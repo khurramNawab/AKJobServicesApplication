@@ -1,0 +1,15 @@
+node_modules/
+backend/node_modules/
+mobile/node_modules/
+.expo/
+.idea/
+.env
+backend/.env
+mobile/.env
+*.log
+*.txt
+output.txt
+status.txt
+env_check.txt
+remote.txt
+!mobile/.gitignore
