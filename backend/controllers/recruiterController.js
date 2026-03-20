@@ -1,4 +1,6 @@
 import Recruiter from '../models/Recruiter.js';
+import Job from '../models/Job.js';
+import Application from '../models/Application.js';
 
 // @desc    Get recruiter profile
 // @route   GET /api/v1/recruiters/me
@@ -12,9 +14,19 @@ export const getMyRecruiterProfile = async (req, res) => {
             recruiter = await Recruiter.create({ userId: req.user._id });
         }
 
+        const jobsCount = await Job.countDocuments({ recruiterId: req.user._id });
+        const recruitersJobs = await Job.find({ recruiterId: req.user._id }).select('_id');
+        const jobIds = recruitersJobs.map(j => j._id);
+        const applicantsCount = await Application.countDocuments({ jobId: { $in: jobIds } });
+
         res.status(200).json({
             success: true,
-            data: recruiter
+            data: recruiter,
+            stats: {
+                jobs: jobsCount,
+                applicants: applicantsCount,
+                interviews: await Application.countDocuments({ jobId: { $in: jobIds }, status: 'SHORTLISTED' })
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

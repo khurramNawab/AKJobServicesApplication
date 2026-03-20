@@ -1,14 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    FlatList, 
+    ActivityIndicator, 
+    TouchableOpacity, 
+    TextInput,
+    StatusBar,
+    ScrollView,
+    Platform,
+    Alert,
+    BackHandler
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/useAuthStore';
-import { COLORS } from '../constants/theme';
+import { useThemeStore } from '../store/useThemeStore';
+import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import api from '../services/api';
 import JobCard from '../components/JobCard';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { useWindowDimensions } from 'react-native';
 
 const HomeScreen = ({ navigation }) => {
+    const { width } = useWindowDimensions();
+    const isWideScreen = width > 768;
+    const MAX_WIDTH = 600;
+
     const user = useAuthStore((state) => state.user);
+    const { isDarkMode } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -55,16 +79,31 @@ const HomeScreen = ({ navigation }) => {
         }
     };
 
+    // Fix: Back Button Logic for Android & Exit prevention for Mac Web
     useFocusEffect(
         useCallback(() => {
             fetchData();
-        }, [])
+            
+            const onBackPress = () => {
+                if (Platform.OS === 'web') return false; // Ignore on Web/Mac
+                if (navigation.isFocused()) {
+                    Alert.alert('Exit App', 'Are you sure you want to exit?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Exit', onPress: () => BackHandler.exitApp() }
+                    ]);
+                    return true;
+                }
+                return false;
+            };
+
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+            return () => subscription.remove();
+        }, [navigation])
     );
 
     const applyFilters = (baseJobs, search, filterType, currentPrefs) => {
         let result = baseJobs;
 
-        // 1. apply preferences if they exist
         if (currentPrefs.title || currentPrefs.location) {
             result = result.filter(job => {
                 const titleMatch = currentPrefs.title ? job.title.toLowerCase().includes(currentPrefs.title.toLowerCase()) : true;
@@ -73,16 +112,15 @@ const HomeScreen = ({ navigation }) => {
             });
         }
 
-        // 2. apply manual type filter
         if (filterType !== 'All') {
             result = result.filter(job => job.type === filterType);
         }
 
-        // 3. apply search query
         if (search.trim() !== '') {
             result = result.filter(job =>
                 job.title.toLowerCase().includes(search.toLowerCase()) ||
-                job.location.toLowerCase().includes(search.toLowerCase())
+                job.location.toLowerCase().includes(search.toLowerCase()) ||
+                job.recruiterId?.companyName?.toLowerCase().includes(search.toLowerCase())
             );
         }
 
@@ -93,244 +131,288 @@ const HomeScreen = ({ navigation }) => {
         applyFilters(jobs, searchQuery, activeFilter, preferences);
     }, [searchQuery, activeFilter, jobs, preferences]);
 
-    const handleSeedData = async () => {
-        try {
-            setLoading(true);
-            const res = await api.post('/jobs/seed');
-            if (res.data.success) {
-                Alert.alert('Success', `${res.data.count} mock jobs created!`);
-                fetchJobs(); // refresh the list
-            }
-        } catch (error) {
-            console.error('Error seeding data:', error);
-            Alert.alert('Error', error.response?.data?.message || 'Failed to seed data');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const onRefresh = () => {
         setRefreshing(true);
         fetchData();
     };
 
     const renderHeader = () => (
-        <View style={styles.headerWrapper}>
-            <View style={styles.header}>
+        <View style={styles.headerSection}>
+            <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] || 'User'} 👋</Text>
-                    <Text style={styles.subtitle}>Find your dream job today</Text>
+                    <Text style={[styles.greetingText, { color: COLORS.textPrimary }]}>Hello, {user?.name?.split(' ')[0] || 'User'} 👋</Text>
+                    <Text style={[styles.welcomeText, { color: COLORS.textSecondary }]}>Find your next career move</Text>
                 </View>
+                <TouchableOpacity 
+                    style={[styles.notificationButton, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('Notifications')}
+                >
+                    <Ionicons name="notifications-outline" size={24} color={COLORS.textPrimary} />
+                    <View style={[styles.notificationDot, { borderColor: COLORS.surface }]} />
+                </TouchableOpacity>
             </View>
 
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color={COLORS.textSecondary} />
+            <View style={[styles.searchBox, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
                 <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search by job title or location..."
+                    style={[styles.searchInput, { color: COLORS.textPrimary }]}
+                    placeholder="Search jobs, companies..."
+                    placeholderTextColor={COLORS.textTertiary}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
+                <TouchableOpacity 
+                    style={[styles.filterIconButton, { backgroundColor: COLORS.primary }]} 
+                    activeOpacity={0.8}
+                    onPress={() => Alert.alert("Filter", "Advanced search filters are being customized for your experience.")}
+                >
+                    <Ionicons name="options-outline" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
             </View>
 
-            <View style={styles.filterContainer}>
-                <FlatList
-                    data={filters}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={item => item}
-                    renderItem={({ item }) => (
+            <View style={styles.filterWrapper}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                    {filters.map((item) => (
                         <TouchableOpacity
+                            key={item}
                             style={[
-                                styles.filterPill,
-                                activeFilter === item && styles.filterPillActive
+                                styles.filterItem,
+                                { backgroundColor: COLORS.surface, borderColor: COLORS.border },
+                                activeFilter === item && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
                             ]}
+                            activeOpacity={0.8}
                             onPress={() => setActiveFilter(item)}
                         >
                             <Text style={[
-                                styles.filterText,
-                                activeFilter === item && styles.filterTextActive
+                                styles.filterLabel,
+                                { color: COLORS.textSecondary },
+                                activeFilter === item && { color: '#FFFFFF' }
                             ]}>
                                 {item}
                             </Text>
                         </TouchableOpacity>
-                    )}
-                />
+                    ))}
+                </ScrollView>
             </View>
         </View>
     );
 
     return (
-        <View style={styles.container}>
-            {renderHeader()}
-
-            <View style={styles.listContainer}>
-                {(preferences.title || preferences.location) ? (
-                    <View style={styles.preferenceBanner}>
-                        <Text style={styles.preferenceBannerText}>
-                            ✨ Recommended based on your preferences
-                        </Text>
-                    </View>
-                ) : null}
-                <Text style={styles.sectionTitle}>Recent Jobs</Text>
-
-                {loading && !refreshing ? (
-                    <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-                ) : (
-                    <FlatList
-                        data={filteredJobs}
-                        keyExtractor={(item) => item._id}
-                        renderItem={({ item }) => (
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: COLORS.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <View style={[styles.container, isWideScreen && { maxWidth: MAX_WIDTH, alignSelf: 'center', width: '100%' }]}>
+                <FlatList
+                    data={filteredJobs}
+                    keyExtractor={(item) => item._id}
+                    ListHeaderComponent={
+                        <>
+                            {renderHeader()}
+                            {preferences.title || preferences.location ? (
+                                <View style={styles.recommendationBanner}>
+                                    <LinearGradient
+                                        colors={[COLORS.primary + '15', COLORS.primaryLight + '05']}
+                                        style={styles.recommendationGradient}
+                                    >
+                                        <Ionicons name="sparkles" size={18} color={COLORS.primary} />
+                                        <Text style={[styles.recommendationText, { color: COLORS.primary }]}>
+                                            Tailored for your preferences
+                                        </Text>
+                                    </LinearGradient>
+                                </View>
+                            ) : null}
+                            <View style={styles.sectionHeader}>
+                                <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Popular Jobs</Text>
+                                <TouchableOpacity 
+                                    activeOpacity={0.7}
+                                    onPress={() => Alert.alert("Popular Jobs", "We are fetching all popular opportunities for you.")}
+                                >
+                                    <Text style={[styles.seeAllText, { color: COLORS.primary }]}>See all</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    }
+                    renderItem={({ item }) => (
+                        <View style={styles.cardWrapper}>
                             <JobCard
                                 job={item}
                                 onPress={() => navigation.navigate('JobDetails', { jobId: item._id })}
                             />
-                        )}
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.flatListContent}
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Ionicons name="briefcase-outline" size={48} color={COLORS.textHint} />
-                                <Text style={styles.emptyText}>No jobs found</Text>
+                        </View>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.listContent}
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    ListEmptyComponent={
+                        <View style={styles.emptyView}>
+                            <View style={[styles.emptyIconBox, { backgroundColor: COLORS.surfaceSecondary }]}>
+                                <Ionicons name="search-outline" size={40} color={COLORS.textTertiary} />
                             </View>
-                        }
-                    />
-                )}
+                            <Text style={[styles.emptyTitle, { color: COLORS.textPrimary }]}>No matching jobs</Text>
+                            <Text style={[styles.emptySubtitle, { color: COLORS.textSecondary }]}>Try adjusting your filters or search terms</Text>
+                        </View>
+                    }
+                />
             </View>
-
-            {/* Floating Action Button for Recruiters to easily add dummy data */}
-            {user?.role === 'RECRUITER' && (
-                <TouchableOpacity style={styles.fab} onPress={handleSeedData}>
-                    <Ionicons name="add" size={30} color={COLORS.white} />
-                </TouchableOpacity>
-            )}
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+    },
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
-        paddingTop: 60, // approximate status bar height
     },
-    headerWrapper: {
-        paddingHorizontal: 24,
-        marginBottom: 10,
+    headerSection: {
+        paddingHorizontal: SIZES.lg,
+        paddingTop: SIZES.md,
+        paddingBottom: SIZES.md,
     },
-    header: {
+    topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: SIZES.xl,
     },
-    greeting: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
+    greetingText: {
+        fontSize: 26,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    subtitle: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        marginTop: 4,
+    welcomeText: {
+        fontSize: 15,
+        marginTop: 2,
+        fontWeight: '600',
     },
-    searchContainer: {
+    notificationButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        ...SHADOWS.soft,
+    },
+    notificationDot: {
+        position: 'absolute',
+        top: 14,
+        right: 14,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#EF4444',
+        borderWidth: 2,
+    },
+    searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginBottom: 16,
+        borderRadius: 18,
+        paddingLeft: 16,
+        paddingRight: 8,
+        height: 60,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        ...SHADOWS.soft,
+    },
+    searchIcon: {
+        marginRight: 10,
     },
     searchInput: {
         flex: 1,
-        marginLeft: 10,
         fontSize: 16,
-    },
-    filterContainer: {
-        marginBottom: 10,
-    },
-    filterPill: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: COLORS.white,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        marginRight: 10,
-    },
-    filterPillActive: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
-    },
-    filterText: {
-        color: COLORS.textSecondary,
         fontWeight: '600',
     },
-    filterTextActive: {
-        color: COLORS.white,
+    filterIconButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    listContainer: {
-        flex: 1,
-        paddingHorizontal: 24,
+    filterWrapper: {
+        marginTop: SIZES.xl,
+    },
+    filterScroll: {
+        gap: 12,
+        paddingRight: SIZES.lg,
+    },
+    filterItem: {
+        paddingHorizontal: 22,
+        paddingVertical: 12,
+        borderRadius: 14,
+        borderWidth: 1,
+    },
+    filterLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    recommendationBanner: {
+        marginHorizontal: SIZES.lg,
+        marginBottom: SIZES.lg,
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    recommendationGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        gap: 10,
+    },
+    recommendationText: {
+        fontWeight: '800',
+        fontSize: 13,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: SIZES.lg,
+        marginVertical: SIZES.md,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginBottom: 16,
+        fontSize: 22,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    loader: {
-        marginTop: 40,
+    seeAllText: {
+        fontSize: 14,
+        fontWeight: '800',
     },
-    preferenceBanner: {
-        backgroundColor: COLORS.secondary + '15',
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: COLORS.secondary + '50',
-    },
-    preferenceBannerText: {
-        color: COLORS.secondary,
-        fontWeight: 'bold',
-        fontSize: 13,
-        textAlign: 'center',
-    },
-    flatListContent: {
+    listContent: {
         paddingBottom: 40,
     },
-    emptyContainer: {
+    cardWrapper: {
+        paddingHorizontal: SIZES.lg,
+    },
+    emptyView: {
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 60,
+        paddingHorizontal: 40,
     },
-    emptyText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: COLORS.textSecondary,
-    },
-    fab: {
-        position: 'absolute',
-        bottom: 24,
-        right: 24,
-        backgroundColor: COLORS.primary,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        alignItems: 'center',
+    emptyIconBox: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
         justifyContent: 'center',
-        elevation: 6, // android shadow
-        shadowColor: COLORS.primary, // ios shadow
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 22,
+        fontWeight: '500',
     }
 });
 
 export default HomeScreen;
+

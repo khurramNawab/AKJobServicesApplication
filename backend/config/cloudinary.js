@@ -22,13 +22,9 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     let folder = "jobportal/misc";
-    let resource_type = "image";
-    let format = undefined;
-
     if (file.fieldname === "resume") {
       folder = "jobportal/resumes";
-      resource_type = "raw";
-    } else if (file.fieldname === "avatar") {
+    } else if (file.fieldname === "avatar" || file.fieldname === "photo") {
       folder = "jobportal/avatars";
     } else if (file.fieldname === "logo") {
       folder = "jobportal/logos";
@@ -36,12 +32,12 @@ const storage = new CloudinaryStorage({
 
     return {
       folder,
-      resource_type,
+      resource_type: "auto", // Crucial for PDF/DOCX support
       public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
-      format,
     };
   },
 });
+
 
 const fileFilter = (req, file, cb) => {
   console.log("MULTER RECEIVED FILE:", file.fieldname, file.mimetype, file.originalname);
@@ -57,7 +53,7 @@ const fileFilter = (req, file, cb) => {
       : cb(new Error("Only PDF, DOC, DOCX allowed for resume"), false);
   }
 
-  if (file.fieldname === "avatar" || file.fieldname === "logo") {
+  if (file.fieldname === "avatar" || file.fieldname === "logo" || file.fieldname === "photo") {
     const allowed = ["image/jpeg", "image/png", "image/jpg"];
     return allowed.includes(file.mimetype)
       ? cb(null, true)

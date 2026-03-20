@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TextInput, 
+    ScrollView, 
+    TouchableOpacity, 
+    ActivityIndicator, 
+    Alert,
+    SafeAreaView,
+    StatusBar,
+    KeyboardAvoidingView,
+    Platform
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
-import { COLORS } from '../constants/theme';
+import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
+import { useThemeStore } from '../store/useThemeStore';
+import ModernButton from '../components/ModernButton';
 
 const CreateJobScreen = ({ navigation }) => {
+    const { isDarkMode } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         requirements: '',
-        skills: '', // Will split by comma on submit
+        skills: '', 
         location: '',
         type: 'Full-time',
         minSalary: '',
@@ -27,7 +45,7 @@ const CreateJobScreen = ({ navigation }) => {
 
     const handleSubmit = async () => {
         if (!formData.title || !formData.description || !formData.location) {
-            Alert.alert('Error', 'Please fill in all required fields (Title, Description, Location).');
+            Alert.alert('Required Fields', 'Please fill in the Job Title, Description, and Location to continue.');
             return;
         }
 
@@ -53,226 +71,270 @@ const CreateJobScreen = ({ navigation }) => {
             const res = await api.post('/jobs', payload);
 
             if (res.data.success) {
-                Alert.alert('Success', 'Job posted successfully!');
+                Alert.alert('Success!', 'Your job posting is now live and visible to candidates.');
                 navigation.goBack();
             }
         } catch (error) {
             console.log('Error posting job:', error.response?.data?.message || error.message);
-            Alert.alert('Posting Failed', error.response?.data?.message || 'Something went wrong');
+            Alert.alert('Post Failed', error.response?.data?.message || 'Something went wrong while publishing your job.');
         } finally {
             setLoading(false);
         }
     };
 
+    const InputField = ({ label, icon, ...props }) => (
+        <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: COLORS.textPrimary }]}>{label}</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
+                <Ionicons name={icon} size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                <TextInput
+                    style={[styles.input, { color: COLORS.textPrimary }]}
+                    placeholderTextColor={COLORS.textTertiary}
+                    {...props}
+                />
+            </View>
+        </View>
+    );
+
     return (
-        <View style={styles.container}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
+                <TouchableOpacity style={[styles.closeBtn, { backgroundColor: COLORS.background }]} onPress={() => navigation.goBack()}>
                     <Ionicons name="close" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Post a Job</Text>
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
-                    {loading ? (
-                        <ActivityIndicator size="small" color={COLORS.primary} />
-                    ) : (
-                        <Text style={styles.submitText}>Post</Text>
-                    )}
-                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>New Posting</Text>
+                <View style={{ width: 44 }} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.formContainer} showsVerticalScrollIndicator={false}>
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Job Title *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Senior React Developer"
-                        value={formData.title}
-                        onChangeText={(text) => handleInputChange('title', text)}
-                    />
-                </View>
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+                style={{ flex: 1 }}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent} 
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Job Details</Text>
+                        
+                        <InputField 
+                            label="Job Title *" 
+                            icon="briefcase-outline"
+                            placeholder="e.g. Senior Software Engineer"
+                            value={formData.title}
+                            onChangeText={(text) => handleInputChange('title', text)}
+                        />
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Location *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Remote, New York, etc."
-                        value={formData.location}
-                        onChangeText={(text) => handleInputChange('location', text)}
-                    />
-                </View>
+                        <InputField 
+                            label="Location *" 
+                            icon="location-outline"
+                            placeholder="e.g. Remote or New York, NY"
+                            value={formData.location}
+                            onChangeText={(text) => handleInputChange('location', text)}
+                        />
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Job Type</Text>
-                    <View style={styles.pillContainer}>
-                        {['Full-time', 'Part-time', 'Contract', 'Internship'].map((type) => (
-                            <TouchableOpacity
-                                key={type}
-                                style={[styles.typePill, formData.type === type && styles.typePillActive]}
-                                onPress={() => setJobType(type)}
-                            >
-                                <Text style={[styles.typeText, formData.type === type && styles.typeTextActive]}>
-                                    {type}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Type</Text>
+                            <View style={styles.typeSwitcher}>
+                                {['Full-time', 'Part-time', 'Contract', 'Intern'].map((type) => (
+                                    <TouchableOpacity
+                                        key={type}
+                                        style={[
+                                            styles.typeOption, 
+                                            { backgroundColor: COLORS.background, borderColor: COLORS.border },
+                                            formData.type === type && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
+                                        ]}
+                                        onPress={() => setJobType(type)}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[
+                                            styles.typeOptionText, 
+                                            { color: COLORS.textSecondary },
+                                            formData.type === type && { color: COLORS.white }
+                                        ]}>
+                                            {type}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.row}>
-                    <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                        <Text style={styles.label}>Min Salary ($)</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g. 80000"
-                            keyboardType="numeric"
-                            value={formData.minSalary}
-                            onChangeText={(text) => handleInputChange('minSalary', text)}
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Compensation & Skills</Text>
+                        
+                        <View style={styles.salaryRow}>
+                            <View style={{ flex: 1 }}>
+                                <InputField 
+                                    label="Min Salary ($)" 
+                                    icon="wallet-outline"
+                                    placeholder="80,000"
+                                    keyboardType="numeric"
+                                    value={formData.minSalary}
+                                    onChangeText={(text) => handleInputChange('minSalary', text)}
+                                />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 16 }}>
+                                <InputField 
+                                    label="Max Salary ($)" 
+                                    icon="cash-outline"
+                                    placeholder="120,000"
+                                    keyboardType="numeric"
+                                    value={formData.maxSalary}
+                                    onChangeText={(text) => handleInputChange('maxSalary', text)}
+                                />
+                            </View>
+                        </View>
+
+                        <InputField 
+                            label="Required Skills (Comma separated)" 
+                            icon="code-working-outline"
+                            placeholder="React, TypeScript, Node.js"
+                            value={formData.skills}
+                            onChangeText={(text) => handleInputChange('skills', text)}
                         />
                     </View>
-                    <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
-                        <Text style={styles.label}>Max Salary ($)</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g. 120000"
-                            keyboardType="numeric"
-                            value={formData.maxSalary}
-                            onChangeText={(text) => handleInputChange('maxSalary', text)}
-                        />
+
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Role Description</Text>
+                        
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Description *</Text>
+                            <TextInput
+                                style={[styles.textArea, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="Describe the role and responsibilities..."
+                                placeholderTextColor={COLORS.textTertiary}
+                                multiline
+                                numberOfLines={6}
+                                value={formData.description}
+                                onChangeText={(text) => handleInputChange('description', text)}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Candidate Requirements</Text>
+                            <TextInput
+                                style={[styles.textArea, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="List required experience, certifications, etc."
+                                placeholderTextColor={COLORS.textTertiary}
+                                multiline
+                                numberOfLines={4}
+                                value={formData.requirements}
+                                onChangeText={(text) => handleInputChange('requirements', text)}
+                            />
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Required Skills (Comma separated)</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. React, Node.js, MongoDB"
-                        value={formData.skills}
-                        onChangeText={(text) => handleInputChange('skills', text)}
+                    <ModernButton 
+                        title="Publish Job Posting"
+                        onPress={handleSubmit}
+                        loading={loading}
+                        style={styles.submitBtn}
                     />
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Job Description *</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Describe the role responsibilities..."
-                        multiline
-                        numberOfLines={5}
-                        textAlignVertical="top"
-                        value={formData.description}
-                        onChangeText={(text) => handleInputChange('description', text)}
-                    />
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Requirements</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="List required experience, degrees, etc..."
-                        multiline
-                        numberOfLines={4}
-                        textAlignVertical="top"
-                        value={formData.requirements}
-                        onChangeText={(text) => handleInputChange('requirements', text)}
-                    />
-                </View>
-
-                <View style={{ height: 40 }} />
-            </ScrollView>
-        </View>
+                    <View style={{ height: 40 }} />
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
     },
-    headerRow: {
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 60, // approximate status bar
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        backgroundColor: COLORS.white,
+        paddingHorizontal: SIZES.lg,
+        paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
-    backButton: {
-        padding: 8,
+    closeBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerTitle: {
+        flex: 1,
+        textAlign: 'center',
         fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
+        fontWeight: '800',
+        letterSpacing: -0.3,
     },
-    submitButton: {
-        backgroundColor: COLORS.primary + '20',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+    scrollContent: {
+        padding: SIZES.lg,
     },
-    submitText: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
-        fontSize: 14,
+    section: {
+        marginBottom: 32,
     },
-    formContainer: {
-        padding: 24,
+    sectionHeading: {
+        fontSize: 12,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 20,
     },
     inputGroup: {
         marginBottom: 20,
     },
     label: {
         fontSize: 14,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
+        fontWeight: '700',
         marginBottom: 8,
     },
-    input: {
-        backgroundColor: COLORS.white,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 12,
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 16,
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        height: 56,
+        borderWidth: 1,
+    },
+    inputIcon: {
+        marginRight: 12,
+    },
+    input: {
+        flex: 1,
         fontSize: 15,
-        color: COLORS.textPrimary,
+        fontWeight: '600',
     },
     textArea: {
-        height: 120,
+        borderRadius: 16,
+        padding: 16,
+        height: 140,
+        textAlignVertical: 'top',
+        fontSize: 15,
+        borderWidth: 1,
+        fontWeight: '600',
     },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    pillContainer: {
+    typeSwitcher: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 10,
+        gap: 8,
+        marginTop: 4,
     },
-    typePill: {
+    typeOption: {
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 20,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.white,
+        borderWidth: 1.5,
     },
-    typePillActive: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
+    typeOptionText: {
+        fontSize: 13,
+        fontWeight: '700',
     },
-    typeText: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        fontWeight: '500',
+    salaryRow: {
+        flexDirection: 'row',
     },
-    typeTextActive: {
-        color: COLORS.white,
-        fontWeight: 'bold',
+    submitBtn: {
+        marginTop: 10,
+        height: 60,
     }
 });
 
 export default CreateJobScreen;
+

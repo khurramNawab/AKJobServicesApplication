@@ -1,11 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    FlatList, 
+    ActivityIndicator, 
+    TouchableOpacity, 
+    Alert, 
+    Linking,
+    SafeAreaView,
+    StatusBar,
+    ScrollView 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
-import { COLORS, SHADOWS } from '../constants/theme';
+import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
+import { useThemeStore } from '../store/useThemeStore';
+import ModernButton from '../components/ModernButton';
 
 const JobApplicantsScreen = ({ route, navigation }) => {
     const { jobId, jobTitle } = route.params;
+    const { isDarkMode } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
     const [applicants, setApplicants] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,7 +38,7 @@ const JobApplicantsScreen = ({ route, navigation }) => {
             }
         } catch (error) {
             console.error('Error fetching applicants:', error);
-            Alert.alert('Debug (Applicants)', JSON.stringify(error.response?.data) || error.message);
+            Alert.alert('Network Error', 'Failed to load applicants. Please pull to refresh.');
         } finally {
             setLoading(false);
         }
@@ -31,24 +48,24 @@ const JobApplicantsScreen = ({ route, navigation }) => {
         try {
             const res = await api.put(`/applications/${applicationId}/status`, { status: newStatus });
             if (res.data.success) {
-                Alert.alert('Success', `Applicant marked as ${newStatus}`);
-                fetchApplicants(); // refresh list
+                Alert.alert('Status Updated', `Candidate is now marked as ${newStatus}`);
+                fetchApplicants();
             }
         } catch (error) {
             console.error('Error updating status:', error);
-            Alert.alert('Error', 'Failed to update candidate status.');
+            Alert.alert('Update Failed', 'Could not change candidate status.');
         }
     };
 
     const showStatusOptions = (applicant) => {
-        // Basic react native alert with buttons
         Alert.alert(
-            'Update Status',
-            `For candidate: ${applicant.candidateId?.name}`,
+            'Change Status',
+            `Update status for ${applicant.candidateId?.name}`,
             [
-                { text: 'REVIEWING', onPress: () => updateStatus(applicant._id, 'REVIEWING') },
-                { text: 'SHORTLISTED', onPress: () => updateStatus(applicant._id, 'SHORTLISTED') },
-                { text: 'REJECTED', onPress: () => updateStatus(applicant._id, 'REJECTED'), style: 'destructive' },
+                { text: 'Under Review', onPress: () => updateStatus(applicant._id, 'REVIEWING') },
+                { text: 'Shortlist', onPress: () => updateStatus(applicant._id, 'SHORTLISTED') },
+                { text: 'Reject', onPress: () => updateStatus(applicant._id, 'REJECTED'), style: 'destructive' },
+                { text: 'Hired', onPress: () => updateStatus(applicant._id, 'HIRED') },
                 { text: 'Cancel', style: 'cancel' }
             ],
             { cancelable: true }
@@ -56,67 +73,117 @@ const JobApplicantsScreen = ({ route, navigation }) => {
     };
 
     const handleViewResume = (item) => {
-        const resumeUrl = item.candidateId?.resumeUrl;
+        const resumeUrl = item.profile?.resumeUrl;
         if (resumeUrl) {
-            Linking.openURL(resumeUrl).catch(err => {
-                console.error("Failed to open URL:", err);
-                Alert.alert("Error", "Could not open the resume.");
+            navigation.navigate('ResumeViewer', { 
+                resumeUrl: resumeUrl,
+                title: `${item.candidateId?.name}'s Resume` 
             });
         } else {
-            Alert.alert("No Resume", "This candidate has not uploaded a resume.");
+            Alert.alert("Resume Not Found", "This candidate hasn't uploaded their resume yet.");
         }
     };
 
-    const getStatusColor = (status) => {
+    const getStatusStyle = (status) => {
         switch (status) {
-            case 'APPLIED': return COLORS.textSecondary;
-            case 'REVIEWING': return COLORS.secondary;
-            case 'SHORTLISTED': return COLORS.success;
-            case 'REJECTED': return COLORS.danger;
-            case 'HIRED': return COLORS.primary;
-            default: return COLORS.textSecondary;
+            case 'APPLIED': return { color: COLORS.primary, bg: COLORS.primary + '15', label: 'New' };
+            case 'REVIEWING': return { color: COLORS.secondary, bg: COLORS.secondary + '15', label: 'Reviewing' };
+            case 'SHORTLISTED': return { color: '#059669', bg: '#D1FAE5', label: 'Shortlisted' };
+            case 'REJECTED': return { color: COLORS.danger, bg: COLORS.danger + '15', label: 'Rejected' };
+            case 'HIRED': return { color: '#10B981', bg: '#D1FAE5', label: 'Hired' };
+            default: return { color: COLORS.textTertiary, bg: COLORS.surface, label: status };
         }
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                <View style={styles.applicantInfo}>
-                    <Text style={styles.name}>{item.candidateId?.name || 'Unknown Candidate'}</Text>
-                    <Text style={styles.email}>{item.candidateId?.email || 'N/A'}</Text>
+    const renderItem = ({ item }) => {
+        const status = getStatusStyle(item.status);
+        const name = item.candidateId?.name || 'Unknown Candidate';
+        const initial = name.charAt(0).toUpperCase();
+
+        return (
+            <View style={[styles.applicantCard, SHADOWS.soft, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                <View style={styles.cardHeader}>
+                    <View style={[styles.avatarBox, { backgroundColor: COLORS.primary + '10', borderColor: COLORS.primary + '20' }]}>
+                        <Text style={[styles.avatarText, { color: COLORS.primary }]}>{initial}</Text>
+                    </View>
+                    <View style={styles.basicInfo}>
+                        <Text style={[styles.candidateName, { color: COLORS.textPrimary }]} numberOfLines={1}>{name}</Text>
+                        <Text style={[styles.candidateEmail, { color: COLORS.textTertiary }]} numberOfLines={1}>{item.candidateId?.email}</Text>
+                        <View style={styles.badgeRow}>
+                            <View style={[styles.statusTag, { backgroundColor: status.bg }]}>
+                                <Text style={[styles.statusTagText, { color: status.color }]}>{status.label}</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => showStatusOptions(item)} style={styles.editStatusBtn}>
+                                <Ionicons name="ellipsis-horizontal" size={16} color={COLORS.textTertiary} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                <TouchableOpacity
-                    style={[styles.statusBadge, { borderColor: getStatusColor(item.status) }]}
-                    onPress={() => showStatusOptions(item)}
-                >
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                        {item.status} ▾
-                    </Text>
-                </TouchableOpacity>
+
+                {item.profile?.headline && (
+                    <Text style={[styles.headlineText, { color: COLORS.textSecondary }]} numberOfLines={2}>{item.profile.headline}</Text>
+                )}
+
+                {item.profile?.skills && item.profile.skills.length > 0 && (
+                    <View style={styles.skillsWrapper}>
+                        {item.profile.skills.slice(0, 3).map((skill, index) => (
+                            <View key={index} style={[styles.skillChip, { backgroundColor: COLORS.background }]}>
+                                <Text style={[styles.skillChipText, { color: COLORS.textSecondary }]}>{skill}</Text>
+                            </View>
+                        ))}
+                        {item.profile.skills.length > 3 && (
+                            <Text style={[styles.moreSkillsText, { color: COLORS.textTertiary }]}>+{item.profile.skills.length - 3} more</Text>
+                        )}
+                    </View>
+                )}
+
+                {item.coverLetter && (
+                    <View style={[styles.coverLetterBox, { backgroundColor: COLORS.background + '50', borderColor: COLORS.border }]}>
+                        <Text style={[styles.clLabel, { color: COLORS.textTertiary }]}>Introduction</Text>
+                        <Text style={[styles.clText, { color: COLORS.textPrimary }]} numberOfLines={2}>{item.coverLetter}</Text>
+                    </View>
+                )}
+
+                <View style={styles.cardActions}>
+                    <TouchableOpacity 
+                        style={[styles.actionBtn, { borderColor: COLORS.primary }]} 
+                        onPress={() => handleViewResume(item)}
+                    >
+                        <Ionicons name="document-text-outline" size={18} color={COLORS.primary} />
+                        <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>Resume</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                        style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}
+                        onPress={() => navigation.navigate('ChatRoom', {
+                            otherUser: item.candidateId,
+                            conversationId: null
+                        })}
+                    >
+                        <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.white} />
+                        <Text style={[styles.actionBtnText, { color: COLORS.white }]}>Message</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <View style={styles.cardFooter}>
-                <Text style={styles.dateText}>
-                    Applied: {new Date(item.createdAt).toLocaleDateString()}
-                </Text>
-                <TouchableOpacity style={styles.viewResumeBtn} onPress={() => handleViewResume(item)}>
-                    <Text style={styles.viewResumeText}>View Resume</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <View style={[styles.navigatorHeader, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
+                <TouchableOpacity style={[styles.backBtn, { backgroundColor: COLORS.background }]} onPress={() => navigation.goBack()}>
+                    <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>{jobTitle}</Text>
-                <View style={{ width: 40 }} />
+                <View style={styles.headerTitleBox}>
+                    <Text style={[styles.screenTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>{jobTitle}</Text>
+                    <Text style={[styles.screenSubtitle, { color: COLORS.textSecondary }]}>View and Manage Applicants</Text>
+                </View>
+                <View style={{ width: 44 }} />
             </View>
 
             {loading ? (
-                <View style={styles.centerContainer}>
+                <View style={styles.centerBox}>
                     <ActivityIndicator size="large" color={COLORS.primary} />
                 </View>
             ) : (
@@ -124,128 +191,207 @@ const JobApplicantsScreen = ({ route, navigation }) => {
                     data={applicants}
                     keyExtractor={(item) => item._id}
                     renderItem={renderItem}
-                    contentContainerStyle={styles.listContent}
+                    contentContainerStyle={styles.listContainer}
+                    showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <Ionicons name="people-outline" size={48} color={COLORS.textHint} />
-                            <Text style={styles.emptyText}>No applicants yet.</Text>
+                        <View style={styles.emptyView}>
+                            <View style={[styles.emptyIconCircle, { backgroundColor: COLORS.surface }]}>
+                                <Ionicons name="people-outline" size={50} color={COLORS.textTertiary} />
+                            </View>
+                            <Text style={[styles.emptyHeading, { color: COLORS.textPrimary }]}>No Applicants Yet</Text>
+                            <Text style={[styles.emptySub, { color: COLORS.textSecondary }]}>When candidates apply for this position, they will appear here.</Text>
                         </View>
                     }
                 />
             )}
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
     },
-    headerRow: {
+    navigatorHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 60, // status bar roughly
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        backgroundColor: COLORS.white,
+        paddingHorizontal: SIZES.lg,
+        paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
-    backButton: {
-        padding: 8,
-        backgroundColor: COLORS.backgroundLight,
-        borderRadius: 12,
+    backBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    headerTitle: {
+    headerTitleBox: {
         flex: 1,
-        textAlign: 'center',
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginHorizontal: 12,
+        alignItems: 'center',
     },
-    listContent: {
-        padding: 24,
+    screenTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        letterSpacing: -0.3,
     },
-    card: {
-        backgroundColor: COLORS.white,
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 16,
+    screenSubtitle: {
+        fontSize: 12,
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    listContainer: {
+        paddingHorizontal: SIZES.lg,
+        paddingTop: 20,
+        paddingBottom: 40,
+    },
+    applicantCard: {
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        ...SHADOWS.light,
     },
     cardHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         marginBottom: 16,
     },
-    applicantInfo: {
-        flex: 1,
-        marginRight: 12,
+    avatarBox: {
+        width: 56,
+        height: 56,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
-    name: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
+    avatarText: {
+        fontSize: 22,
+        fontWeight: '800',
+    },
+    basicInfo: {
+        flex: 1,
+        marginLeft: 14,
+    },
+    candidateName: {
+        fontSize: 18,
+        fontWeight: '800',
+        letterSpacing: -0.4,
+    },
+    candidateEmail: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+        gap: 8,
+    },
+    statusTag: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    statusTagText: {
+        fontSize: 10,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+    },
+    editStatusBtn: {
+        padding: 4,
+    },
+    headlineText: {
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    skillsWrapper: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 16,
+    },
+    skillChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    skillChipText: {
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    moreSkillsText: {
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    coverLetterBox: {
+        borderRadius: 16,
+        padding: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+    },
+    clLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        textTransform: 'uppercase',
         marginBottom: 4,
     },
-    email: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
+    clText: {
+        fontSize: 13,
+        lineHeight: 18,
+        fontWeight: '500',
     },
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 20,
-        borderWidth: 1,
-        backgroundColor: COLORS.white,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    cardFooter: {
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-        paddingTop: 12,
+    cardActions: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
+        gap: 12,
     },
-    dateText: {
-        fontSize: 12,
-        color: COLORS.textHint,
+    actionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 48,
+        borderRadius: 14,
+        gap: 8,
+        borderWidth: 1.5,
+        borderColor: 'transparent',
     },
-    centerContainer: {
+    actionBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    centerBox: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    emptyContainer: {
+    emptyView: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 60,
+        paddingTop: 80,
+        paddingHorizontal: 40,
     },
-    emptyText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: COLORS.textSecondary,
+    emptyIconCircle: {
+        width: 100,
+        height: 100,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
     },
-    viewResumeBtn: {
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.primary + '15',
-        borderRadius: 6,
+    emptyHeading: {
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 10,
     },
-    viewResumeText: {
-        color: COLORS.primary,
-        fontSize: 12,
-        fontWeight: 'bold'
+    emptySub: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 22,
+        fontWeight: '500',
     }
 });
 

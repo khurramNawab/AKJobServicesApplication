@@ -10,19 +10,26 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Image
+    Image,
+    SafeAreaView,
+    StatusBar
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
-import { COLORS } from '../constants/theme';
+import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useAuthStore } from '../store/useAuthStore';
+import { useThemeStore } from '../store/useThemeStore';
+import ModernButton from '../components/ModernButton';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
 const EditProfileScreen = ({ navigation }) => {
     const { user } = useAuthStore();
+    const { isDarkMode } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -95,7 +102,7 @@ const EditProfileScreen = ({ navigation }) => {
             const apiUrl = `${api.defaults.baseURL}/candidates/me/photo`;
 
             const res = await fetch(apiUrl, {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
@@ -159,203 +166,220 @@ const EditProfileScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
     }
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : null}
-        >
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: COLORS.background }]}>
                     <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-                <View style={{ width: 24 }} />
+                <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Edit Profile</Text>
+                <View style={{ width: 44 }} />
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-
-                <View style={styles.photoSection}>
-                    <View style={styles.photoContainer}>
-                        {form.profilePhoto ? (
-                            <Image source={{ uri: form.profilePhoto }} style={styles.photoImage} />
-                        ) : (
-                            <Ionicons name="person" size={40} color={COLORS.primary} />
-                        )}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : null}
+            >
+                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                    <View style={styles.photoSection}>
+                        <View style={[styles.photoContainer, { backgroundColor: COLORS.primary + '15', borderColor: COLORS.primary + '30' }]}>
+                            {form.profilePhoto ? (
+                                <Image source={{ uri: form.profilePhoto }} style={styles.photoImage} />
+                            ) : (
+                                <Ionicons name="person" size={40} color={COLORS.primary} />
+                            )}
+                        </View>
+                        <TouchableOpacity 
+                            style={[styles.uploadBtn, { backgroundColor: COLORS.primary + '10' }]} 
+                            onPress={handlePhotoUpload} 
+                            disabled={saving}
+                        >
+                            <Ionicons name="camera-outline" size={20} color={COLORS.primary} />
+                            <Text style={[styles.uploadBtnText, { color: COLORS.primary }]}>Change Photo</Text>
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.uploadBtn} onPress={handlePhotoUpload} disabled={saving}>
-                        <Ionicons name="camera-outline" size={20} color={COLORS.primary} />
-                        <Text style={styles.uploadBtnText}>Upload Photo</Text>
-                    </TouchableOpacity>
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Headline</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Senior Software Engineer"
-                        value={form.headline}
-                        onChangeText={(text) => setForm({ ...form, headline: text })}
-                    />
-                </View>
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Basic Information</Text>
+                        
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Headline</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="e.g. Senior Software Engineer"
+                                placeholderTextColor={COLORS.textTertiary}
+                                value={form.headline}
+                                onChangeText={(text) => setForm({ ...form, headline: text })}
+                            />
+                        </View>
 
-                <View style={styles.row}>
-                    <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                        <Text style={styles.label}>Phone</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="+1 234 567 8900"
-                            keyboardType="phone-pad"
-                            value={form.phone}
-                            onChangeText={(text) => setForm({ ...form, phone: text })}
-                        />
+                        <View style={styles.row}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={[styles.label, { color: COLORS.textSecondary }]}>Phone</Text>
+                                <TextInput
+                                    style={[styles.input, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                    placeholder="+1 234 567 8900"
+                                    placeholderTextColor={COLORS.textTertiary}
+                                    keyboardType="phone-pad"
+                                    value={form.phone}
+                                    onChangeText={(text) => setForm({ ...form, phone: text })}
+                                />
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 0.5, marginLeft: 8 }]}>
+                                <Text style={[styles.label, { color: COLORS.textSecondary }]}>Age</Text>
+                                <TextInput
+                                    style={[styles.input, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                    placeholder="e.g. 25"
+                                    placeholderTextColor={COLORS.textTertiary}
+                                    keyboardType="numeric"
+                                    value={form.age}
+                                    onChangeText={(text) => setForm({ ...form, age: text })}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Gender</Text>
+                            <View style={styles.chipContainer}>
+                                {GENDER_OPTIONS.map((g) => (
+                                    <TouchableOpacity
+                                        key={g}
+                                        style={[
+                                            styles.chip,
+                                            { backgroundColor: COLORS.surface, borderColor: COLORS.border },
+                                            form.gender === g && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
+                                        ]}
+                                        onPress={() => setForm({ ...form, gender: g })}
+                                    >
+                                        <Text style={[
+                                            styles.chipText,
+                                            { color: COLORS.textSecondary },
+                                            form.gender === g && { color: '#FFFFFF', fontWeight: '700' }
+                                        ]}>
+                                            {g}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Address</Text>
+                            <TextInput
+                                style={[styles.input, styles.textArea, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="Your full address"
+                                placeholderTextColor={COLORS.textTertiary}
+                                multiline
+                                numberOfLines={3}
+                                value={form.address}
+                                onChangeText={(text) => setForm({ ...form, address: text })}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Bio (About you)</Text>
+                            <TextInput
+                                style={[styles.input, styles.textArea, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="Tell recruiters a little about yourself (up to 500 chars)"
+                                placeholderTextColor={COLORS.textTertiary}
+                                multiline
+                                numberOfLines={4}
+                                value={form.bio}
+                                onChangeText={(text) => setForm({ ...form, bio: text })}
+                            />
+                        </View>
                     </View>
-                    <View style={[styles.inputGroup, { flex: 0.5, marginLeft: 8 }]}>
-                        <Text style={styles.label}>Age</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g. 25"
-                            keyboardType="numeric"
-                            value={form.age}
-                            onChangeText={(text) => setForm({ ...form, age: text })}
-                        />
+
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Job Preferences</Text>
+                        
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Preferred Job Title</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="e.g. React Native Developer"
+                                placeholderTextColor={COLORS.textTertiary}
+                                value={form.preferredJobTitle}
+                                onChangeText={(text) => setForm({ ...form, preferredJobTitle: text })}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Preferred Location</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="e.g. Remote, or New York"
+                                placeholderTextColor={COLORS.textTertiary}
+                                value={form.preferredLocation}
+                                onChangeText={(text) => setForm({ ...form, preferredLocation: text })}
+                            />
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Gender</Text>
-                    <View style={styles.chipContainer}>
-                        {GENDER_OPTIONS.map((g) => (
-                            <TouchableOpacity
-                                key={g}
-                                style={[
-                                    styles.chip,
-                                    form.gender === g && styles.chipSelected
-                                ]}
-                                onPress={() => setForm({ ...form, gender: g })}
-                            >
-                                <Text style={[
-                                    styles.chipText,
-                                    form.gender === g && styles.chipTextSelected
-                                ]}>
-                                    {g}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Address</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Your full address"
-                        multiline
-                        numberOfLines={3}
-                        value={form.address}
-                        onChangeText={(text) => setForm({ ...form, address: text })}
+                    <ModernButton
+                        title="Save Changes"
+                        onPress={handleSave}
+                        loading={saving}
+                        style={styles.saveBtn}
                     />
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Bio (About you)</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Tell recruiters a little about yourself (up to 500 chars)"
-                        multiline
-                        numberOfLines={4}
-                        value={form.bio}
-                        onChangeText={(text) => setForm({ ...form, bio: text })}
-                    />
-                </View>
-
-                <View style={{ height: 1, backgroundColor: COLORS.border, marginVertical: 20 }} />
-                <Text style={[styles.headerTitle, { marginBottom: 20 }]}>Job Preferences</Text>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Preferred Job Title</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. React Native Developer"
-                        value={form.preferredJobTitle}
-                        onChangeText={(text) => setForm({ ...form, preferredJobTitle: text })}
-                    />
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Preferred Location</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Remote, or New York"
-                        value={form.preferredLocation}
-                        onChangeText={(text) => setForm({ ...form, preferredLocation: text })}
-                    />
-                </View>
-
-                <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={handleSave}
-                    disabled={saving}
-                >
-                    {saving ? (
-                        <ActivityIndicator size="small" color={COLORS.white} />
-                    ) : (
-                        <Text style={styles.saveButtonText}>Save Changes</Text>
-                    )}
-                </TouchableOpacity>
-                <View style={{ height: 40 }} />
-            </ScrollView>
-        </KeyboardAvoidingView>
+                    <View style={{ height: 40 }} />
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingTop: 50,
-        paddingBottom: 20,
-        backgroundColor: COLORS.white,
+        paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     backButton: {
-        padding: 4,
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
+        fontWeight: '800',
     },
     content: {
-        padding: 20,
+        padding: 24,
     },
     photoSection: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 32,
     },
     photoContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: COLORS.primary + '15',
+        width: 110,
+        height: 110,
+        borderRadius: 55,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
         overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: COLORS.primary + '30'
+        borderWidth: 2,
     },
     photoImage: {
         width: '100%',
@@ -366,18 +390,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: COLORS.primary + '10',
-        gap: 6,
+        paddingVertical: 10,
+        borderRadius: 14,
+        gap: 8,
     },
     uploadBtnText: {
-        color: COLORS.primary,
-        fontWeight: '600',
+        fontWeight: '700',
         fontSize: 14,
     },
+    section: {
+        marginBottom: 32,
+        gap: 20,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+        marginBottom: 4,
+    },
     inputGroup: {
-        marginBottom: 20,
+        gap: 8,
     },
     row: {
         flexDirection: 'row',
@@ -385,21 +417,18 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 14,
-        fontWeight: '600',
-        color: COLORS.textSecondary,
-        marginBottom: 8,
+        fontWeight: '700',
+        marginLeft: 4,
     },
     input: {
-        backgroundColor: COLORS.white,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 8,
-        padding: 14,
+        borderRadius: 16,
+        padding: 16,
         fontSize: 16,
-        color: COLORS.textPrimary,
+        fontWeight: '600',
     },
     textArea: {
-        height: 100,
+        height: 120,
         textAlignVertical: 'top',
     },
     chipContainer: {
@@ -408,36 +437,18 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     chip: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        backgroundColor: COLORS.white,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    chipSelected: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
+        paddingVertical: 10,
+        paddingHorizontal: 18,
+        borderRadius: 14,
+        borderWidth: 1.5,
     },
     chipText: {
         fontSize: 14,
-        color: COLORS.textSecondary,
+        fontWeight: '600',
     },
-    chipTextSelected: {
-        color: COLORS.white,
-        fontWeight: 'bold',
-    },
-    saveButton: {
-        backgroundColor: COLORS.primary,
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    saveButtonText: {
-        color: COLORS.white,
-        fontSize: 16,
-        fontWeight: 'bold',
+    saveBtn: {
+        height: 60,
+        borderRadius: 18,
     }
 });
 

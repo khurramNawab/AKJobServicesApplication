@@ -2,7 +2,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/useAuthStore'; // Will use directly if needed or pass token
 
-const API_URL = 'http://192.168.0.233:5000/api/v1'; // Use 10.0.2.2 for Android Emulator, or 192.168.x.x for Physical Devices
+// For Android Emulator: 10.0.2.2
+// For Physical Devices: Your local machine IP like 192.168.x.x
+const API_URL = 'http://10.0.2.2:5000/api/v1'; 
 
 const api = axios.create({
     baseURL: API_URL,

@@ -29,15 +29,22 @@ export const useAuthStore = create((set) => ({
 
     loadCredentials: async () => {
         try {
+            // Safety timeout
+            const storageTimer = setTimeout(() => {
+                set({ isLoading: false });
+            }, 3000);
+
             const token = await AsyncStorage.getItem('userToken');
             const userInfoStr = await AsyncStorage.getItem('userInfo');
+            
+            clearTimeout(storageTimer);
+            
             if (token && userInfoStr) {
                 set({ user: JSON.parse(userInfoStr), token, isLoading: false });
             } else {
                 set({ isLoading: false });
             }
         } catch (e) {
-            console.error('Error loading credentials:', e);
             set({ isLoading: false });
         }
     }

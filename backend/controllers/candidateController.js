@@ -1,4 +1,5 @@
 import Candidate from '../models/Candidate.js';
+import Application from '../models/Application.js';
 
 // @desc    Get Candidate profile
 // @route   GET /api/v1/candidates/me
@@ -12,9 +13,20 @@ export const getMyCandidateProfile = async (req, res) => {
             candidate = await Candidate.create({ userId: req.user._id });
         }
 
+        // Get statistics
+        const stats = {
+            applied: await Application.countDocuments({ candidateId: req.user._id }),
+            interviews: await Application.countDocuments({ 
+                candidateId: req.user._id, 
+                status: { $in: ['REVIEWING', 'SHORTLISTED', 'HIRED'] } 
+            }),
+            matchRate: '84%' // Placeholder logic for now, could be based on skills
+        };
+
         res.status(200).json({
             success: true,
-            data: candidate
+            data: candidate,
+            stats
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -74,7 +86,7 @@ export const uploadResume = async (req, res) => {
 };
 
 // @desc    Upload / Update candidate profile photo
-// @route   POST /api/v1/candidates/me/photo
+// @route   PUT /api/v1/candidates/me/photo
 // @access  Private (Candidate only)
 export const uploadProfilePhoto = async (req, res) => {
     try {

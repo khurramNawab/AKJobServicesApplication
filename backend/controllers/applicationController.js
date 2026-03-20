@@ -1,6 +1,7 @@
 import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 import mongoose from 'mongoose';
+import { createNotification } from '../utils/notification.js';
 
 // @desc    Apply for a job
 // @route   POST /api/v1/jobs/:jobId/apply
@@ -29,6 +30,15 @@ export const applyForJob = async (req, res) => {
         // Update Job applicants count
         job.applicantsCount = (job.applicantsCount || 0) + 1;
         await job.save();
+
+        // Send notification to recruiter
+        await createNotification(
+            job.recruiterId,
+            'New Application',
+            `A candidate has applied for your job: ${job.title}`,
+            'APPLICATION_STATUS',
+            { jobId: job._id, applicationId: application._id }
+        );
 
         res.status(201).json({
             success: true,
@@ -117,13 +127,19 @@ export const getJobApplicants = async (req, res) => {
                     _id: 1,
                     status: 1,
                     createdAt: 1,
-                    'candidateId._id': '$candidateUser._id',
-                    'candidateId.name': '$candidateUser.name',
-                    'candidateId.email': '$candidateUser.email',
-                    'candidateId.resumeUrl': '$candidateProfile.resumeUrl'
+                    candidateId: {
+                        _id: '$candidateUser._id',
+                        name: '$candidateUser.name',
+                        email: '$candidateUser.email',
+                        role: '$candidateUser.role'
+                    },
+
+                    profile: '$candidateProfile'
                 }
             }
         ]);
+
+
 
         res.status(200).json({
             success: true,
@@ -154,6 +170,15 @@ export const updateApplicationStatus = async (req, res) => {
 
         application.status = status;
         await application.save();
+
+        // Send notification to candidate
+        await createNotification(
+            application.candidateId,
+            'Application Updated',
+            `Your application for ${job.title} status has been updated to: ${status}`,
+            'APPLICATION_STATUS',
+            { jobId: job._id, applicationId: application._id, status }
+        );
 
         res.status(200).json({
             success: true,

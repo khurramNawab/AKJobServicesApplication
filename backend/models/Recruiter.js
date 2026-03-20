@@ -30,6 +30,11 @@ const recruiterSchema = new mongoose.Schema({
     description: {
         type: String,
         default: ''
+    },
+    privacy: {
+        companyVisibility: { type: Boolean, default: true },
+        emailNotifications: { type: Boolean, default: true },
+        whatsappUpdates: { type: Boolean, default: false }
     }
 }, {
     timestamps: true

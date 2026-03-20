@@ -1,17 +1,33 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    Alert, 
+    ActivityIndicator, 
+    ScrollView, 
+    Image, 
+    StatusBar,
+    Switch
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import api from '../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/useAuthStore';
-import { COLORS } from '../constants/theme';
+import { useThemeStore } from '../store/useThemeStore';
+import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout } = useAuthStore();
-    const [uploading, setUploading] = useState(false);
+    const { isDarkMode, toggleTheme } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
     const [profile, setProfile] = useState(null);
+    const [stats, setStats] = useState(null);
 
     useFocusEffect(
         useCallback(() => {
@@ -28,6 +44,7 @@ const ProfileScreen = ({ navigation }) => {
             const res = await api.get('/recruiters/me');
             if (res.data.success && res.data.data) {
                 setProfile(res.data.data);
+                setStats(res.data.stats);
             }
         } catch (error) {
             console.error(error);
@@ -39,333 +56,251 @@ const ProfileScreen = ({ navigation }) => {
             const res = await api.get('/candidates/me');
             if (res.data.success && res.data.data) {
                 setProfile(res.data.data);
+                setStats(res.data.stats);
             }
         } catch (error) {
             console.error(error);
         }
     };
 
-    const handleFileUpload = async () => {
-        try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-            });
 
-            if (result.canceled) return;
-
-            const file = result.assets[0];
-
-            // Check file size (< 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                Alert.alert('File too large', 'Please upload a file smaller than 5MB');
-                return;
-            }
-
-            setUploading(true);
-
-            // Create form data for Multer
-            const formData = new FormData();
-            formData.append('resume', {
-                uri: file.uri,
-                name: file.name,
-                type: file.mimeType || 'application/pdf',
-            });
-
-            const token = await AsyncStorage.getItem('userToken');
-            const apiUrl = `${api.defaults.baseURL}/candidates/me/resume`;
-
-            const res = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                    // Do not set Content-Type! Let fetch compute the boundary automatically
-                },
-                body: formData
-            });
-
-            const textData = await res.text();
-            console.log('--- SERVER RAW RESPONSE ---');
-            console.log(textData);
-            let data;
-            try {
-                data = JSON.parse(textData);
-            } catch (err) {
-                console.error('Server returned non-JSON:', textData);
-                throw new Error('Server returned an invalid response. Please try again.');
-            }
-
-            if (data.success) {
-                Alert.alert('Success', 'resume updated successfully!');
-                setProfile(data.data);
-            } else {
-                throw new Error(data.message || 'Error from server');
-            }
-        } catch (error) {
-            console.error('Upload Error:', error);
-            Alert.alert('Upload Failed', 'Failed to upload resume. Please try again.');
-        } finally {
-            setUploading(false);
-        }
-    };
 
     const handleLogout = () => {
         Alert.alert(
-            'Confirm Logout',
+            'Log Out',
             'Are you sure you want to log out?',
             [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Log Out', onPress: logout, style: 'destructive' }
-            ],
-            { cancelable: true }
+            ]
         );
     };
 
+    const renderMenuItem = (icon, title, onPress, rightElement = null, isDanger = false) => (
+        <TouchableOpacity 
+            style={[styles.menuItem, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, isDanger && { borderColor: COLORS.danger + '20', backgroundColor: COLORS.danger + '05' }]} 
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.menuIconBox, { backgroundColor: isDanger ? COLORS.danger + '10' : COLORS.primary + '10' }]}>
+                <Ionicons name={icon} size={22} color={isDanger ? COLORS.danger : COLORS.primary} />
+            </View>
+            <Text style={[styles.menuText, { color: isDanger ? COLORS.danger : COLORS.textPrimary }]}>{title}</Text>
+            {rightElement ? rightElement : <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />}
+        </TouchableOpacity>
+    );
+
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <View style={styles.header}>
-                {user?.role === 'RECRUITER' && profile?.companyLogo ? (
-                    <Image source={{ uri: profile.companyLogo }} style={styles.avatarImage} />
-                ) : user?.role === 'CANDIDATE' && profile?.profilePhoto ? (
-                    <Image source={{ uri: profile.profilePhoto }} style={styles.avatarImage} />
-                ) : (
-                    <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
-                    </View>
-                )}
-                <Text style={styles.name}>{user?.name}</Text>
-
-                {user?.role === 'CANDIDATE' && profile?.headline ? (
-                    <Text style={styles.headline}>{profile.headline}</Text>
-                ) : null}
-
-                {user?.role === 'RECRUITER' && profile?.companyName ? (
-                    <Text style={styles.headline}>{profile.companyName}</Text>
-                ) : null}
-
-                <Text style={styles.email}>{user?.email}</Text>
-                <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>{user?.role}</Text>
-                </View>
-            </View>
-
-            {/* Candidate Details */}
-            {user?.role === 'CANDIDATE' && profile && (
-                <View style={styles.infoSection}>
-                    <Text style={styles.sectionTitle}>Personal Details</Text>
-                    {profile.phone ? <Text style={styles.infoText}><Ionicons name="call-outline" size={16} />  {profile.phone}</Text> : null}
-                    {profile.address ? <Text style={styles.infoText}><Ionicons name="location-outline" size={16} />  {profile.address}</Text> : null}
-                    {profile.gender && profile.gender !== 'Prefer not to say' ? <Text style={styles.infoText}><Ionicons name="person-outline" size={16} />  {profile.gender}</Text> : null}
-                    {profile.age ? <Text style={styles.infoText}><Ionicons name="calendar-outline" size={16} />  {profile.age} years old</Text> : null}
-
-                    {profile.bio && (
-                        <View style={{ marginTop: 12 }}>
-                            <Text style={styles.sectionTitle}>About Me</Text>
-                            <Text style={styles.bioText}>{profile.bio}</Text>
-                        </View>
-                    )}
-
-                    {(profile.preferredJobTitle || profile.preferredLocation) && (
-                        <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORS.border }}>
-                            <Text style={styles.sectionTitle}>Job Preferences</Text>
-                            {profile.preferredJobTitle ? <Text style={styles.infoText}><Ionicons name="briefcase-outline" size={16} />  {profile.preferredJobTitle}</Text> : null}
-                            {profile.preferredLocation ? <Text style={styles.infoText}><Ionicons name="map-outline" size={16} />  {profile.preferredLocation}</Text> : null}
-                        </View>
-                    )}
-                </View>
-            )}
-
-            {/* Recruiter Details */}
-            {user?.role === 'RECRUITER' && profile && (
-                <View style={styles.infoSection}>
-                    <Text style={styles.sectionTitle}>Company Details</Text>
-                    {profile.industry ? <Text style={styles.infoText}><Ionicons name="business-outline" size={16} />  {profile.industry}</Text> : null}
-                    {profile.location ? <Text style={styles.infoText}><Ionicons name="location-outline" size={16} />  {profile.location}</Text> : null}
-                    {profile.website ? <Text style={styles.infoText}><Ionicons name="globe-outline" size={16} />  {profile.website}</Text> : null}
-
-                    {profile.description ? (
-                        <View style={{ marginTop: 12 }}>
-                            <Text style={styles.sectionTitle}>Company Description</Text>
-                            <Text style={styles.bioText}>{profile.description}</Text>
-                        </View>
-                    ) : null}
-                </View>
-            )}
-
-            <View style={styles.section}>
-                {user?.role === 'CANDIDATE' && (
-                    <>
-                        <TouchableOpacity
-                            style={styles.menuItemNormal}
-                            onPress={() => navigation.navigate('EditProfile')}
-                        >
-                            <Ionicons name="create-outline" size={24} color={COLORS.primary} />
-                            <Text style={styles.menuTextNormal}>Edit Profile Details</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.menuItemNormal}
-                            onPress={handleFileUpload}
-                            disabled={uploading}
-                        >
-                            {uploading ? (
-                                <ActivityIndicator size="small" color={COLORS.primary} />
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: COLORS.background }]}>
+            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+                <View style={styles.profileHeader}>
+                    <LinearGradient
+                        colors={[COLORS.primary, COLORS.primaryLight]}
+                        style={styles.headerBg}
+                    />
+                    <View style={styles.headerInfo}>
+                        <View style={[styles.avatarBox, SHADOWS.medium, { backgroundColor: COLORS.surface, borderColor: COLORS.surface }]}>
+                            {user?.role === 'RECRUITER' && profile?.companyLogo ? (
+                                <Image source={{ uri: profile.companyLogo }} style={styles.avatar} />
+                            ) : user?.role === 'CANDIDATE' && profile?.profilePhoto ? (
+                                <Image source={{ uri: profile.profilePhoto }} style={styles.avatar} />
                             ) : (
-                                <Ionicons name="document-text-outline" size={24} color={COLORS.primary} />
+                                <Text style={[styles.avatarInitial, { color: COLORS.primary }]}>
+                                    {user?.name?.charAt(0) || 'U'}
+                                </Text>
                             )}
-                            <Text style={styles.menuTextNormal}>
-                                {profile?.resumeUrl ? 'Update Resume (PDF)' : 'Upload Resume (PDF)'}
-                            </Text>
-                        </TouchableOpacity>
-                    </>
-                )}
+                            <TouchableOpacity style={[styles.editAvatarBtn, { backgroundColor: COLORS.primary, borderColor: COLORS.surface }]}>
+                                <Ionicons name="camera" size={16} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={[styles.userName, { color: COLORS.textPrimary }]}>{user?.name}</Text>
+                        <Text style={[styles.userRoleBadge, { color: COLORS.primary, backgroundColor: COLORS.primary + '10' }]}>{user?.role}</Text>
+                    </View>
+                </View>
 
-                {user?.role === 'RECRUITER' && (
-                    <TouchableOpacity
-                        style={styles.menuItemNormal}
-                        onPress={() => navigation.navigate('EditRecruiterProfile')}
-                    >
-                        <Ionicons name="business-outline" size={24} color={COLORS.primary} />
-                        <Text style={styles.menuTextNormal}>Edit Company Profile</Text>
-                    </TouchableOpacity>
-                )}
+                <View style={[styles.statsRow, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, SHADOWS.soft]}>
+                    <View style={styles.statBox}>
+                        <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>{user?.role === 'RECRUITER' ? stats?.jobs || 0 : stats?.applied || 0}</Text>
+                        <Text style={[styles.statLabel, { color: COLORS.textSecondary }]}>{user?.role === 'RECRUITER' ? 'Jobs' : 'Applied'}</Text>
+                    </View>
+                    <View style={[styles.statDivider, { backgroundColor: COLORS.border }]} />
+                    <View style={styles.statBox}>
+                        <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>{user?.role === 'RECRUITER' ? stats?.applicants || 0 : stats?.interviews || 0}</Text>
+                        <Text style={[styles.statLabel, { color: COLORS.textSecondary }]}>{user?.role === 'RECRUITER' ? 'Applicants' : 'Interviews'}</Text>
+                    </View>
+                    <View style={[styles.statDivider, { backgroundColor: COLORS.border }]} />
+                    <View style={styles.statBox}>
+                        <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>{user?.role === 'RECRUITER' ? stats?.interviews || 0 : stats?.matchRate || '0%'}</Text>
+                        <Text style={[styles.statLabel, { color: COLORS.textSecondary }]}>{user?.role === 'RECRUITER' ? 'Shortlisted' : 'Match'}</Text>
+                    </View>
+                </View>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={24} color={COLORS.danger} />
-                    <Text style={styles.menuTextDanger}>Log Out</Text>
-                </TouchableOpacity>
-            </View>
-            <View style={{ height: 40 }} />
-        </ScrollView>
+                <View style={styles.contentSection}>
+                    <Text style={[styles.sectionTitle, { color: COLORS.textTertiary }]}>Personal</Text>
+                    {user?.role === 'CANDIDATE' ? (
+                        <>
+                            {renderMenuItem("person-outline", "Edit Profile", () => navigation.navigate('EditProfile'))}
+                            {renderMenuItem("cloud-upload-outline", "Resume Management", () => navigation.navigate('ResumeViewer', { 
+                                resumeUrl: profile?.resume || profile?.resumeUrl, 
+                                title: 'My Resume' 
+                            }))}
+                        </>
+                    ) : (
+                        renderMenuItem("business-outline", "Company Profile", () => navigation.navigate('EditRecruiterProfile'))
+                    )}
+                </View>
+
+                <View style={styles.contentSection}>
+                    <Text style={[styles.sectionTitle, { color: COLORS.textTertiary }]}>Preferences</Text>
+                    {renderMenuItem(
+                        isDarkMode ? "moon" : "sunny-outline", 
+                        "Dark Mode", 
+                        toggleTheme,
+                        <Switch 
+                            value={isDarkMode} 
+                            onValueChange={toggleTheme} 
+                            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                            thumbColor="#FFFFFF"
+                        />
+                    )}
+                    {renderMenuItem("notifications-outline", "Notifications", () => navigation.navigate('Notifications'))}
+                    {renderMenuItem("shield-checkmark-outline", "Privacy & Security", () => navigation.navigate('PrivacySecurity'))}
+                </View>
+
+                <View style={[styles.contentSection, { marginBottom: 40 }]}>
+                    <Text style={[styles.sectionTitle, { color: COLORS.textTertiary }]}>Account</Text>
+                    {renderMenuItem("log-out-outline", "Log Out", handleLogout, null, true)}
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+    },
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
     },
-    header: {
-        backgroundColor: COLORS.white,
-        paddingTop: 60,
-        paddingBottom: 30,
+    profileHeader: {
+        marginBottom: 20,
+    },
+    headerBg: {
+        height: 120,
+        width: '100%',
+        paddingTop: 40,
+    },
+    headerInfo: {
         alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        marginTop: -60,
     },
-    avatarPlaceholder: {
-        width: 80,
-        height: 80,
+    avatarBox: {
+        width: 120,
+        height: 120,
         borderRadius: 40,
-        backgroundColor: COLORS.primary + '20',
-        alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 16,
+        alignItems: 'center',
+        borderWidth: 4,
+        overflow: 'visible',
     },
-    avatarImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        marginBottom: 16,
-        resizeMode: 'cover',
-        borderWidth: 2,
-        borderColor: COLORS.primary + '30',
+    avatar: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 36,
     },
-    avatarText: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: COLORS.primary,
+    avatarInitial: {
+        fontSize: 48,
+        fontWeight: '900',
     },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginBottom: 4,
-    },
-    headline: {
-        fontSize: 16,
-        color: COLORS.primary,
-        fontWeight: '600',
-        marginBottom: 8,
-        textAlign: 'center',
-        paddingHorizontal: 20,
-    },
-    email: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        marginBottom: 12,
-    },
-    roleBadge: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        borderRadius: 100,
-    },
-    roleText: {
-        color: COLORS.white,
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    infoSection: {
-        backgroundColor: COLORS.white,
-        marginTop: 16,
-        marginHorizontal: 16,
-        padding: 16,
+    editAvatarBtn: {
+        position: 'absolute',
+        bottom: -5,
+        right: -5,
+        width: 36,
+        height: 36,
         borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+    },
+    userName: {
+        fontSize: 26,
+        fontWeight: '800',
+        marginTop: 12,
+        letterSpacing: -0.5,
+    },
+    userRoleBadge: {
+        fontSize: 13,
+        fontWeight: '800',
+        paddingHorizontal: 16,
+        paddingVertical: 5,
+        borderRadius: 100,
+        marginTop: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        marginHorizontal: SIZES.lg,
+        paddingVertical: 20,
+        borderRadius: 24,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        marginBottom: 32,
+    },
+    statBox: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    statValue: {
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    statLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        marginTop: 2,
+    },
+    statDivider: {
+        width: 1,
+        height: '60%',
+        alignSelf: 'center',
+    },
+    contentSection: {
+        paddingHorizontal: SIZES.lg,
+        marginBottom: 24,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginBottom: 10,
-    },
-    infoText: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        marginBottom: 6,
-    },
-    bioText: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        lineHeight: 22,
-    },
-    section: {
-        marginTop: 16,
-        paddingHorizontal: 16,
+        fontSize: 12,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 12,
+        marginLeft: 6,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
-        padding: 16,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: COLORS.danger + '30',
+        padding: 14,
+        borderRadius: 18,
         marginBottom: 12,
+        borderWidth: 1,
     },
-    menuTextDanger: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.danger,
-        marginLeft: 12,
-    },
-    menuItemNormal: {
-        flexDirection: 'row',
+    menuIconBox: {
+        width: 42,
+        height: 42,
+        borderRadius: 12,
+        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
-        padding: 16,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        marginBottom: 12,
+        marginRight: 14,
     },
-    menuTextNormal: {
+    menuText: {
+        flex: 1,
         fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
-        marginLeft: 12,
+        fontWeight: '700',
     }
 });
 
 export default ProfileScreen;
+
