@@ -6,9 +6,7 @@ import {
     FlatList, 
     ActivityIndicator, 
     TouchableOpacity, 
-    Alert, 
-    SafeAreaView,
-    StatusBar 
+    Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +14,7 @@ import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const getStyles = (COLORS, SIZES) => StyleSheet.create({
     container: {
@@ -262,8 +261,7 @@ const RecruiterJobsScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper bottom={false}>
             <View style={styles.header}>
                 <View style={styles.headerTop}>
                     <View>
@@ -324,10 +322,8 @@ const RecruiterJobsScreen = ({ navigation }) => {
                     <Ionicons name="add" size={32} color={COLORS.white} />
                 </LinearGradient>
             </TouchableOpacity>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
-
 export default RecruiterJobsScreen;
-

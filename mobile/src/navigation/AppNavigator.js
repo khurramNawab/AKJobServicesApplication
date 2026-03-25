@@ -12,6 +12,7 @@ import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen';
 import JobDetailsScreen from '../screens/JobDetailsScreen';
 import MyApplicationsScreen from '../screens/MyApplicationsScreen';
@@ -26,9 +27,10 @@ import ChatRoomScreen from '../screens/ChatRoomScreen';
 import ResumeViewerScreen from '../screens/ResumeViewerScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
+import CustomSplashScreen from '../screens/SplashScreen';
 
-// SplashScreen.preventAutoHideAsync().catch(() => {});
-console.log('SplashScreen prevention disabled for debugging');
+// Ensure splash screen doesn't stay forever
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,10 +46,10 @@ const MainTabs = () => {
                 headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName;
-                    if (route.name === 'HomeTab') iconName = focused ? 'sparkles' : 'sparkles-outline';
-                    else if (route.name === 'ApplicationsTab') iconName = focused ? 'briefcase' : 'briefcase-outline';
-                    else if (route.name === 'MessagesTab') iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
-                    else if (route.name === 'ProfileTab') iconName = focused ? 'person' : 'person-outline';
+                    if (route.name === 'Home') iconName = focused ? 'sparkles' : 'sparkles-outline';
+                    else if (route.name === 'Applications') iconName = focused ? 'briefcase' : 'briefcase-outline';
+                    else if (route.name === 'ChatList') iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
+                    else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
 
                     return (
                         <View style={focused ? styles.activeIconCircle : null}>
@@ -72,49 +74,67 @@ const MainTabs = () => {
                 }
             })}
         >
-            <Tab.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Explore' }} />
+            <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Explore' }} />
             {user?.role === 'RECRUITER' ? (
-                <Tab.Screen name="ApplicationsTab" component={RecruiterJobsScreen} options={{ title: 'Postings' }} />
+                <Tab.Screen name="Applications" component={RecruiterJobsScreen} options={{ title: 'Postings' }} />
             ) : (
-                <Tab.Screen name="ApplicationsTab" component={MyApplicationsScreen} options={{ title: 'My Jobs' }} />
+                <Tab.Screen name="Applications" component={MyApplicationsScreen} options={{ title: 'My Jobs' }} />
             )}
-            <Tab.Screen name="MessagesTab" component={ChatListScreen} options={{ title: 'Chat' }} />
-            <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Settings' }} />
+            <Tab.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Chat' }} />
+            <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Settings' }} />
         </Tab.Navigator>
     );
 };
 
 const AppNavigator = () => {
-    const { token, isLoading, loadCredentials } = useAuthStore();
+    const token = useAuthStore(state => state.token);
+    const isLoading = useAuthStore(state => state.isLoading);
+    const loadCredentials = useAuthStore(state => state.loadCredentials);
+    
+    // We want the SVG animation to play for at least 3.5s 
+    const [isSplashAnimationDone, setIsSplashAnimationDone] = React.useState(false);
+
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
-    console.log('AppNavigator rendering, isLoading:', isLoading, 'token:', !!token);
-
+    // 1. Initial Load
     useEffect(() => {
-        console.log('Calling loadCredentials...');
+        console.log('[AppNavigator] Initializing...');
         loadCredentials();
-    }, [loadCredentials]);
+        
+        // Let the SVG animation breathe
+        const brandTimer = setTimeout(() => {
+            setIsSplashAnimationDone(true);
+        }, 3500);
 
+        // Failsafe timer: hide native splash regardless after 7 seconds
+        const timer = setTimeout(() => {
+            console.log('[AppNavigator] Failsafe: Hiding native splash screen');
+            SplashScreen.hideAsync().catch(() => {});
+        }, 7000);
+        
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(brandTimer);
+        };
+    }, []);
+
+    // 2. Hide Expo Splash Screen early to show our custom HTML completely
     useEffect(() => {
-        console.log('isLoading changed to:', isLoading);
-        if (!isLoading) {
-            console.log('Hiding SplashScreen');
-            SplashScreen.hideAsync().catch(err => console.log('Error hiding splash:', err));
-        }
-    }, [isLoading]);
+        SplashScreen.hideAsync().catch(() => {});
+    }, []);
 
-    if (isLoading) {
+    if (isLoading || !isSplashAnimationDone) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: COLORS.background }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+            <View style={{ flex: 1, backgroundColor: '#f1f5f9' }}>
+                <StatusBar barStyle="dark-content" />
+                <CustomSplashScreen />
             </View>
         );
     }
 
     return (
         <NavigationContainer>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
             <Stack.Navigator 
                 screenOptions={{ 
                     headerShown: false,
@@ -126,6 +146,7 @@ const AppNavigator = () => {
                     <>
                         <Stack.Screen name="Login" component={LoginScreen} />
                         <Stack.Screen name="Register" component={RegisterScreen} />
+                        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
                     </>
                 ) : (
                     <>
@@ -157,10 +178,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     activeIconCircle: {
-        // Optional circle decoration
+        // Optional decoration
     }
 });
 
 export default AppNavigator;
-
-

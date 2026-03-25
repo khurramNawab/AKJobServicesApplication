@@ -5,12 +5,11 @@ import {
     StyleSheet, 
     FlatList, 
     TouchableOpacity, 
-    SafeAreaView, 
-    StatusBar, 
-    ActivityIndicator,
+    ActivityIndicator, 
     Alert,
     RefreshControl
 } from 'react-native';
+import ScreenWrapper from '../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../store/useThemeStore';
 import { LIGHT_COLORS, DARK_COLORS, SIZES, SHADOWS } from '../constants/theme';
@@ -128,10 +127,13 @@ const NotificationsScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: COLORS.background }]}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={[styles.backBtn, { backgroundColor: COLORS.background }]}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Notifications</Text>
@@ -168,7 +170,7 @@ const NotificationsScreen = ({ navigation }) => {
                     }
                 />
             )}
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

@@ -9,10 +9,9 @@ import {
     Alert, 
     ScrollView,
     KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StatusBar
+    Platform
 } from 'react-native';
+import ScreenWrapper from '../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../services/api';
@@ -23,34 +22,33 @@ import ModernButton from '../components/ModernButton';
 
 const RegisterScreen = ({ navigation }) => {
     const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('CANDIDATE'); 
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [step, setStep] = useState(1); // 1: Registration info, 2: OTP verification
+    const [otp, setOtp] = useState('');
+    const [tempUserId, setTempUserId] = useState(null);
 
     const setCredentials = useAuthStore((state) => state.setCredentials);
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
     const handleRegister = async () => {
-        if (!name || !email || !password) {
+        if (!name || !phoneNumber || !password) {
             Alert.alert('Missing Info', 'Please fill in all fields to create your account.');
             return;
         }
 
         try {
             setLoading(true);
-            const res = await api.post('/auth/register', { name, email, password, role });
+            const res = await api.post('/auth/register', { name, phoneNumber, password, role });
 
             if (res.data.success) {
-                const user = {
-                    _id: res.data._id,
-                    name: res.data.name,
-                    email: res.data.email,
-                    role: res.data.role
-                };
-                await setCredentials(user, res.data.token);
+                setTempUserId(res.data._id);
+                setStep(2);
+                Alert.alert('Verify Phone', 'A verification code has been sent to your phone number.');
             }
         } catch (error) {
             console.log('Register Error:', error.response?.data?.message || error.message);
@@ -60,9 +58,31 @@ const RegisterScreen = ({ navigation }) => {
         }
     };
 
+    const handleVerify = async () => {
+        if (!otp || otp.length < 6) {
+            Alert.alert('Invalid OTP', 'Please enter the 6-digit verification code.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            // Using the same verify endpoint as forgot password for consistency
+            const res = await api.post('/auth/forgot-password/verify', { phoneNumber, otp });
+
+            if (res.data.success) {
+                Alert.alert('Verified!', 'Your account is now verified. Please log in.');
+                navigation.navigate('Login');
+            }
+        } catch (error) {
+            console.log('Verify Error:', error.response?.data?.message || error.message);
+            Alert.alert('Verification Failed', error.response?.data?.message || 'Invalid or expired OTP.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper bottom={false}>
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -123,61 +143,96 @@ const RegisterScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.formSection}>
-                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="person-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Full Name"
-                                placeholderTextColor={COLORS.textTertiary}
-                                value={name}
-                                onChangeText={setName}
-                                autoComplete="name"
-                            />
-                        </View>
+                        {step === 1 ? (
+                            <>
+                                <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                                    <Ionicons name="person-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={[styles.input, { color: COLORS.textPrimary }]}
+                                        placeholder="Full Name"
+                                        placeholderTextColor={COLORS.textTertiary}
+                                        value={name}
+                                        onChangeText={setName}
+                                        autoComplete="name"
+                                    />
+                                </View>
 
-                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="mail-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Email Address"
-                                placeholderTextColor={COLORS.textTertiary}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoComplete="email"
-                            />
-                        </View>
+                                <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                                    <Ionicons name="call-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={[styles.input, { color: COLORS.textPrimary }]}
+                                        placeholder="Phone Number"
+                                        placeholderTextColor={COLORS.textTertiary}
+                                        keyboardType="phone-pad"
+                                        value={phoneNumber}
+                                        onChangeText={setPhoneNumber}
+                                        autoComplete="tel"
+                                    />
+                                </View>
 
-                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Password"
-                                placeholderTextColor={COLORS.textTertiary}
-                                secureTextEntry={!showPassword}
-                                value={password}
-                                onChangeText={setPassword}
-                                autoComplete="password"
-                            />
-                            <TouchableOpacity 
-                                style={styles.eyeIcon}
-                                onPress={() => setShowPassword(!showPassword)}
-                            >
-                                <Ionicons 
-                                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                                    size={20} 
-                                    color={COLORS.textTertiary} 
+                                <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                                    <Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={[styles.input, { color: COLORS.textPrimary }]}
+                                        placeholder="Password"
+                                        placeholderTextColor={COLORS.textTertiary}
+                                        secureTextEntry={!showPassword}
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        autoComplete="password"
+                                    />
+                                    <TouchableOpacity 
+                                        style={styles.eyeIcon}
+                                        onPress={() => setShowPassword(!showPassword)}
+                                    >
+                                        <Ionicons 
+                                            name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                                            size={20} 
+                                            color={COLORS.textTertiary} 
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+
+                                <ModernButton
+                                    title="Create Account"
+                                    onPress={handleRegister}
+                                    loading={loading}
+                                    style={styles.registerBtn}
                                 />
-                            </TouchableOpacity>
-                        </View>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={[styles.otpInfo, { color: COLORS.textSecondary }]}>
+                                    Please enter the 6-digit code sent to {phoneNumber}
+                                </Text>
+                                <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                                    <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={[styles.input, { color: COLORS.textPrimary }]}
+                                        placeholder="6-digit OTP"
+                                        placeholderTextColor={COLORS.textTertiary}
+                                        keyboardType="number-pad"
+                                        maxLength={6}
+                                        value={otp}
+                                        onChangeText={setOtp}
+                                    />
+                                </View>
 
-                        <ModernButton
-                            title="Create Account"
-                            onPress={handleRegister}
-                            loading={loading}
-                            style={styles.registerBtn}
-                        />
+                                <ModernButton
+                                    title="Verify & Continue"
+                                    onPress={handleVerify}
+                                    loading={loading}
+                                    style={styles.registerBtn}
+                                />
+                                
+                                <TouchableOpacity 
+                                    style={{ alignSelf: 'center', marginTop: 10 }} 
+                                    onPress={() => setStep(1)}
+                                >
+                                    <Text style={{ color: COLORS.primary, fontWeight: '700' }}>Back to Registration</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
 
                         <View style={styles.footerLinks}>
                             <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>Already have an account? </Text>
@@ -188,7 +243,7 @@ const RegisterScreen = ({ navigation }) => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
@@ -225,6 +280,12 @@ const styles = StyleSheet.create({
         marginTop: 8,
         textAlign: 'center',
         fontWeight: '500',
+    },
+    otpInfo: {
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+        marginBottom: 10,
     },
     rolePicker: {
         flexDirection: 'row',

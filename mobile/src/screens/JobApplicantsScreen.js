@@ -8,15 +8,15 @@ import {
     TouchableOpacity, 
     Alert, 
     Linking,
-    SafeAreaView,
-    StatusBar,
-    ScrollView 
+    ScrollView,
+    Image 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const JobApplicantsScreen = ({ route, navigation }) => {
     const { jobId, jobTitle } = route.params;
@@ -104,7 +104,11 @@ const JobApplicantsScreen = ({ route, navigation }) => {
             <View style={[styles.applicantCard, SHADOWS.soft, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                 <View style={styles.cardHeader}>
                     <View style={[styles.avatarBox, { backgroundColor: COLORS.primary + '10', borderColor: COLORS.primary + '20' }]}>
-                        <Text style={[styles.avatarText, { color: COLORS.primary }]}>{initial}</Text>
+                        {item.candidateId?.avatar ? (
+                            <Image source={{ uri: item.candidateId.avatar }} style={styles.avatarImg} />
+                        ) : (
+                            <Text style={[styles.avatarText, { color: COLORS.primary }]}>{initial}</Text>
+                        )}
                     </View>
                     <View style={styles.basicInfo}>
                         <Text style={[styles.candidateName, { color: COLORS.textPrimary }]} numberOfLines={1}>{name}</Text>
@@ -169,10 +173,13 @@ const JobApplicantsScreen = ({ route, navigation }) => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <View style={[styles.navigatorHeader, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity style={[styles.backBtn, { backgroundColor: COLORS.background }]} onPress={() => navigation.goBack()}>
+                <TouchableOpacity 
+                    style={[styles.backBtn, { backgroundColor: COLORS.background }]} 
+                    onPress={() => navigation.goBack()}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleBox}>
@@ -204,7 +211,7 @@ const JobApplicantsScreen = ({ route, navigation }) => {
                     }
                 />
             )}
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
@@ -267,6 +274,11 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 22,
         fontWeight: '800',
+    },
+    avatarImg: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 18,
     },
     basicInfo: {
         flex: 1,

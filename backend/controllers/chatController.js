@@ -1,6 +1,8 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
+import Candidate from '../models/Candidate.js';
+import Recruiter from '../models/Recruiter.js';
 import { createNotification } from '../utils/notification.js';
 
 // @desc    Get all conversations for the logged in user
@@ -8,12 +10,36 @@ import { createNotification } from '../utils/notification.js';
 // @access  Private
 export const getMyConversations = async (req, res) => {
     try {
-        const conversations = await Conversation.find({
+        let conversations = await Conversation.find({
             participants: { $in: [req.user._id] }
         })
         .populate('participants', 'name email role')
         .sort({ updatedAt: -1 })
         .lean();
+
+        // Enhance participants with their avatars
+        conversations = await Promise.all(conversations.map(async (conv) => {
+            const enhancedParticipants = await Promise.all(conv.participants.map(async (p) => {
+                let avatar = '';
+                if (p.role === 'CANDIDATE') {
+                    const candidateProfile = await Candidate.findOne({ userId: p._id }).lean();
+                    if (candidateProfile && candidateProfile.profilePhoto) {
+                        avatar = candidateProfile.profilePhoto;
+                    }
+                } else if (p.role === 'RECRUITER' || p.role === 'ADMIN') {
+                    const recruiterProfile = await Recruiter.findOne({ userId: p._id }).lean();
+                    if (recruiterProfile && recruiterProfile.companyLogo) {
+                        avatar = recruiterProfile.companyLogo;
+                    }
+                }
+                return { ...p, avatar };
+            }));
+            
+            return {
+                ...conv,
+                participants: enhancedParticipants
+            };
+        }));
 
         const enhancedConversations = await Promise.all(conversations.map(async (conv) => {
             const lastMessage = await Message.findOne({ conversationId: conv._id })
@@ -79,10 +105,10 @@ export const getMessages = async (req, res) => {
 // @access  Private
 export const sendMessage = async (req, res) => {
     try {
-        const { receiverId, text } = req.body;
+        const { receiverId, text, attachments } = req.body;
 
-        if (!receiverId || !text) {
-            return res.status(400).json({ success: false, message: 'Receiver ID and text are required' });
+        if (!receiverId || (!text && (!attachments || attachments.length === 0))) {
+            return res.status(400).json({ success: false, message: 'Receiver ID and either text or attachments are required' });
         }
 
         // Find or create conversation
@@ -99,7 +125,8 @@ export const sendMessage = async (req, res) => {
         const message = await Message.create({
             conversationId: conversation._id,
             senderId: req.user._id,
-            text
+            text: text || '',
+            attachments: attachments || []
         });
 
         // Update conversation's updatedAt

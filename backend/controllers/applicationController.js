@@ -97,9 +97,20 @@ export const getJobApplicants = async (req, res) => {
         const jobId = req.params.jobId;
         const job = await Job.findById(jobId);
 
+        if (!job) {
+            return res.status(404).json({ success: false, message: 'Job not found' });
+        }
+
         // Make sure job belongs to this recruiter
-        if (job.recruiterId.toString() !== req.user._id.toString() && req.user.role !== 'ADMIN') {
-            return res.status(403).json({ success: false, message: 'Not authorized to view applicants for this job' });
+        const recruiterIdStr = job.recruiterId.toString();
+        const userIdStr = req.user._id.toString();
+
+        if (recruiterIdStr !== userIdStr && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Not authorized to view applicants for this job',
+                debug: { recruiterIdStr, userIdStr, role: req.user.role }
+            });
         }
 
         const applicants = await Application.aggregate([
@@ -130,8 +141,9 @@ export const getJobApplicants = async (req, res) => {
                     candidateId: {
                         _id: '$candidateUser._id',
                         name: '$candidateUser.name',
-                        email: '$candidateUser.email',
-                        role: '$candidateUser.role'
+                        phoneNumber: '$candidateUser.phoneNumber',
+                        role: '$candidateUser.role',
+                        avatar: '$candidateUser.avatar'
                     },
 
                     profile: '$candidateProfile'
@@ -172,10 +184,27 @@ export const updateApplicationStatus = async (req, res) => {
         await application.save();
 
         // Send notification to candidate
+        let notificationTitle = 'Application Status Update';
+        let notificationMessage = `Your application for ${job.title} status has been updated to: ${status}`;
+
+        if (status === 'SHORTLISTED') {
+            notificationTitle = 'Congratulations! You are Shortlisted';
+            notificationMessage = `Great news! You have been shortlisted for the ${job.title} position at ${job.recruiterId?.companyName || 'the company'}. Expected a follow-up soon.`;
+        } else if (status === 'REJECTED') {
+            notificationTitle = 'Application Status: Not Selected';
+            notificationMessage = `Thank you for your interest in the ${job.title} position. After careful review, the company has decided not to proceed with your application at this time.`;
+        } else if (status === 'HIRED') {
+            notificationTitle = 'Offer Insight: You are Hired!';
+            notificationMessage = `We are thrilled to inform you that you have been hired for the ${job.title} position! The recruiter will contact you regarding the next steps.`;
+        } else if (status === 'REVIEWING') {
+            notificationTitle = 'Application Under Review';
+            notificationMessage = `Your application for ${job.title} is now under review by the hiring team.`;
+        }
+
         await createNotification(
             application.candidateId,
-            'Application Updated',
-            `Your application for ${job.title} status has been updated to: ${status}`,
+            notificationTitle,
+            notificationMessage,
             'APPLICATION_STATUS',
             { jobId: job._id, applicationId: application._id, status }
         );

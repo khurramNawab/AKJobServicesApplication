@@ -8,8 +8,6 @@ import {
     TouchableOpacity, 
     ActivityIndicator, 
     Alert,
-    SafeAreaView,
-    StatusBar,
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
@@ -18,6 +16,7 @@ import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const CreateJobScreen = ({ navigation }) => {
     const { isDarkMode } = useThemeStore();
@@ -97,10 +96,13 @@ const CreateJobScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity style={[styles.closeBtn, { backgroundColor: COLORS.background }]} onPress={() => navigation.goBack()}>
+                <TouchableOpacity 
+                    style={[styles.closeBtn, { backgroundColor: COLORS.background }]} 
+                    onPress={() => navigation.goBack()}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="close" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>New Posting</Text>
@@ -137,7 +139,7 @@ const CreateJobScreen = ({ navigation }) => {
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Type</Text>
                             <View style={styles.typeSwitcher}>
-                                {['Full-time', 'Part-time', 'Contract', 'Intern'].map((type) => (
+                                {['Full-time', 'Part-time', 'Contract', 'Internship'].map((type) => (
                                     <TouchableOpacity
                                         key={type}
                                         style={[
@@ -236,7 +238,7 @@ const CreateJobScreen = ({ navigation }) => {
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

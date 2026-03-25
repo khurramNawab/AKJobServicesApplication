@@ -6,11 +6,10 @@ import {
     ScrollView, 
     TouchableOpacity, 
     Switch, 
-    SafeAreaView, 
-    StatusBar,
     ActivityIndicator,
     Alert
 } from 'react-native';
+import ScreenWrapper from '../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -108,17 +107,20 @@ const PrivacySecurityScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background, justifyContent: 'center' }]}>
+            <ScreenWrapper bottom={false} style={{ justifyContent: 'center' }}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-            </SafeAreaView>
+            </ScreenWrapper>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper bottom={false}>
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backBtn}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Privacy & Security</Text>
@@ -188,7 +190,7 @@ const PrivacySecurityScreen = ({ navigation }) => {
                 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

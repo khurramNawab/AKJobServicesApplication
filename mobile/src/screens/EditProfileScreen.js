@@ -11,8 +11,6 @@ import {
     Platform,
     ActivityIndicator,
     Image,
-    SafeAreaView,
-    StatusBar
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +20,7 @@ import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
@@ -42,7 +41,8 @@ const EditProfileScreen = ({ navigation }) => {
         bio: '',
         preferredJobTitle: '',
         preferredLocation: '',
-        profilePhoto: ''
+        profilePhoto: '',
+        resumeUrl: ''
     });
 
     useEffect(() => {
@@ -63,7 +63,8 @@ const EditProfileScreen = ({ navigation }) => {
                     bio: data.bio || '',
                     preferredJobTitle: data.preferredJobTitle || '',
                     preferredLocation: data.preferredLocation || '',
-                    profilePhoto: data.profilePhoto || ''
+                    profilePhoto: data.profilePhoto || '',
+                    resumeUrl: data.resumeUrl || ''
                 });
             }
         } catch (error) {
@@ -131,6 +132,67 @@ const EditProfileScreen = ({ navigation }) => {
         }
     };
 
+    const handleResumeUpload = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ],
+            });
+
+            if (result.canceled) return;
+
+            const file = result.assets[0];
+
+            if (file.size > 250 * 1024) {
+                Alert.alert('File too large', 'Please upload a file smaller than 250KB');
+                return;
+            }
+
+            setSaving(true);
+
+            const formData = new FormData();
+            formData.append('resume', {
+                uri: file.uri,
+                name: file.name,
+                type: file.mimeType || 'application/pdf',
+            });
+
+            const token = await AsyncStorage.getItem('userToken');
+            const apiUrl = `${api.defaults.baseURL}/candidates/me/resume`;
+
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const textData = await res.text();
+            let data;
+            try {
+                data = JSON.parse(textData);
+            } catch (err) {
+                throw new Error('Server returned an invalid response.');
+            }
+
+            if (data.success) {
+                Alert.alert('Success', 'Resume uploaded successfully!');
+                setForm(prev => ({ ...prev, resumeUrl: data.data.resumeUrl }));
+            } else {
+                throw new Error(data.message || 'Error uploading resume');
+            }
+        } catch (error) {
+            console.error('Upload Error:', error);
+            Alert.alert('Upload Failed', error.message || 'Failed to upload resume.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -166,17 +228,22 @@ const EditProfileScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <ScreenWrapper>
+                <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            </ScreenWrapper>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: COLORS.background }]}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={[styles.backButton, { backgroundColor: COLORS.background }]}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Edit Profile</Text>
@@ -323,6 +390,42 @@ const EditProfileScreen = ({ navigation }) => {
                         </View>
                     </View>
 
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Professional Documents</Text>
+                        
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: COLORS.textSecondary }]}>Resume / CV (PDF, DOCX)</Text>
+                            <TouchableOpacity 
+                                style={[
+                                    styles.resumeBox, 
+                                    { backgroundColor: COLORS.surface, borderColor: COLORS.border },
+                                    form.resumeUrl && { borderColor: COLORS.primary + '50' }
+                                ]}
+                                onPress={handleResumeUpload}
+                                disabled={saving}
+                            >
+                                <View style={[styles.resumeIconBox, { backgroundColor: form.resumeUrl ? COLORS.primary + '10' : COLORS.textTertiary + '10' }]}>
+                                    <Ionicons 
+                                        name={form.resumeUrl ? "document-text" : "cloud-upload-outline"} 
+                                        size={24} 
+                                        color={form.resumeUrl ? COLORS.primary : COLORS.textTertiary} 
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.resumeTitle, { color: COLORS.textPrimary }]}>
+                                        {form.resumeUrl ? "Resume Uploaded" : "Upload Resume"}
+                                    </Text>
+                                    <Text style={[styles.resumeSub, { color: COLORS.textSecondary }]}>
+                                        {form.resumeUrl ? "Tap to change file" : "Max size 250KB"}
+                                    </Text>
+                                </View>
+                                {form.resumeUrl && (
+                                    <Ionicons name="checkmark-circle" size={20} color={COLORS.success || '#4CAF50'} />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
                     <ModernButton
                         title="Save Changes"
                         onPress={handleSave}
@@ -332,7 +435,7 @@ const EditProfileScreen = ({ navigation }) => {
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
@@ -449,6 +552,31 @@ const styles = StyleSheet.create({
     saveBtn: {
         height: 60,
         borderRadius: 18,
+    },
+    resumeBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderStyle: 'dashed',
+    },
+    resumeIconBox: {
+        width: 50,
+        height: 50,
+        borderRadius: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    resumeTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    resumeSub: {
+        fontSize: 12,
+        fontWeight: '500',
+        marginTop: 2,
     }
 });
 

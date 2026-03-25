@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenWrapper from '../components/ScreenWrapper';
 import { 
     View, 
     Text, 
@@ -44,7 +44,7 @@ const HomeScreen = ({ navigation }) => {
     const [filteredJobs, setFilteredJobs] = useState([]);
     const [preferences, setPreferences] = useState({ title: '', location: '' });
 
-    const filters = ['All', 'Full-time', 'Part-time', 'Remote', 'Contract'];
+    const filters = ['All', 'Full-time', 'Part-time', 'Remote', 'Internship', 'Contract'];
 
     const fetchData = async () => {
         try {
@@ -199,8 +199,7 @@ const HomeScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper bottom={false}>
             <View style={[styles.container, isWideScreen && { maxWidth: MAX_WIDTH, alignSelf: 'center', width: '100%' }]}>
                 <FlatList
                     data={filteredJobs}
@@ -255,7 +254,7 @@ const HomeScreen = ({ navigation }) => {
                     }
                 />
             </View>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

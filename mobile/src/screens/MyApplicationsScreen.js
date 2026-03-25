@@ -7,8 +7,6 @@ import {
     ActivityIndicator, 
     TouchableOpacity, 
     TextInput,
-    SafeAreaView,
-    StatusBar,
     Image
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -17,6 +15,7 @@ import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const MyApplicationsScreen = () => {
     const navigation = useNavigation();
@@ -109,8 +108,7 @@ const MyApplicationsScreen = () => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper bottom={false}>
             <View style={[styles.header, { backgroundColor: COLORS.surface }]}>
                 <View style={styles.titleRow}>
                     <View>
@@ -163,7 +161,7 @@ const MyApplicationsScreen = () => {
                             </Text>
                             <ModernButton 
                                 title="Explore Jobs"
-                                onPress={() => navigation.navigate('HomeTab')}
+                                onPress={() => navigation.navigate('Home')}
                                 style={styles.exploreBtn}
                                 textStyle={{ fontSize: 16 }}
                             />
@@ -171,7 +169,7 @@ const MyApplicationsScreen = () => {
                     }
                 />
             )}
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
@@ -347,4 +345,3 @@ const styles = StyleSheet.create({
 });
 
 export default MyApplicationsScreen;
-

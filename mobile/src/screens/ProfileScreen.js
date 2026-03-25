@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
     View, 
     Text, 
@@ -9,17 +8,16 @@ import {
     ActivityIndicator, 
     ScrollView, 
     Image, 
-    StatusBar,
     Switch
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as DocumentPicker from 'expo-document-picker';
 import api from '../services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout } = useAuthStore();
@@ -91,8 +89,7 @@ const ProfileScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.profileHeader}>
                     <LinearGradient
@@ -173,7 +170,7 @@ const ProfileScreen = ({ navigation }) => {
                     {renderMenuItem("log-out-outline", "Log Out", handleLogout, null, true)}
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 
@@ -190,7 +187,6 @@ const styles = StyleSheet.create({
     headerBg: {
         height: 120,
         width: '100%',
-        paddingTop: 40,
     },
     headerInfo: {
         alignItems: 'center',

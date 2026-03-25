@@ -1,6 +1,7 @@
 import Recruiter from '../models/Recruiter.js';
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
+import { uploadToFirebase } from '../config/upload.js';
 
 // @desc    Get recruiter profile
 // @route   GET /api/v1/recruiters/me
@@ -62,7 +63,8 @@ export const uploadLogo = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please upload an image file' });
         }
 
-        const fileUrl = req.file.path; // Secured Cloudinary URL
+        // Upload to Firebase Storage
+        const fileUrl = await uploadToFirebase(req.file, "jobportal/logos");
 
         // UPSERT: update tracking if exists or create if not
         const recruiter = await Recruiter.findOneAndUpdate(
@@ -73,10 +75,11 @@ export const uploadLogo = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Company logo uploaded successfully',
+            message: 'Company logo uploaded successfully via Firebase!',
             data: recruiter
         });
     } catch (error) {
+        console.error("Upload Logo Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

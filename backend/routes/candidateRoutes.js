@@ -6,7 +6,7 @@ import {
   uploadProfilePhoto,
 } from "../controllers/candidateController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
-import upload from "../config/cloudinary.js";
+import upload from "../config/upload.js";
 
 const router = express.Router();
 

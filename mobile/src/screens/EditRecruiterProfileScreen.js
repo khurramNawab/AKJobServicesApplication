@@ -11,8 +11,6 @@ import {
     Platform,
     ActivityIndicator,
     Image,
-    SafeAreaView,
-    StatusBar
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +20,7 @@ import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 import ModernButton from '../components/ModernButton';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const EditRecruiterProfileScreen = ({ navigation }) => {
     const { user } = useAuthStore();
@@ -143,17 +142,22 @@ const EditRecruiterProfileScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <ScreenWrapper>
+                <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            </ScreenWrapper>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+        <ScreenWrapper>
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: COLORS.background }]}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={[styles.backButton, { backgroundColor: COLORS.background }]}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                     <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Company Profile</Text>
@@ -253,7 +257,7 @@ const EditRecruiterProfileScreen = ({ navigation }) => {
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

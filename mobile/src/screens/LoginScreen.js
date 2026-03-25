@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-    View, 
-    Text, 
-    TextInput, 
-    TouchableOpacity, 
-    StyleSheet, 
-    ActivityIndicator, 
-    Alert, 
-    KeyboardAvoidingView, 
-    Platform, 
-    ScrollView,
-    StatusBar
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView
 } from 'react-native';
+import ScreenWrapper from '../components/ScreenWrapper';
 import api from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -109,7 +108,7 @@ const getStyles = (COLORS, SIZES) => StyleSheet.create({
 });
 
 const LoginScreen = ({ navigation }) => {
-    const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -120,20 +119,20 @@ const LoginScreen = ({ navigation }) => {
     const styles = getStyles(COLORS, SIZES);
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Incomplete Info', 'Please enter both your email and password to log in.');
+        if (!phoneNumber || !password) {
+            Alert.alert('Incomplete Info', 'Please enter both your phone number and password to log in.');
             return;
         }
 
         try {
             setLoading(true);
-            const res = await api.post('/auth/login', { email, password });
+            const res = await api.post('/auth/login', { phoneNumber, password });
 
             if (res.data.success) {
                 const user = {
                     _id: res.data._id,
                     name: res.data.name,
-                    email: res.data.email,
+                    phoneNumber: res.data.phoneNumber,
                     role: res.data.role
                 };
                 await setCredentials(user, res.data.token);
@@ -147,13 +146,12 @@ const LoginScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
-            <KeyboardAvoidingView 
+        <ScreenWrapper bottom={false}>
+            <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <ScrollView 
+                <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
@@ -170,16 +168,15 @@ const LoginScreen = ({ navigation }) => {
 
                     <View style={styles.formSection}>
                         <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="mail-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
+                            <Ionicons name="call-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
                             <TextInput
                                 style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Email Address"
+                                placeholder="Phone Number"
                                 placeholderTextColor={COLORS.textTertiary}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoComplete="email"
+                                keyboardType="phone-pad"
+                                value={phoneNumber}
+                                onChangeText={setPhoneNumber}
+                                autoComplete="tel"
                             />
                         </View>
 
@@ -194,19 +191,22 @@ const LoginScreen = ({ navigation }) => {
                                 onChangeText={setPassword}
                                 autoComplete="password"
                             />
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.eyeIcon}
                                 onPress={() => setShowPassword(!showPassword)}
                             >
-                                <Ionicons 
-                                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                                    size={20} 
-                                    color={COLORS.textTertiary} 
+                                <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={20}
+                                    color={COLORS.textTertiary}
                                 />
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity style={styles.forgotPass}>
+                        <TouchableOpacity
+                            style={styles.forgotPass}
+                            onPress={() => navigation.navigate('ForgotPassword')}
+                        >
                             <Text style={styles.forgotPassText}>Forgot Password?</Text>
                         </TouchableOpacity>
 
@@ -226,7 +226,7 @@ const LoginScreen = ({ navigation }) => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenWrapper>
     );
 };
 

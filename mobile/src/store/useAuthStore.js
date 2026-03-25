@@ -28,11 +28,13 @@ export const useAuthStore = create((set) => ({
     },
 
     loadCredentials: async () => {
+        console.log('[AuthStore] Loading credentials...');
         try {
-            // Safety timeout
+            // Failsafe timer: Hide loading after 4 seconds regardless
             const storageTimer = setTimeout(() => {
                 set({ isLoading: false });
-            }, 3000);
+                console.log('[AuthStore] Failsafe timeout reached');
+            }, 4000);
 
             const token = await AsyncStorage.getItem('userToken');
             const userInfoStr = await AsyncStorage.getItem('userInfo');
@@ -40,12 +42,27 @@ export const useAuthStore = create((set) => ({
             clearTimeout(storageTimer);
             
             if (token && userInfoStr) {
-                set({ user: JSON.parse(userInfoStr), token, isLoading: false });
+                try {
+                    const user = JSON.parse(userInfoStr);
+                    set({ user, token, isLoading: false });
+                } catch (parseError) {
+                    console.error('[AuthStore] Parse error:', parseError);
+                    set({ isLoading: false });
+                }
             } else {
                 set({ isLoading: false });
             }
         } catch (e) {
+            console.error('[AuthStore] Store load error:', e);
             set({ isLoading: false });
+        } finally {
+            // Guaranteed state update
+            setTimeout(() => {
+                set(state => {
+                    if (state.isLoading) return { isLoading: false };
+                    return {};
+                });
+            }, 500);
         }
     }
 }));

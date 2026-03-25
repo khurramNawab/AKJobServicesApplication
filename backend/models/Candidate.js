@@ -61,7 +61,6 @@ const candidateSchema = new mongoose.Schema({
     },
     privacy: {
         profileVisibility: { type: Boolean, default: true },
-        emailNotifications: { type: Boolean, default: true },
         showPhone: { type: Boolean, default: true },
         whatsappUpdates: { type: Boolean, default: false }
     }

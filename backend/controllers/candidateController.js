@@ -1,5 +1,6 @@
 import Candidate from '../models/Candidate.js';
 import Application from '../models/Application.js';
+import { uploadToFirebase } from '../config/upload.js';
 
 // @desc    Get Candidate profile
 // @route   GET /api/v1/candidates/me
@@ -58,15 +59,15 @@ export const updateCandidateProfile = async (req, res) => {
 // @access  Private (Candidate only)
 export const uploadResume = async (req, res) => {
     try {
-        console.log('uploadResume called');
+        console.log('uploadResume via Firebase called');
         console.log('req.file:', req.file);
-        console.log('req.body:', req.body);
-        // req.file is injected by Multer Cloudinary storage
+        
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'Please upload a PDF or DOCX file' });
         }
 
-        const fileUrl = req.file.path; // Secured Cloudinary URL
+        // Real Upload to Firebase Storage
+        const fileUrl = await uploadToFirebase(req.file, "jobportal/resumes");
 
         // UPSERT: update array of object if exists or create if not
         const candidate = await Candidate.findOneAndUpdate(
@@ -77,10 +78,11 @@ export const uploadResume = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Resume uploaded successfully',
+            message: 'Resume uploaded successfully with Firebase!',
             data: candidate
         });
     } catch (error) {
+        console.error("Upload Resume Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -94,7 +96,8 @@ export const uploadProfilePhoto = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please upload an image file' });
         }
 
-        const fileUrl = req.file.path;
+        // Real Upload to Firebase Storage
+        const fileUrl = await uploadToFirebase(req.file, "jobportal/avatars");
 
         const candidate = await Candidate.findOneAndUpdate(
             { userId: req.user._id },
@@ -104,10 +107,11 @@ export const uploadProfilePhoto = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Profile photo uploaded successfully',
+            message: 'Profile photo uploaded successfully via Firebase!',
             data: candidate
         });
     } catch (error) {
+        console.error("Upload Photo Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

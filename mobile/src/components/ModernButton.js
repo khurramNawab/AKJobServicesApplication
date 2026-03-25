@@ -8,6 +8,7 @@ const ModernButton = ({
     title, 
     onPress, 
     loading = false, 
+    disabled = false,
     variant = 'primary', // primary, secondary, outline, ghost
     size = 'md',        // sm, md, lg
     style,
@@ -18,6 +19,7 @@ const ModernButton = ({
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
     const isPrimary = variant === 'primary';
+    const isSuccess = variant === 'success';
     const isOutline = variant === 'outline';
     const isGhost = variant === 'ghost';
     const isSecondary = variant === 'secondary';
@@ -34,7 +36,8 @@ const ModernButton = ({
                         isOutline && { color: COLORS.primary },
                         isGhost && { color: COLORS.textSecondary },
                         isSecondary && { color: COLORS.secondary },
-                        textStyle
+                        textStyle,
+                        (disabled || loading) && { opacity: 0.8 }
                     ]}>
                         {title}
                     </Text>
@@ -43,16 +46,21 @@ const ModernButton = ({
         </View>
     );
 
-    if (isPrimary) {
+    if (isPrimary || isSuccess) {
         return (
             <TouchableOpacity 
                 onPress={onPress} 
-                disabled={loading}
+                disabled={loading || disabled}
                 activeOpacity={0.8}
-                style={[styles.container, SHADOWS.medium, style]}
+                style={[
+                    styles.container, 
+                    SHADOWS.medium, 
+                    style,
+                    (disabled || loading) && { opacity: 0.6, shadowOpacity: 0 }
+                ]}
             >
                 <LinearGradient
-                    colors={[COLORS.primary, COLORS.primaryLight]}
+                    colors={isSuccess ? ['#10B981', '#34D399'] : [COLORS.primary, COLORS.primaryLight]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.gradient}
@@ -66,14 +74,15 @@ const ModernButton = ({
     return (
         <TouchableOpacity 
             onPress={onPress} 
-            disabled={loading}
+            disabled={loading || disabled}
             activeOpacity={0.7}
             style={[
                 styles.container,
                 isOutline && { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: COLORS.primary },
                 isGhost && { backgroundColor: 'transparent' },
                 isSecondary && { backgroundColor: COLORS.secondary + '15' },
-                style
+                style,
+                (disabled || loading) && { opacity: 0.5 }
             ]}
         >
             {renderContent()}
