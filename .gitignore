@@ -13,3 +13,6 @@ status.txt
 env_check.txt
 remote.txt
 !mobile/.gitignore
+.continue/
+.DS_Store
+*.tmp

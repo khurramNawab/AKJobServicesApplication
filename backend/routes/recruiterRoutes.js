@@ -1,9 +1,13 @@
 import express from 'express';
-import { getMyRecruiterProfile, updateRecruiterProfile, uploadLogo } from '../controllers/recruiterController.js';
+import { getMyRecruiterProfile, updateRecruiterProfile, uploadLogo, getRecruiters, getRecruiterById } from '../controllers/recruiterController.js';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
 import upload from '../config/upload.js';
 
 const router = express.Router();
+
+router.get('/', getRecruiters);
+router.get('/list', getRecruiters);
+router.get('/:id', getRecruiterById);
 
 router.route('/me')
     .get(protect, authorize('RECRUITER', 'ADMIN'), getMyRecruiterProfile)

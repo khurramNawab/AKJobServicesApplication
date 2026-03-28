@@ -83,3 +83,42 @@ export const uploadLogo = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// @desc    Get all recruiters/companies (public)
+// @route   GET /api/v1/recruiters
+// @access  Public
+export const getRecruiters = async (req, res) => {
+    try {
+        const recruiters = await Recruiter.find().populate('userId', 'name email');
+
+        res.status(200).json({
+            success: true,
+            count: recruiters.length,
+            data: recruiters
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+// @desc    Get specific recruiter/company by ID (public)
+// @route   GET /api/v1/recruiters/:id
+// @access  Public
+export const getRecruiterById = async (req, res) => {
+    try {
+        const recruiter = await Recruiter.findById(req.params.id).populate('userId', 'name email');
+        
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Company not found' });
+        }
+
+        const activeJobs = await Job.find({ recruiterId: recruiter.userId }).sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: recruiter,
+            jobs: activeJobs
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

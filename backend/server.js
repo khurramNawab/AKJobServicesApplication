@@ -33,6 +33,7 @@ app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/recruiters", recruiterRoutes);
+app.use("/api/v1/companies", recruiterRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 
@@ -41,7 +42,15 @@ app.get("/", (req, res) => {
   res.send("Job Portal API is running...");
 });
 
-const PORT = process.env.PORT || 5000;
+// 404 Handler
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Not Found - ${req.originalUrl}`,
+  });
+});
+
+const PORT = process.env.PORT || 5050;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

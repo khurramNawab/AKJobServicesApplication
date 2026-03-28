@@ -1,5 +1,7 @@
 import Job from '../models/Job.js';
+import Application from '../models/Application.js';
 import Recruiter from '../models/Recruiter.js';
+import { uploadToFirebase } from '../config/upload.js';
 
 // @desc    Get all jobs
 // @route   GET /api/v1/jobs
@@ -90,3 +92,4 @@ export const createJob = async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+

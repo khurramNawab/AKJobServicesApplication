@@ -7,6 +7,7 @@ import { protect, authorize } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
+
 router.post('/seed', protect, authorize('RECRUITER', 'ADMIN'), seedJobs);
 
 router.get('/me', protect, authorize('RECRUITER', 'ADMIN'), getMyJobs);
