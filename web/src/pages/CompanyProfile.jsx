@@ -30,7 +30,7 @@ const CompanyProfile = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#020617] pt-40 px-6 flex flex-col items-center gap-6">
+            <div className="min-h-screen bg-bg-main pt-40 px-6 flex flex-col items-center gap-6">
                 <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
                 <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Loading Corporate Profile...</p>
             </div>
@@ -39,7 +39,7 @@ const CompanyProfile = () => {
 
     if (error || !company) {
         return (
-            <div className="min-h-screen bg-[#020617] pt-40 px-6 text-center space-y-8">
+            <div className="min-h-screen bg-bg-main pt-40 px-6 text-center space-y-8">
                 <div className="w-24 h-24 bg-secondary/10 rounded-full flex items-center justify-center mx-auto border border-secondary/20 font-black text-4xl text-secondary">?</div>
                 <div className="space-y-2">
                     <h2 className="text-3xl font-bold text-white">Company not found</h2>
@@ -53,7 +53,7 @@ const CompanyProfile = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] pt-32 pb-20 px-6 relative overflow-hidden">
+        <div className="min-h-screen bg-bg-main pt-32 pb-20 px-6 relative overflow-hidden">
             {/* Background Accents */}
             <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none -z-10" />
             

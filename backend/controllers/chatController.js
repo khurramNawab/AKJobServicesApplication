@@ -13,7 +13,7 @@ export const getMyConversations = async (req, res) => {
         let conversations = await Conversation.find({
             participants: { $in: [req.user._id] }
         })
-        .populate('participants', 'name email role')
+        .populate('participants', 'name email role phoneNumber')
         .sort({ updatedAt: -1 })
         .lean();
 

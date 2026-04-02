@@ -7,13 +7,20 @@ import {
     TouchableOpacity, 
     ActivityIndicator, 
     Alert,
-    RefreshControl
+    RefreshControl,
+    Dimensions
 } from 'react-native';
-import ScreenWrapper from '../components/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeStore } from '../store/useThemeStore';
-import { LIGHT_COLORS, DARK_COLORS, SIZES, SHADOWS } from '../constants/theme';
+import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import api from '../services/api';
+import { LIGHT_COLORS, DARK_COLORS, SIZES, SHADOWS } from '../constants/theme';
+import { useThemeStore } from '../store/useThemeStore';
+
+// Premium Components
+import ScreenWrapper from '../components/ScreenWrapper';
+import SkeletonLoader from '../components/SkeletonLoader';
+
+const { width } = Dimensions.get('window');
 
 const NotificationsScreen = ({ navigation }) => {
     const { isDarkMode } = useThemeStore();
@@ -25,12 +32,13 @@ const NotificationsScreen = ({ navigation }) => {
 
     const fetchNotifications = async () => {
         try {
+            if (!refreshing) setLoading(true);
             const res = await api.get('/notifications');
             if (res.data.success) {
                 setNotifications(res.data.data);
             }
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            console.error('Fetch notifications error:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -41,35 +49,30 @@ const NotificationsScreen = ({ navigation }) => {
         fetchNotifications();
     }, []);
 
-    const onRefresh = () => {
-        setRefreshing(true);
-        fetchNotifications();
-    };
-
     const handleMarkAsRead = async (id) => {
         try {
             await api.put(`/notifications/${id}/read`);
             setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
         } catch (error) {
-            console.error('Error marking as read:', error);
+            console.error('Mark as read error:', error);
         }
     };
 
     const handleClearAll = () => {
         Alert.alert(
-            "Clear Notifications",
-            "Are you sure you want to delete all notifications?",
+            "Clear Activity",
+            "Are you sure you want to remove all notifications from your history?",
             [
-                { text: "Cancel", style: "cancel" },
+                { text: "Keep Them", style: "cancel" },
                 { 
-                    text: "Clear All", 
+                    text: "Clear History", 
                     style: "destructive",
                     onPress: async () => {
                         try {
                             await api.delete('/notifications');
                             setNotifications([]);
                         } catch (error) {
-                            console.error('Error clearing notifications:', error);
+                            console.error('Clear notifications error:', error);
                         }
                     }
                 }
@@ -79,204 +82,224 @@ const NotificationsScreen = ({ navigation }) => {
 
     const getIconInfo = (type) => {
         switch (type) {
-            case 'APPLICATION_STATUS': return { icon: 'briefcase-outline', color: COLORS.primary };
-            case 'NEW_MESSAGE': return { icon: 'chatbubble-outline', color: COLORS.secondary };
-            case 'JOB_MATCH': return { icon: 'sparkles-outline', color: COLORS.accent };
-            case 'SYSTEM': return { icon: 'notifications-outline', color: COLORS.textSecondary };
-            default: return { icon: 'notifications-outline', color: COLORS.primary };
+            case 'APPLICATION_STATUS': return { icon: 'briefcase', color: COLORS.primary };
+            case 'NEW_MESSAGE': return { icon: 'chatbubbles', color: COLORS.secondary };
+            case 'JOB_MATCH': return { icon: 'sparkles', color: COLORS.accent };
+            case 'SYSTEM': return { icon: 'shield-checkmark', color: COLORS.textTertiary };
+            default: return { icon: 'notifications', color: COLORS.primary };
         }
     };
 
     const formatTime = (dateString) => {
         const date = new Date(dateString);
         const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-        
-        if (diffInSeconds < 60) return 'Just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        return date.toLocaleDateString();
+        const diffInSecs = Math.floor((now - date) / 1000);
+        if (diffInSecs < 60) return 'Just now';
+        if (diffInSecs < 3600) return `${Math.floor(diffInSecs / 60)}m ago`;
+        if (diffInSecs < 86400) return `${Math.floor(diffInSecs / 3600)}h ago`;
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     };
 
-    const renderItem = ({ item }) => {
+    const renderItem = ({ item, index }) => {
         const { icon, color } = getIconInfo(item.type);
+        const isUnread = !item.isRead;
+
         return (
-            <TouchableOpacity 
-                style={[
-                    styles.card, 
-                    { backgroundColor: COLORS.surface, borderColor: item.isRead ? COLORS.border : COLORS.primary + '30' }, 
-                    SHADOWS.soft,
-                    !item.isRead && { borderLeftWidth: 4, borderLeftColor: COLORS.primary }
-                ]}
-                onPress={() => handleMarkAsRead(item._id)}
+            <Animated.View 
+                entering={FadeInDown.delay(index * 100).springify()}
+                layout={Layout.springify()}
+                style={styles.cardWrapper}
             >
-                <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-                    <Ionicons name={icon} size={24} color={color} />
-                </View>
-                <View style={styles.content}>
-                    <View style={styles.row}>
-                        <Text style={[styles.title, { color: COLORS.textPrimary }, !item.isRead && styles.unreadTitle]}>{item.title}</Text>
-                        <Text style={[styles.time, { color: COLORS.textTertiary }]}>{formatTime(item.createdAt)}</Text>
+                <TouchableOpacity 
+                    style={[
+                        styles.notiCard, 
+                        { backgroundColor: COLORS.surface, borderColor: isUnread ? COLORS.primary + '20' : COLORS.border }, 
+                        isUnread && styles.unreadCard
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => handleMarkAsRead(item._id)}
+                >
+                    <View style={[styles.iconBox, { backgroundColor: color + '10' }]}>
+                        <Ionicons name={icon} size={22} color={color} />
                     </View>
-                    <Text style={[styles.message, { color: COLORS.textSecondary }]} numberOfLines={2}>
-                        {item.message}
-                    </Text>
-                </View>
-            </TouchableOpacity>
+                    <View style={styles.textContent}>
+                        <View style={styles.topRow}>
+                            <Text style={[styles.notiTitle, { color: COLORS.textPrimary }, isUnread && styles.boldText]}>{item.title}</Text>
+                            <Text style={[styles.timeTxt, { color: COLORS.textTertiary }]}>{formatTime(item.createdAt)}</Text>
+                        </View>
+                        <Text style={[styles.notiMsg, { color: COLORS.textSecondary }]} numberOfLines={2}>
+                            {item.message}
+                        </Text>
+                    </View>
+                    {isUnread && <View style={[styles.unreadDot, { backgroundColor: COLORS.primary }]} />}
+                </TouchableOpacity>
+            </Animated.View>
         );
     };
 
     return (
-        <ScreenWrapper>
-            <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity 
-                    onPress={() => navigation.goBack()} 
-                    style={[styles.backBtn, { backgroundColor: COLORS.background }]}
-                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+        <ScreenWrapper bottom={false}>
+            <View style={[styles.header, { borderBottomColor: COLORS.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.headerBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]}>
                     <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Notifications</Text>
+                <View style={styles.headerTitleArea}>
+                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Activity</Text>
+                </View>
                 {notifications.length > 0 ? (
-                    <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
-                        <Ionicons name="trash-outline" size={22} color={COLORS.danger} />
+                    <TouchableOpacity onPress={handleClearAll} style={[styles.headerBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]}>
+                        <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
                     </TouchableOpacity>
                 ) : (
-                    <View style={{ width: 44 }} />
+                    <View style={{ width: 48 }} />
                 )}
             </View>
 
-            {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                </View>
-            ) : (
-                <FlatList
-                    data={notifications}
-                    keyExtractor={(item) => item._id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.list}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
-                    }
-                    ListEmptyComponent={
-                        <View style={styles.empty}>
-                            <View style={[styles.emptyIconBox, { backgroundColor: COLORS.surface }]}>
-                                <Ionicons name="notifications-off-outline" size={64} color={COLORS.textTertiary} />
+            <FlatList
+                data={loading ? Array(8).fill(0) : notifications}
+                keyExtractor={(item, index) => item?._id || index.toString()}
+                renderItem={loading ? () => (
+                    <View style={styles.skeletonWrap}>
+                        <SkeletonLoader height={80} borderRadius={20} />
+                    </View>
+                ) : renderItem}
+                contentContainerStyle={styles.listContent}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchNotifications(); }} tintColor={COLORS.primary} />
+                }
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    !loading && (
+                        <View style={styles.emptyContainer}>
+                            <View style={[styles.emptyIcon, { backgroundColor: COLORS.surfaceSecondary }]}>
+                                <Ionicons name="notifications-off-outline" size={60} color={COLORS.textTertiary} />
                             </View>
-                            <Text style={[styles.emptyText, { color: COLORS.textSecondary }]}>No notifications yet</Text>
-                            <Text style={[styles.emptySubtitle, { color: COLORS.textTertiary }]}>We'll notify you when something important happens.</Text>
+                            <Text style={[styles.emptyTitle, { color: COLORS.textPrimary }]}>All caught up!</Text>
+                            <Text style={[styles.emptySubtitle, { color: COLORS.textSecondary }]}>
+                                Your notification history is clear. We'll alert you when there's an update on your applications.
+                            </Text>
                         </View>
-                    }
-                />
-            )}
+                    )
+                }
+            />
         </ScreenWrapper>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingHorizontal: SIZES.lg,
+        paddingVertical: 16,
         borderBottomWidth: 1,
     },
-    backBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+    headerBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
     },
-    clearBtn: {
-        width: 44,
-        height: 44,
-        justifyContent: 'center',
+    headerTitleArea: {
+        flex: 1,
         alignItems: 'center',
     },
     headerTitle: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '800',
+        letterSpacing: -0.5,
     },
-    list: {
-        padding: 20,
+    listContent: {
         paddingBottom: 40,
     },
-    card: {
-        flexDirection: 'row',
-        padding: 16,
-        borderRadius: 20,
-        marginBottom: 16,
-        borderWidth: 1,
+    cardWrapper: {
+        paddingHorizontal: SIZES.lg,
+        marginTop: 12,
     },
-    iconContainer: {
+    notiCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderRadius: 20,
+        borderWidth: 1,
+        ...SHADOWS.soft,
+    },
+    unreadCard: {
+        borderLeftWidth: 4,
+        borderLeftColor: '#3b82f6',
+    },
+    iconBox: {
         width: 48,
         height: 48,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
     },
-    content: {
+    textContent: {
         flex: 1,
+        marginLeft: 14,
+        marginRight: 8,
     },
-    row: {
+    topRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 4,
     },
-    title: {
+    notiTitle: {
         fontSize: 15,
         fontWeight: '700',
+        flex: 1,
+        marginRight: 8,
     },
-    unreadTitle: {
+    boldText: {
         fontWeight: '800',
     },
-    time: {
+    timeTxt: {
         fontSize: 11,
         fontWeight: '600',
     },
-    message: {
+    notiMsg: {
         fontSize: 13,
         lineHeight: 18,
         fontWeight: '500',
     },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    unreadDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        position: 'absolute',
+        top: 14,
+        right: 14,
     },
-    empty: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+    skeletonWrap: {
+        paddingHorizontal: SIZES.lg,
+        marginTop: 12,
+    },
+    emptyContainer: {
         marginTop: 100,
+        alignItems: 'center',
         paddingHorizontal: 40,
     },
-    emptyIconBox: {
-        width: 100,
-        height: 100,
-        borderRadius: 30,
+    emptyIcon: {
+        width: 110,
+        height: 110,
+        borderRadius: 36,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
-    emptyText: {
-        fontSize: 18,
+    emptyTitle: {
+        fontSize: 22,
         fontWeight: '800',
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
         textAlign: 'center',
-        lineHeight: 20,
+        lineHeight: 22,
         fontWeight: '500',
     }
 });

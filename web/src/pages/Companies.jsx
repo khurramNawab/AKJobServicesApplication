@@ -35,53 +35,61 @@ const Companies = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#020617] pt-32 pb-20 px-6">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen bg-[#020617] pt-40 pb-32 px-6 relative overflow-hidden">
+      {/* 🌌 Advanced Background System */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
+      </div>
+
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
+
+      <div className="max-w-7xl mx-auto space-y-16 relative z-10">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
           <div className="space-y-4">
-             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Company <span className="gradient-text">Directory</span></h1>
-             <p className="text-slate-400 text-lg max-w-xl font-medium">
-               Explore top-tier organizations and find your next workplace culture that fits yours.
+             <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-tight text-left">Company <span className="gradient-text">Directory</span></h1>
+             <p className="text-text-secondary text-xl max-w-xl font-medium opacity-80 leading-relaxed text-left">
+               Explore top-tier corporate organizations and find your next workplace culture that fits yours.
              </p>
           </div>
-          <div className="glass-card px-5 py-3 rounded-2xl border-white/5 flex items-center gap-3">
-             <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
-             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Hiring: <span className="text-white">{companies.length}</span> Companies</span>
+          <div className="glass-island px-8 py-5 flex items-center gap-4 border-white/5 shadow-2xl">
+             <Activity className="w-5 h-5 text-[#EF4444] animate-pulse" />
+             <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Active Hiring: <span className="text-[#2563EB] text-xl ml-2">{companies.length}</span> Companies</span>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="glass-card p-2 rounded-[2rem] border-white/5 flex flex-col md:flex-row gap-2 shadow-2xl">
-          <div className="flex-[1.5] relative flex items-center">
-            <Search className="absolute left-6 w-5 h-5 text-slate-500" />
+        {/* Search Bar - Glass Island */}
+        <div className="glass-island p-3 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-3 transition-all hover:border-white/10 group shadow-2xl">
+          <div className="flex-[1.5] w-full relative flex items-center">
+            <Search className="absolute left-8 w-6 h-6 text-[#2563EB]" />
             <input
               type="text"
               placeholder="Search company name..."
-              className="w-full bg-transparent border-none outline-none text-white placeholder:text-slate-600 pl-16 pr-4 py-5 font-bold"
+              className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="hidden md:block w-[1px] h-10 self-center bg-white/10" />
-          <div className="flex-1 relative flex items-center">
-            <MapPin className="absolute left-6 w-5 h-5 text-slate-500" />
+          <div className="hidden md:block w-[1px] h-14 bg-white/10" />
+          <div className="flex-1 w-full relative flex items-center">
+            <MapPin className="absolute left-8 w-6 h-6 text-[#EF4444]" />
             <input
               type="text"
-              placeholder="Global Headquarters / Remote"
-              className="w-full bg-transparent border-none outline-none text-white placeholder:text-slate-600 pl-16 pr-4 py-5 font-bold"
+              placeholder="Headquarters / Remote"
+              className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
             />
           </div>
-          <Button variant="cta" className="md:w-48 rounded-[1.5rem] py-5">
-             Explore
-          </Button>
+          <button className="btn-power w-full md:w-56 !py-8 !rounded-[1.8rem] !shadow-none hover:shadow-[0_0_30px_rgba(37,99,235,0.3)] text-lg">
+             Scan Network
+          </button>
         </div>
 
-        {/* Content Area */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Content Area - Elite Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
            <AnimatePresence mode="popLayout">
               {loading ? (
                 [1,2,3,4,5,6].map(i => (
@@ -98,55 +106,58 @@ const Companies = () => {
                     key={company._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="glass-card p-10 rounded-[3rem] border-white/5 hover:border-white/10 group transition-all duration-500 shadow-xl overflow-hidden relative flex flex-col"
+                    whileHover={{ y: -10 }}
+                    className="glass-card p-10 group transition-all duration-500 shadow-xl overflow-hidden relative flex flex-col border-white/5 hover:border-[#2563EB]/30"
                   >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl group-hover:bg-primary/10 transition-colors pointer-events-none rounded-full" />
-                    
-                    <div className="flex justify-between items-start mb-8">
-                       <div className="w-20 h-20 bg-white/5 rounded-2xl border border-white/10 p-4 group-hover:border-primary/20 transition-all flex items-center justify-center relative shadow-inner overflow-hidden">
+                    <div className="flex justify-between items-start mb-10">
+                       <div className="w-20 h-20 bg-white/5 rounded-3xl border border-white/10 p-4 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all flex items-center justify-center relative shadow-inner overflow-hidden">
                           {company.companyLogo ? (
                              <img src={company.companyLogo} alt={company.companyName} className="w-full h-full object-contain" />
                           ) : (
-                             <Building2 className="w-10 h-10 text-slate-700" />
+                             <span className="text-4xl font-black text-white/30 group-hover:text-white transition-all">{company.companyName?.charAt(0) || 'C'}</span>
                           )}
                        </div>
-                       <div className="flex gap-1">
-                          {[1,2,3,4,5].map(v => <Star key={v} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
+                       <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                          {[1,2,3,4,5].map(v => <Star key={v} className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />)}
                        </div>
                     </div>
 
-                    <div className="flex-1 space-y-4">
-                       <h3 className="text-2xl font-black group-hover:text-primary-light transition-colors">{company.companyName}</h3>
-                       <p className="text-slate-400 font-medium text-sm line-clamp-2 italic">"{company.industry || 'Leading Industry Solutions'} — Pioneering the future through innovation and dedicated excellence in every field."</p>
+                    <div className="flex-1 space-y-5">
+                       <h3 className="text-2xl font-black text-white tracking-tight group-hover:text-[#2563EB] transition-colors">{company.companyName}</h3>
+                       <p className="text-text-secondary font-medium text-sm leading-relaxed opacity-60 line-clamp-3">
+                         Leading {company.industry || 'Business Solutions'} organization pioneering excellence through innovation and dedicated corporate culture.
+                       </p>
                        
-                       <div className="flex flex-wrap gap-4 pt-4">
-                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                             <MapPin className="w-4 h-4 text-primary-light" /> {company.location || 'Remote'}
+                       <div className="flex flex-wrap gap-4 pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
+                             <MapPin className="w-4 h-4 text-[#EF4444]" /> {company.location || 'India'}
                           </div>
-                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                             <Users className="w-4 h-4 text-primary-light" /> 500-1000 Crew
+                          <div className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
+                             <Users className="w-4 h-4 text-[#2563EB]" /> 500+ Active
                           </div>
                        </div>
                     </div>
 
-                    <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between">
-                       <Link to={`/companies/${company._id}`} className="text-sm font-black text-white hover:text-primary-light transition-colors flex items-center gap-2">
-                          View Profile <ArrowRight className="w-4 h-4" />
+                    <div className="mt-12 flex items-center justify-between">
+                       <Link to={`/companies/${company._id}`} className="text-sm font-black text-white hover:text-[#2563EB] transition-colors flex items-center gap-3 group/btn">
+                          Explore Opportunities <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                        </Link>
-                       <div className="p-3 bg-white/5 rounded-xl border border-white/5 group-hover:text-primary-light transition-all">
+                       <div className="p-3 bg-white/5 rounded-2xl border border-white/5 group-hover:border-[#2563EB]/30 transition-all text-text-muted hover:text-white">
                           <Globe className="w-5 h-5" />
                        </div>
                     </div>
+
+                    {/* Decorative Hover Glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/0 to-[#2563EB]/0 group-hover:from-[#2563EB]/5 group-hover:to-transparent pointer-events-none transition-all duration-500 rounded-[3.5rem]" />
                   </motion.div>
                 ))
               ) : (
-                <div className="col-span-full py-20 text-center space-y-6">
-                   <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10">
-                      <Search className="w-10 h-10 text-slate-600" />
+                <div className="col-span-full py-32 text-center space-y-8">
+                   <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10 shadow-inner">
+                      <Search className="w-10 h-10 text-text-muted opacity-40" />
                    </div>
-                   <h3 className="text-2xl font-bold">No companies matching your search</h3>
-                   <Button variant="outline" className="w-auto px-8" onClick={() => { setSearchQuery(''); setLocationQuery(''); }}>Reset Search</Button>
+                   <h3 className="text-3xl font-black text-white tracking-tight">Organization Not Found</h3>
+                   <Button variant="secondary" className="px-10 py-5 rounded-2xl" onClick={() => { setSearchQuery(''); setLocationQuery(''); }}>Reset Search</Button>
                 </div>
               )}
            </AnimatePresence>

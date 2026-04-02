@@ -1,24 +1,34 @@
 import Recruiter from '../models/Recruiter.js';
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
-import { uploadToFirebase } from '../config/upload.js';
+// Cloudinary storage handles the upload via middleware
+
 
 // @desc    Get recruiter profile
 // @route   GET /api/v1/recruiters/me
 // @access  Private (Recruiter only)
 export const getMyRecruiterProfile = async (req, res) => {
     try {
+        console.log(`[RecruiterProfile] Fetching profile for user: ${req.user._id}`);
         let recruiter = await Recruiter.findOne({ userId: req.user._id });
 
         // If recruiter profile doesn't exist yet, create an empty one implicitly
         if (!recruiter) {
+            console.log(`[RecruiterProfile] Creating new recruiter profile for user: ${req.user._id}`);
             recruiter = await Recruiter.create({ userId: req.user._id });
         }
 
         const jobsCount = await Job.countDocuments({ recruiterId: req.user._id });
         const recruitersJobs = await Job.find({ recruiterId: req.user._id }).select('_id');
         const jobIds = recruitersJobs.map(j => j._id);
-        const applicantsCount = await Application.countDocuments({ jobId: { $in: jobIds } });
+        
+        let applicantsCount = 0;
+        let interviewsCount = 0;
+
+        if (jobIds.length > 0) {
+            applicantsCount = await Application.countDocuments({ jobId: { $in: jobIds } });
+            interviewsCount = await Application.countDocuments({ jobId: { $in: jobIds }, status: 'SHORTLISTED' });
+        }
 
         res.status(200).json({
             success: true,
@@ -26,13 +36,15 @@ export const getMyRecruiterProfile = async (req, res) => {
             stats: {
                 jobs: jobsCount,
                 applicants: applicantsCount,
-                interviews: await Application.countDocuments({ jobId: { $in: jobIds }, status: 'SHORTLISTED' })
+                interviews: interviewsCount
             }
         });
     } catch (error) {
+        console.error("GET RECRUITER PROFILE ERROR:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 // @desc    Update recruiter profile (companyName, location, industry, etc)
 // @route   PUT /api/v1/recruiters/me
@@ -63,8 +75,8 @@ export const uploadLogo = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please upload an image file' });
         }
 
-        // Upload to Firebase Storage
-        const fileUrl = await uploadToFirebase(req.file, "jobportal/logos");
+        // Cloudinary uploads automatically via Multer middleware
+        const fileUrl = req.file.path;
 
         // UPSERT: update tracking if exists or create if not
         const recruiter = await Recruiter.findOneAndUpdate(
@@ -73,9 +85,11 @@ export const uploadLogo = async (req, res) => {
             { new: true, upsert: true }
         );
 
+
         res.status(200).json({
             success: true,
-            message: 'Company logo uploaded successfully via Firebase!',
+            message: 'Company logo uploaded successfully to Cloudinary!',
+
             data: recruiter
         });
     } catch (error) {

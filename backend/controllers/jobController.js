@@ -1,7 +1,6 @@
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
 import Recruiter from '../models/Recruiter.js';
-import { uploadToFirebase } from '../config/upload.js';
 
 // @desc    Get all jobs
 // @route   GET /api/v1/jobs
@@ -22,7 +21,8 @@ export const getJobs = async (req, res) => {
                 const recruiterInfo = recruiterMap[job.recruiterId._id.toString()];
                 if (recruiterInfo) {
                     job.recruiterId.companyName = recruiterInfo.companyName;
-                    job.recruiterId.companyLogo = recruiterInfo.companyLogo;
+                    // Force HTTPS for mobile image loading stability
+                    job.recruiterId.companyLogo = recruiterInfo.companyLogo?.replace('http://', 'https://');
                 }
             }
             return job;

@@ -86,7 +86,7 @@ const VerifyAccount = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-20 bg-[#020617] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-20 bg-bg-main relative overflow-hidden">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 blur-[120px] rounded-full opacity-50" />

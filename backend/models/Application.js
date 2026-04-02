@@ -23,7 +23,20 @@ const applicationSchema = new mongoose.Schema({
     resumeVersionUrl: {
         type: String,
         default: '' // We will link S3/Cloudinary URL here later
-    }
+    },
+    statusHistory: [
+        {
+            status: {
+                type: String,
+                enum: ['APPLIED', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED'],
+                required: true
+            },
+            timestamp: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
 }, {
     timestamps: true
 });

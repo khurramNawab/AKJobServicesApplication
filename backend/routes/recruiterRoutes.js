@@ -7,11 +7,12 @@ const router = express.Router();
 
 router.get('/', getRecruiters);
 router.get('/list', getRecruiters);
-router.get('/:id', getRecruiterById);
 
 router.route('/me')
     .get(protect, authorize('RECRUITER', 'ADMIN'), getMyRecruiterProfile)
     .put(protect, authorize('RECRUITER', 'ADMIN'), updateRecruiterProfile);
+
+router.get('/:id', getRecruiterById);
 
 router.route('/me/logo')
     .post(protect, authorize('RECRUITER', 'ADMIN'), (req, res, next) => {

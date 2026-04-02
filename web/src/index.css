@@ -1,16 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #6366f1;
-  --color-primary-dark: #4f46e5;
-  --color-primary-light: #818cf8;
-  --color-secondary: #f43f5e;
-  --color-secondary-light: #fb7185;
-  --color-secondary-soft: #fda4af;
-  --color-dark: #0f172a;
-  --color-dark-surface: #1e293b;
-  --color-accent-indigo: #818cf8;
-  --color-accent-cyan: #22d3ee;
+  --color-primary: #3B82F6; /* Tech Blue */
+  --color-primary-dark: #1E40AF;
+  --color-secondary: #F43F5E; /* Action Red */
+  --color-secondary-dark: #BE123C;
+  --color-accent-glow: #22D3EE;
+  
+  --color-bg-main: #020617; /* Deep Void */
+  --color-bg-surface: #0F172A; /* Glass Slate */
+  --color-bg-card: rgba(15, 23, 42, 0.5);
+  
+  --color-border-subtle: rgba(51, 65, 85, 0.3);
+  
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #E2E8F0;
+  --color-text-muted: #94A3B8;
+
+  /* Legacy aliases to maintain compatibility */
+  --color-dark: #020617;
+  --color-dark-surface: #0F172A;
+  --color-dark-border: rgba(51, 65, 85, 0.3);
+  
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --spacing-8: 2rem;
   --spacing-16: 4rem;
@@ -18,57 +29,89 @@
 
 @layer base {
   body {
-    @apply bg-[#020617] text-slate-200 antialiased selection:bg-primary/30 selection:text-white;
+    @apply bg-bg-main text-text-secondary antialiased selection:bg-primary/30 selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  h1, h2, h3, h4 {
-    @apply tracking-tight font-bold text-white;
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold text-text-primary;
   }
 }
 
-/* Premium Glassmorphism */
+/* Premium Elite Design System */
 .glass {
-  @apply bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  @apply bg-bg-surface/70 backdrop-blur-xl border border-border-subtle shadow-[0_8px_32px_0_rgba(0,0,0,0.8)];
 }
 
 .glass-card {
-  @apply bg-white/[0.03] backdrop-blur-lg border border-white/10 shadow-xl transition-all duration-300;
+  @apply bg-bg-surface/40 backdrop-blur-lg border border-border-subtle shadow-2xl transition-all duration-300;
 }
 
 .glass-card:hover {
-  @apply bg-white/[0.05] border-white/20 shadow-2xl;
+  @apply bg-white/[0.04] border-primary/30 shadow-[0_0_40px_-10px_rgba(59,130,246,0.3)];
+}
+
+.btn-power {
+  @apply bg-gradient-to-br from-[#2563EB] to-[#EF4444] text-white font-extrabold
+         shadow-[0_0_30px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_0_40px_-5px_rgba(239,68,68,0.5)] 
+         hover:scale-[1.05] active:scale-95 transition-all duration-500 py-5 px-12 rounded-[1.2rem]
+         border border-white/10 uppercase tracking-widest text-[13px];
+}
+
+.glass-island {
+  @apply bg-black/20 backdrop-blur-[20px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)];
+}
+
+.glow-orb {
+  @apply absolute blur-[130px] rounded-full opacity-30 pointer-events-none;
 }
 
 .gradient-text {
-  @apply text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-primary-light;
+  @apply text-transparent bg-clip-text bg-gradient-to-br from-white via-[#2563EB] to-[#EF4444];
 }
 
 .accent-gradient {
-  @apply bg-gradient-to-r from-primary via-indigo-400 to-accent-cyan;
+  @apply bg-gradient-to-r from-[#2563EB] via-accent-glow to-[#EF4444];
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Minimal Tech Style */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-[#020617];
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full border-2 border-[#020617];
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-white/20;
+  @apply bg-white/10 rounded-full hover:bg-primary/50 transition-colors;
 }
 
 /* Subtle Micro-animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-15px) rotate(1deg); }
+  66% { transform: translateY(5px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
 }
 
-.animate-float {
+@keyframes pulse-glow {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+  100% { opacity: 0.3; transform: scale(1); }
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-medium {
   animation: float 6s ease-in-out infinite;
 }
+
+.animate-glow {
+  animation: pulse-glow 10s ease-in-out infinite alternate;
+}
+
+
+
+
+

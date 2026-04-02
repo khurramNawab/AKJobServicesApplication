@@ -89,35 +89,20 @@ const EditRecruiterProfileScreen = ({ navigation }) => {
                 type: file.mimeType || 'image/jpeg',
             });
 
-            const token = await AsyncStorage.getItem('userToken');
-            const apiUrl = `${api.defaults.baseURL}/recruiters/me/logo`;
-
-            const res = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
+            const res = await api.put('/recruiters/me/logo', formData, {
+                timeout: 120000, // 2 minutes
             });
 
-
-            const textData = await res.text();
-            let data;
-            try {
-                data = JSON.parse(textData);
-            } catch (err) {
-                throw new Error('Server returned an invalid response.');
-            }
-
-            if (data.success) {
+            if (res.data.success) {
                 Alert.alert('Success', 'Logo uploaded successfully!');
-                setForm(prev => ({ ...prev, companyLogo: data.data.companyLogo }));
+                setForm(prev => ({ ...prev, companyLogo: res.data.data.companyLogo }));
             } else {
-                throw new Error(data.message || 'Error uploading logo');
+                throw new Error(res.data.message || 'Error uploading logo');
             }
         } catch (error) {
             console.error('Upload Error:', error);
-            Alert.alert('Upload Failed', 'Failed to upload logo.');
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to upload logo.';
+            Alert.alert('Upload Failed', errorMsg);
         } finally {
             setSaving(false);
         }

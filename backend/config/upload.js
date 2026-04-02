@@ -1,72 +1,88 @@
 import multer from "multer";
-import { storage } from "./firebase.js";
-import { getDownloadURL } from "firebase-admin/storage";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import "./cloudinary.js";
 
-// Multer Memory Storage Configuration
-const memoryStorage = multer.memoryStorage();
+// ─── Cloudinary Storage ────────────────────────────────────────────────────────
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const isResume = file.fieldname === "resume";
 
-/**
- * File Filter Configuration for Security
- */
+    const folder = isResume ? "jobportal/resumes" : "jobportal/avatars";
+
+    // Sanitize: strip extension + special chars from original filename
+    const baseName = file.originalname
+      .replace(/\.[^.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .slice(0, 60); // max 60 chars
+
+    const public_id = `${Date.now()}-${baseName}`;
+
+    if (isResume) {
+      return {
+        folder,
+        resource_type: "raw",   // raw = store as-is (PDF/DOCX binary)
+        public_id,
+        // ⚠️  Do NOT set format:'pdf' here — it forces re-encoding which
+        //     (a) breaks DOCX files and (b) is not available on free Cloudinary plans.
+        //     The URL returned will still work for Google Docs Viewer.
+      };
+    }
+
+    // Images (avatar / logo / photo)
+    return {
+      folder,
+      resource_type: "auto",
+      public_id,
+      transformation: [
+        { width: 800, height: 800, crop: "limit" }, // resize large images
+        { quality: "auto:good" },
+        { fetch_format: "auto" },
+      ],
+    };
+  },
+});
+
+// ─── File Filter ───────────────────────────────────────────────────────────────
 const fileFilter = (req, file, cb) => {
-  console.log("MULTER RECEIVED FILE:", file.fieldname, file.mimetype, file.originalname);
-  
+  console.log("MULTER FILE:", file.fieldname, file.mimetype, file.originalname);
+
   if (file.fieldname === "resume") {
     const allowed = [
       "application/pdf",
       "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
-    return allowed.includes(file.mimetype)
-      ? cb(null, true)
-      : cb(new Error("Only PDF, DOC, DOCX allowed for resume"), false);
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    return cb(new Error("Only PDF, DOC, or DOCX files are allowed for resume."), false);
   }
 
-  if (file.fieldname === "avatar" || file.fieldname === "logo" || file.fieldname === "photo") {
-    const allowed = ["image/jpeg", "image/png", "image/jpg"];
-    return allowed.includes(file.mimetype)
-      ? cb(null, true)
-      : cb(new Error("Only JPG, JPEG, PNG allowed for images"), false);
+  if (["avatar", "logo", "photo"].includes(file.fieldname)) {
+    const allowed = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+      "image/heic",
+      "image/heif",
+    ];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    return cb(new Error("Only JPG, PNG, WEBP, or HEIC images are allowed."), false);
   }
 
-  cb(new Error(`Unexpected field name: ${file.fieldname || 'undefined'}`), false);
+  cb(new Error(`Unexpected field: ${file.fieldname}`), false);
 };
 
-// Multer Upload Instance
+// ─── Multer Instance ───────────────────────────────────────────────────────────
+// Global limit: 10MB. Per-field size validation is done in the controller.
+// (Multer's global limit must be >= the largest file type you accept.)
 const upload = multer({
-  storage: memoryStorage,
+  storage,
   fileFilter,
   limits: {
-    fileSize: 250 * 1024, // 250KB limit for industrial storage optimization
+    fileSize: 10 * 1024 * 1024, // 10 MB hard cap — controller enforces stricter limits
   },
 });
-
-/**
- * Utility Function for Firebase Storage Upload
- * @param {Object} file - The file object from Multer memoryStorage
- * @param {String} folder - Target folder in Firebase Storage bucket
- */
-export const uploadToFirebase = async (file, folder) => {
-  try {
-    const fileName = `${folder}/${Date.now()}-${file.originalname}`;
-    const fileRef = storage.file(fileName);
-
-    await fileRef.save(file.buffer, {
-      metadata: {
-        contentType: file.mimetype,
-      },
-    });
-
-    // Make the file publicly accessible and get the signed URL
-    // (In Firebase Admin, you usually get a signed URL or make the public bucket perm public)
-    await fileRef.makePublic();
-    const publicUrl = `https://storage.googleapis.com/${process.env.FIREBASE_STORAGE_BUCKET}/${fileName}`;
-    
-    return publicUrl;
-  } catch (error) {
-    console.error("Firebase Storage Upload Error:", error);
-    throw error;
-  }
-};
 
 export default upload;

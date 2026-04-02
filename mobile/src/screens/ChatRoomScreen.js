@@ -6,6 +6,7 @@ import {
     FlatList,
     TextInput,
     TouchableOpacity,
+    ScrollView,
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
@@ -13,16 +14,29 @@ import {
     Image,
     Linking,
     Keyboard,
-    ScrollView,
-    Animated
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import Animated, { 
+    FadeInDown, 
+    Layout, 
+    SlideInRight, 
+    SlideInLeft 
+} from 'react-native-reanimated';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
+
+// Premium Components
 import ScreenWrapper from '../components/ScreenWrapper';
+import EliteGradient from '../components/EliteGradient';
+import * as Haptics from 'expo-haptics';
+
+const { width } = Dimensions.get('window');
 
 const ChatRoomScreen = ({ route, navigation }) => {
     const { conversationId, otherUser } = route.params;
@@ -34,70 +48,16 @@ const ChatRoomScreen = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const [inputText, setInputText] = useState('');
     const [sending, setSending] = useState(false);
+    const [attachments, setAttachments] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const flatListRef = useRef();
-    const inputRef = useRef();
-
-    const EMOJIS = [
-        // Faces & Emotions
-        '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
-        '😋','😎','😍','🥰','😘','🥲','😐','😑','😶','🤔',
-        '😏','😒','🙄','😬','🤥','😔','😪','🤤','😴','😷',
-        '🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🥳',
-        '😭','😢','😤','😠','😡','🤬','😈','👿','💀','☠️',
-        '😫','😩','😯','😲','😱','🤯','😳','🥺','😦','😧',
-        '😨','🤗','🫡','🤭','🫢','🤫','😶‍🌫️','😬','😙','😚',
-
-        // Gestures & Hands
-        '👋','🤚','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌',
-        '🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆',
-        '🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜',
-        '👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳',
-
-        // People
-        '🧑','👦','👧','🧔','👱','🧑‍🦰','🧑‍🦱','🧑‍🦳','🧑‍🦲','👴',
-        '👵','🧓','👶','🧒','🧑‍💻','🧑‍🎨','🧑‍🍳','🧑‍🚀','🧑‍⚕️','💃',
-
-        // Animals & Nature
-        '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
-        '🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧',
-        '🐦','🦆','🦅','🦉','🦇','🐝','🦋','🐛','🐌','🐞',
-        '🐜','🦟','🦗','🐢','🐍','🦎','🦖','🦕','🐙','🦑',
-        '🌸','🌺','🌻','🌹','🌷','🌼','💐','🍀','🌿','🌱',
-
-        // Food & Drink
-        '🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🍳','🧇',
-        '🥞','🧈','🍞','🥐','🥖','🥨','🧀','🥗','🥙','🌮',
-        '🌯','🫔','🥪','🍝','🍜','🍲','🍛','🍣','🍱','🍤',
-        '🍙','🍘','🍥','🥮','🧁','🎂','🍰','🍩','🍪','🍫',
-        '☕','🫖','🧃','🍺','🍻','🥂','🍷','🥃','🧋','🍹',
-
-        // Activities & Sports
-        '⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🏓','🏸',
-        '🥊','🥋','🎯','⛳','🎮','🕹️','🎲','🧩','🎨','🖌️',
-        '🎭','🎪','🎤','🎧','🎵','🎶','🎸','🎹','🎺','🎻',
-        '🏋️','🤸','🤼','🤺','🏇','⛷️','🏂','🪂','🏊','🚴',
-
-        // Travel & Places
-        '🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🛻',
-        '🚜','🏍️','🛵','🚲','✈️','🚀','🛸','🚁','⛵','🚢',
-        '🌍','🌎','🌏','🗺️','🏔️','🌋','🗻','🏕️','🏖️','🏝️',
-        '🌆','🌇','🌃','🌉','🗼','🗽','🏰','🏯','🕌','⛩️',
-
-        // Objects & Symbols
-        '💡','🔦','🕯️','💰','💳','💎','🔑','🗝️','🔒','🔓',
-        '🔨','🪓','🔧','🔩','⚙️','🗃️','📦','📫','📱','💻',
-        '⌚','📷','📹','🎥','📺','📡','🔭','🔬','💊','🩹',
-        '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔',
-        '💯','🔥','✨','⭐','🌟','💫','🎉','🎊','🎁','🎀',
-    ];
-
     const [convId, setConvId] = useState(conversationId);
+
+    const flatListRef = useRef();
 
     useEffect(() => {
         if (convId) {
             fetchMessages();
-            const interval = setInterval(fetchMessages, 5000);
+            const interval = setInterval(fetchMessages, 4000);
             return () => clearInterval(interval);
         } else if (otherUser?._id) {
             initConversation();
@@ -116,7 +76,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 setLoading(false);
             }
         } catch (error) {
-            console.error('Init conversation error:', error);
+            console.error('Init conv error:', error);
             setLoading(false);
         }
     };
@@ -128,175 +88,247 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 setMessages(res.data.data);
             }
         } catch (error) {
-            console.error('Error fetching messages:', error);
+            console.error('Fetch messages error:', error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleSend = async () => {
-        if (!inputText.trim()) return;
+        if (!inputText.trim() && attachments.length === 0) return;
+
+        const textToSend = inputText.trim();
+        const attachmentsToSend = [...attachments];
+        
+        setInputText('');
+        setAttachments([]);
 
         try {
             setSending(true);
-            const textToSend = inputText.trim();
-            setInputText(''); // Optimistic clear
-
             const res = await api.post('/chat/send', {
                 receiverId: otherUser._id,
-                text: textToSend
+                text: textToSend,
+                attachments: attachmentsToSend
             });
 
             if (res.data.success) {
-                const newMsg = res.data.data;
                 if (!convId) {
-                    setConvId(newMsg.conversationId);
+                    setConvId(res.data.data.conversationId);
                 } else {
                     fetchMessages();
                 }
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
-            Alert.alert('Error', 'Failed to send message.');
+            console.error('Send error:', error);
+            Alert.alert('Error', 'Message failed to send.');
         } finally {
             setSending(false);
         }
     };
 
-    const MessageItem = ({ item, index }) => {
-        const isMyMessage = item.senderId === user._id;
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 1,
+        });
 
-        // Bouncy entrance animation for messages
-        const scale = React.useRef(new Animated.Value(0.8)).current;
-        const opacity = React.useRef(new Animated.Value(0)).current;
+        if (!result.canceled) {
+            // For now, we mock the upload or wait for user to confirm backend storage
+            // In a real app, we'd upload to Cloudinary/S3 here
+            setAttachments([...attachments, {
+                url: result.assets[0].uri,
+                fileType: 'IMAGE',
+                fileName: result.assets[0].fileName || 'image.jpg'
+            }]);
+        }
+    };
+
+    const pickDocument = async () => {
+        try {
+            const res = await DocumentPicker.getDocumentAsync({
+                type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            });
+
+            if (!res.canceled) {
+                setAttachments([...attachments, {
+                    url: res.assets[0].uri,
+                    fileType: 'DOCUMENT',
+                    fileName: res.assets[0].name
+                }]);
+            }
+        } catch (err) {
+            console.error('Doc pick error:', err);
+        }
+    };
+
+    const handleEmojiPick = (emoji) => {
+        setInputText(prev => prev + emoji);
+    };
+    
+    const handleCall = () => {
+        if (!otherUser?.phoneNumber) {
+            Alert.alert('Not Available', 'This user has not listed a public phone number.');
+            return;
+        }
         
-        React.useEffect(() => {
-            Animated.parallel([
-                Animated.spring(scale, {
-                    toValue: 1,
-                    friction: 6,
-                    tension: 40,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(opacity, {
-                    toValue: 1,
-                    duration: 250,
-                    useNativeDriver: true,
-                })
-            ]).start();
-        }, []);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        const cleanNumber = otherUser.phoneNumber.replace(/[()\-\s]/g, '');
+        
+        Alert.alert(
+            'Professional Call',
+            `Start a direct voice call with ${otherUser.name}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                    text: 'Call Now', 
+                    onPress: () => Linking.openURL(`tel:${cleanNumber}`),
+                    style: 'default'
+                }
+            ]
+        );
+    };
+
+    const renderMessage = ({ item, index }) => {
+        const isMe = item.senderId === user._id;
+        const prevMsg = index < messages.length - 1 ? messages[index + 1] : null;
+        const nextMsg = index > 0 ? messages[index - 1] : null;
+        
+        // Grouping logic (messages are in desc order)
+        const isSameAsPrev = prevMsg && prevMsg.senderId === item.senderId;
+        const isSameAsNext = nextMsg && nextMsg.senderId === item.senderId;
+        
+        const showAvatar = !isMe && !isSameAsNext;
 
         return (
-            <Animated.View style={[
-                styles.messageContainer,
-                isMyMessage ? styles.myMessageContainer : styles.theirMessageContainer,
-                { opacity, transform: [{ scale }] }
-            ]}>
-                <View style={[
-                    styles.messageBubble,
-                    isMyMessage ?
-                        [styles.myMessage, { backgroundColor: COLORS.primary }, SHADOWS.soft] :
-                        [styles.theirMessage, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, SHADOWS.soft]
-                ]}>
-                    {item.attachments?.map((attachment, idx) => (
-                        <TouchableOpacity
-                            key={idx}
-                            style={styles.attachmentPreview}
-                            onPress={() => Linking.openURL(attachment.url)}
-                        >
-                            {attachment.fileType === 'IMAGE' ? (
-                                <Image source={{ uri: attachment.url }} style={styles.messageImage} />
-                            ) : (
-                                <View style={styles.documentBox}>
-                                    <Ionicons name="document-text" size={24} color={isMyMessage ? '#FFFFFF' : COLORS.primary} />
-                                    <Text style={[styles.fileName, { color: isMyMessage ? '#FFFFFF' : COLORS.textPrimary }]} numberOfLines={1}>
-                                        {attachment.fileName || 'Document'}
+            <Animated.View 
+                entering={isMe ? SlideInRight.springify() : SlideInLeft.springify()}
+                layout={Layout.springify()}
+                style={[
+                    styles.msgWrapper,
+                    isMe ? styles.myMsgWrapper : styles.theirMsgWrapper,
+                    isSameAsNext && { marginBottom: 2 }
+                ]}
+            >
+                {!isMe && (
+                    <View style={styles.avatarSpace}>
+                        {showAvatar && (
+                            <View style={[styles.miniAvatar, { backgroundColor: COLORS.primary + '20' }]}>
+                                {otherUser?.avatar || otherUser?.profilePhoto ? (
+                                    <Image source={{ uri: otherUser.avatar || otherUser.profilePhoto }} style={styles.miniAvatarImg} />
+                                ) : (
+                                    <Text style={[styles.miniAvatarTxt, { color: COLORS.primary }]}>
+                                        {otherUser?.name?.charAt(0).toUpperCase()}
                                     </Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                    ))}
+                                )}
+                            </View>
+                        )}
+                    </View>
+                )}
 
-                    {item.text ? (
-                        <Text style={[
-                            styles.messageText,
-                            isMyMessage ? { color: '#FFFFFF' } : { color: COLORS.textPrimary }
-                        ]}>
-                            {item.text}
-                        </Text>
-                    ) : null}
-
+                <View style={[
+                    styles.bubble,
+                    isMe ? 
+                        { 
+                            backgroundColor: COLORS.primary, 
+                            borderTopRightRadius: isSameAsNext ? 4 : 20,
+                            borderBottomRightRadius: isSameAsPrev ? 4 : 20
+                        } : 
+                        { 
+                            backgroundColor: COLORS.surface, 
+                            borderColor: COLORS.border, 
+                            borderWidth: 1,
+                            borderTopLeftRadius: isSameAsNext ? 4 : 20,
+                            borderBottomLeftRadius: isSameAsPrev ? 4 : 20
+                        }
+                ]}>
                     <Text style={[
-                        styles.messageTime,
-                        isMyMessage ? { color: 'rgba(255, 255, 255, 0.7)' } : { color: COLORS.textTertiary }
+                        styles.msgText,
+                        { color: isMe ? '#FFF' : COLORS.textPrimary }
                     ]}>
-                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {item.text}
                     </Text>
+
+                    {item.attachments && item.attachments.length > 0 && (
+                        <View style={styles.msgAttachments}>
+                            {item.attachments.map((file, i) => (
+                                <View key={i} style={styles.msgFileWrapper}>
+                                    {file.fileType === 'IMAGE' ? (
+                                        <TouchableOpacity onPress={() => Linking.openURL(file.url)}>
+                                            <Image source={{ uri: file.url }} style={styles.msgImage} />
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <TouchableOpacity 
+                                            style={[styles.msgDoc, { backgroundColor: isMe ? 'rgba(255,255,255,0.1)' : COLORS.backgroundSecondary }]}
+                                            onPress={() => Linking.openURL(file.url)}
+                                        >
+                                            <Ionicons name="document-text" size={24} color={isMe ? '#FFF' : COLORS.primary} />
+                                            <Text style={[styles.msgDocText, { color: isMe ? '#FFF' : COLORS.textPrimary }]} numberOfLines={1}>
+                                                {file.fileName || 'Document'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                    
+                    <View style={styles.msgFooter}>
+                        <Text style={[
+                            styles.timeText,
+                            { color: isMe ? 'rgba(255,255,255,0.7)' : COLORS.textTertiary }
+                        ]}>
+                            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                        {isMe && (
+                            <Ionicons 
+                                name={item.isRead ? "checkmark-done" : "checkmark"} 
+                                size={14} 
+                                color={item.isRead ? "#A5B4FC" : "rgba(255,255,255,0.5)"} 
+                                style={styles.statusIcon} 
+                            />
+                        )}
+                    </View>
                 </View>
             </Animated.View>
         );
     };
 
-    const renderMessage = ({ item, index }) => {
-        return <MessageItem item={item} index={index} />;
-    };
-
     return (
-        <ScreenWrapper>
+        <ScreenWrapper bottom={false}>
+            {/* Header */}
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
-                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
-                    <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                    <Ionicons name="chevron-back" size={26} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-
-                <View style={styles.headerProfile}>
-                    <View style={[styles.avatarBox, { backgroundColor: COLORS.primary + '15' }]}>
-                        {otherUser?.avatar ? (
-                            <Image source={{ uri: otherUser.avatar }} style={styles.avatarImg} />
+                
+                <View style={styles.headerInfo}>
+                    <View style={[styles.avatar, { backgroundColor: COLORS.primary + '20' }]}>
+                        {otherUser?.avatar || otherUser?.profilePhoto ? (
+                            <Image source={{ uri: otherUser.avatar || otherUser.profilePhoto }} style={styles.avatarImg} />
                         ) : (
-                            <Text style={[styles.avatarInitial, { color: COLORS.primary }]}>
+                            <Text style={[styles.avatarTxt, { color: COLORS.primary }]}>
                                 {otherUser?.name?.charAt(0).toUpperCase()}
                             </Text>
                         )}
-                        <View style={styles.onlineStatus} />
+                        <View style={styles.onlineDot} />
                     </View>
-                    <View style={styles.headerInfo}>
+                    <View>
                         <Text style={[styles.headerName, { color: COLORS.textPrimary }]} numberOfLines={1}>
                             {otherUser?.name}
                         </Text>
-                        <Text style={[styles.headerStatus, { color: COLORS.secondary }]}>Active now</Text>
+                        <Text style={[styles.statusTxt, { color: COLORS.success }]}>Online</Text>
                     </View>
                 </View>
 
-                <TouchableOpacity
-                    style={styles.headerAction}
-                    onPress={() => {
-                        const phone = otherUser?.phoneNumber || otherUser?.userId?.phoneNumber || otherUser?.candidateId?.phoneNumber;
-                        if (phone) {
-                            let cleanPhone = phone.toString().replace(/[^0-9+]/g, '');
-                            // Indian standard enforcement
-                            if (cleanPhone.length === 10) {
-                                cleanPhone = '+91' + cleanPhone;
-                            } else if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
-                                cleanPhone = '+' + cleanPhone;
-                            } else if (cleanPhone.length > 10 && !cleanPhone.startsWith('+')) {
-                                cleanPhone = '+' + cleanPhone;
-                            }
-                            Linking.openURL(`tel:${cleanPhone}`);
-                        } else {
-                            Alert.alert('No Number', 'This user has not provided a mobile number.');
-                        }
-                    }}
-                >
+                <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
                     <Ionicons name="call-outline" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
             </View>
 
             {loading ? (
-                <View style={styles.centerContainer}>
+                <View style={styles.center}>
                     <ActivityIndicator size="large" color={COLORS.primary} />
                 </View>
             ) : (
@@ -305,128 +337,112 @@ const ChatRoomScreen = ({ route, navigation }) => {
                     data={messages}
                     keyExtractor={(item) => item._id}
                     renderItem={renderMessage}
-                    contentContainerStyle={styles.messageList}
+                    contentContainerStyle={styles.listContent}
                     onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                     showsVerticalScrollIndicator={false}
                 />
             )}
 
-            <KeyboardAvoidingView
+            <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : null}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <View style={[styles.inputArea, { backgroundColor: COLORS.surface, borderTopColor: COLORS.border }]}>
-                    <TouchableOpacity
-                        style={styles.attachBtn}
-                        onPress={async () => {
-                            try {
-                                const result = await DocumentPicker.getDocumentAsync({
-                                    type: '*/*',
-                                    copyToCacheDirectory: true
-                                });
-
-                                if (!result.canceled) {
-                                    const asset = result.assets[0];
-                                    setSending(true);
-
-                                    // Normally we would upload to Firebase/Cloudinary here.
-                                    // For now, I will use a placeholder logic.
-                                    const isImage = asset.mimeType?.startsWith('image/');
-
-                                    const res = await api.post('/chat/send', {
-                                        receiverId: otherUser._id,
-                                        text: '',
-                                        attachments: [{
-                                            url: asset.uri, // In real app, this would be the https url
-                                            fileType: isImage ? 'IMAGE' : 'DOCUMENT',
-                                            fileName: asset.name
-                                        }]
-                                    });
-
-                                    if (res.data.success) {
-                                        fetchMessages();
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Attachment error:', error);
-                                Alert.alert('Error', 'Failed to attach file.');
-                            } finally {
-                                setSending(false);
-                            }
-                        }}
-                    >
-                        <Ionicons name="add-circle" size={28} color={COLORS.primary} />
-                    </TouchableOpacity>
-
-                    <View style={[styles.inputWrapper, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
-                        <TextInput
-                            ref={inputRef}
-                            style={[styles.input, { color: COLORS.textPrimary, maxHeight: 100 }]}
-                            placeholder="Message..."
-                            placeholderTextColor={COLORS.textTertiary}
-                            value={inputText}
-                            onChangeText={setInputText}
-                            multiline
-                        />
-                        <TouchableOpacity
-                            style={styles.emojiBtn}
-                            onPress={() => {
-                                Keyboard.dismiss();
-                                setShowEmojiPicker(prev => !prev);
-                            }}
-                        >
-                            <Ionicons
-                                name={showEmojiPicker ? 'happy' : 'happy-outline'}
-                                size={22}
-                                color={showEmojiPicker ? COLORS.primary : COLORS.textTertiary}
-                            />
+                <BlurView 
+                    intensity={Platform.OS === 'ios' ? 80 : 100} 
+                    tint={isDarkMode ? 'dark' : 'light'} 
+                    style={styles.inputContainer}
+                >
+                    {attachments.length > 0 && (
+                        <View style={styles.attachmentPreview}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                {attachments.map((file, i) => (
+                                    <View key={i} style={styles.previewItem}>
+                                        {file.fileType === 'IMAGE' ? (
+                                            <Image source={{ uri: file.url }} style={styles.previewImg} />
+                                        ) : (
+                                            <View style={[styles.previewDoc, { backgroundColor: COLORS.primary + '15' }]}>
+                                                <Ionicons name="document-text" size={24} color={COLORS.primary} />
+                                            </View>
+                                        )}
+                                        <TouchableOpacity 
+                                            style={styles.removeBtn} 
+                                            onPress={() => setAttachments(attachments.filter((_, idx) => idx !== i))}
+                                        >
+                                            <Ionicons name="close-circle" size={20} color={COLORS.danger} />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+                    
+                    <View style={styles.inputArea}>
+                        <TouchableOpacity style={styles.plusBtn} onPress={pickImage}>
+                            <Ionicons name="image-outline" size={26} color={COLORS.primary} />
                         </TouchableOpacity>
-                    </View>
+                        
+                        <TouchableOpacity style={styles.plusBtn} onPress={pickDocument}>
+                            <Ionicons name="document-attach-outline" size={26} color={COLORS.primary} />
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.sendButton,
-                            { backgroundColor: COLORS.primary },
-                            (!inputText.trim() || sending) && { opacity: 0.6 }
-                        ]}
-                        onPress={handleSend}
-                        disabled={sending || !inputText.trim()}
-                    >
-                        {sending ? (
-                            <ActivityIndicator size="small" color="#FFFFFF" />
-                        ) : (
-                            <Ionicons name="send" size={20} color="#FFFFFF" />
-                        )}
-                    </TouchableOpacity>
-                </View>
-            </KeyboardAvoidingView>
-
-            {/* Emoji Picker Panel */}
-            {showEmojiPicker && (
-                <View style={[styles.emojiPanel, { backgroundColor: COLORS.surface, borderTopColor: COLORS.border }]}>
-                    <ScrollView contentContainerStyle={styles.emojiGrid} showsVerticalScrollIndicator={false}>
-                        {EMOJIS.map((emoji, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.emojiCell}
+                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.backgroundSecondary, borderColor: COLORS.border }]}>
+                            <TextInput
+                                style={[styles.input, { color: COLORS.textPrimary }]}
+                                placeholder="Message..."
+                                placeholderTextColor={COLORS.textTertiary}
+                                value={inputText}
+                                onChangeText={setInputText}
+                                multiline
+                                maxHeight={100}
+                                onFocus={() => setShowEmojiPicker(false)}
+                            />
+                            <TouchableOpacity 
+                                style={styles.emojiBtn} 
                                 onPress={() => {
-                                    setInputText(prev => prev + emoji);
+                                    Keyboard.dismiss();
+                                    setShowEmojiPicker(true);
                                 }}
                             >
-                                <Text style={styles.emojiChar}>{emoji}</Text>
+                                <Ionicons name="happy-outline" size={24} color={COLORS.textTertiary} />
                             </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-            )}
+                        </View>
+
+                        <TouchableOpacity 
+                            style={[styles.sendBtn, { backgroundColor: COLORS.primary, opacity: (inputText.trim() || attachments.length > 0) ? 1 : 0.6 }]}
+                            onPress={handleSend}
+                            disabled={(!inputText.trim() && attachments.length === 0) || sending}
+                        >
+                            <Ionicons name="send" size={20} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
+                </BlurView>
+
+                {/* Custom Elite Emoji Picker (Crash-Proof) */}
+                {showEmojiPicker && (
+                    <View style={[styles.emojiPickerContainer, { backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border }]}>
+                        <ScrollView 
+                            horizontal={false} 
+                            contentContainerStyle={styles.emojiGrid}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'].map((emoji, i) => (
+                                <TouchableOpacity 
+                                    key={i} 
+                                    style={styles.emojiItem}
+                                    onPress={() => handleEmojiPick(emoji)}
+                                >
+                                    <Text style={styles.emojiText}>{emoji}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
+            </KeyboardAvoidingView>
         </ScreenWrapper>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -438,15 +454,14 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         justifyContent: 'center',
-        alignItems: 'center',
     },
-    headerProfile: {
+    headerInfo: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 8,
+        gap: 12,
     },
-    avatarBox: {
+    avatar: {
         width: 44,
         height: 44,
         borderRadius: 15,
@@ -459,11 +474,11 @@ const styles = StyleSheet.create({
         height: '100%',
         borderRadius: 15,
     },
-    avatarInitial: {
+    avatarTxt: {
         fontSize: 18,
         fontWeight: '800',
     },
-    onlineStatus: {
+    onlineDot: {
         position: 'absolute',
         bottom: -2,
         right: -2,
@@ -472,158 +487,215 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: '#10B981',
         borderWidth: 2,
-        borderColor: '#FFFFFF',
-    },
-    headerInfo: {
-        marginLeft: 12,
-        flex: 1,
+        borderColor: '#FFF',
     },
     headerName: {
         fontSize: 16,
         fontWeight: '800',
-        letterSpacing: -0.3,
+        maxWidth: 150,
     },
-    headerStatus: {
+    statusTxt: {
         fontSize: 12,
         fontWeight: '600',
-        marginTop: 1,
     },
-    headerAction: {
+    callBtn: {
         width: 40,
         height: 40,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    messageList: {
-        padding: 20,
-        paddingBottom: 30,
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    messageContainer: {
-        marginBottom: 12,
+    listContent: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 24,
+    },
+    msgWrapper: {
+        flexDirection: 'row',
+        marginBottom: 8,
         maxWidth: '85%',
     },
-    myMessageContainer: {
+    myMsgWrapper: {
         alignSelf: 'flex-end',
     },
-    theirMessageContainer: {
+    theirMsgWrapper: {
         alignSelf: 'flex-start',
     },
-    messageBubble: {
+    avatarSpace: {
+        width: 38,
+        justifyContent: 'flex-end',
+        paddingBottom: 2,
+    },
+    miniAvatar: {
+        width: 30,
+        height: 30,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    miniAvatarImg: {
+        width: '100%',
+        height: '100%',
+    },
+    miniAvatarTxt: {
+        fontSize: 12,
+        fontWeight: '900',
+    },
+    bubble: {
         paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 24,
+        paddingVertical: 10,
+        borderRadius: 20,
+        ...SHADOWS.low,
     },
-    myMessage: {
-        borderBottomRightRadius: 4,
-        ...SHADOWS.soft,
-    },
-    theirMessage: {
-        borderBottomLeftRadius: 4,
-        borderWidth: 1,
-    },
-    messageText: {
+    msgText: {
         fontSize: 15,
         lineHeight: 22,
         fontWeight: '500',
     },
-    messageTime: {
-        fontSize: 10,
+    msgAttachments: {
+        marginTop: 8,
+        gap: 8,
+    },
+    msgFileWrapper: {
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    msgImage: {
+        width: 200,
+        height: 150,
+        borderRadius: 12,
+        resizeMode: 'cover',
+    },
+    msgDoc: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        gap: 10,
+        minWidth: 180,
+    },
+    msgDocText: {
+        fontSize: 14,
         fontWeight: '600',
+        flex: 1,
+    },
+    msgFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
         marginTop: 4,
-        alignSelf: 'flex-end',
+        gap: 4,
+    },
+    timeText: {
+        fontSize: 10,
+        fontWeight: '700',
+    },
+    statusIcon: {
+        marginLeft: 2,
+    },
+    inputContainer: {
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        backgroundColor: 'rgba(255,255,255,0.7)',
+    },
+    attachmentPreview: {
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.05)',
+    },
+    previewItem: {
+        width: 60,
+        height: 60,
+        marginRight: 12,
+        borderRadius: 12,
+        overflow: 'visible',
+    },
+    previewImg: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+    },
+    previewDoc: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    removeBtn: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: '#FFF',
+        borderRadius: 10,
     },
     inputArea: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderTopWidth: 1,
+        paddingTop: 12,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 12,
     },
-    attachBtn: {
-        width: 44,
-        height: 44,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 8,
+    plusBtn: {
+        marginRight: 12,
     },
     inputWrapper: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
         borderRadius: 24,
         borderWidth: 1,
         paddingHorizontal: 16,
-        minHeight: 52,
+        paddingRight: 4, // More space for emoji btn
+        minHeight: 48,
+        flexDirection: 'row',
+        alignItems: 'center',
         ...SHADOWS.soft,
     },
     input: {
         flex: 1,
         fontSize: 15,
-        fontWeight: '500',
+        fontWeight: '600',
         paddingVertical: 10,
     },
     emojiBtn: {
-        padding: 4,
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    sendButton: {
+    emojiPickerContainer: {
+        height: 280,
+        width: '100%',
+        paddingVertical: 10,
+    },
+    emojiGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: 8,
+        justifyContent: 'center',
+    },
+    emojiItem: {
+        width: width / 8,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emojiText: {
+        fontSize: 28,
+    },
+    sendBtn: {
         width: 48,
         height: 48,
         borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 12,
-        ...SHADOWS.soft,
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    attachmentPreview: {
-        marginBottom: 8,
-        borderRadius: 12,
-        overflow: 'hidden',
-    },
-    messageImage: {
-        width: 200,
-        height: 150,
-        borderRadius: 12,
-    },
-    documentBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        backgroundColor: 'rgba(0,0,0,0.05)',
-        borderRadius: 12,
-        maxWidth: 200,
-    },
-    fileName: {
-        fontSize: 13,
-        fontWeight: '700',
-        marginLeft: 10,
-        flex: 1,
-    },
-    emojiPanel: {
-        height: 250,
-        borderTopWidth: 1,
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-    },
-    emojiGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: 4,
-    },
-    emojiCell: {
-        width: '12.5%',
-        aspectRatio: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emojiChar: {
-        fontSize: 28,
+        ...SHADOWS.premium,
     }
 });
 
 export default ChatRoomScreen;
-

@@ -1,14 +1,14 @@
 import React from 'react';
 
 const Button = ({ children, variant = 'primary', size = 'md', className = '', loading = false, ...props }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#020617]';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark';
   
   const variants = {
-    primary: 'bg-primary text-white hover:bg-primary-dark shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)] hover:shadow-[0_0_30px_-5px_rgba(99,102,241,0.6)] focus:ring-primary',
+    primary: 'bg-[#2563EB] text-white hover:bg-[#1d4ed8] shadow-[0_4px_20px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_8px_30px_-5px_rgba(37,99,235,0.5)] focus:ring-[#2563EB]',
     secondary: 'bg-white/5 text-white hover:bg-white/10 border border-white/10 backdrop-blur-md focus:ring-white/20',
-    cta: 'bg-gradient-to-r from-primary to-indigo-500 text-white hover:opacity-90 shadow-lg shadow-primary/20 focus:ring-primary',
+    cta: 'bg-gradient-to-r from-[#2563EB] to-[#EF4444] text-white hover:scale-[1.03] shadow-lg shadow-[#2563EB]/20 focus:ring-[#2563EB] font-black uppercase tracking-widest text-[12px]',
     ghost: 'bg-transparent text-slate-400 hover:text-white hover:bg-white/5 focus:ring-white/10',
-    danger: 'bg-secondary/10 text-secondary hover:bg-secondary hover:text-white border border-secondary/20 focus:ring-secondary',
+    danger: 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444] hover:text-white border border-[#EF4444]/20 focus:ring-[#EF4444]',
     outline: 'bg-transparent text-white border border-white/20 hover:border-white/40 hover:bg-white/5 focus:ring-white/20',
   };
 

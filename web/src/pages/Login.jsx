@@ -42,12 +42,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-20 bg-[#020617] relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/10 blur-[120px] rounded-full opacity-50" />
+    <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-24 bg-[#020617] relative overflow-hidden">
+      {/* 🌌 Advanced Background System */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
       </div>
+
+      {/* Grid Pattern with Fade */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -55,10 +58,10 @@ const Login = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md z-10"
       >
-        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl font-extrabold tracking-tight">Welcome <span className="gradient-text">Back</span></h1>
-            <p className="text-slate-400 font-medium">Log in to your account to continue</p>
+        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl space-y-8 bg-white/[0.02] backdrop-blur-2xl">
+          <div className="text-center space-y-3">
+            <h1 className="text-4xl font-black tracking-tight text-white">Welcome <span className="gradient-text">Back</span></h1>
+            <p className="text-text-secondary font-medium opacity-80">Log in to your account to continue</p>
           </div>
 
           {error && (

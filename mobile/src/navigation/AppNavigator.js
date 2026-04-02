@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ActivityIndicator, Platform, StyleSheet, StatusBar } from 'react-native';
+import { View, ActivityIndicator, Platform, StyleSheet, StatusBar, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -28,12 +28,16 @@ import ResumeViewerScreen from '../screens/ResumeViewerScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
 import CustomSplashScreen from '../screens/SplashScreen';
+import SavedJobsScreen from '../screens/SavedJobsScreen';
+import InterestSelectionScreen from '../screens/InterestSelectionScreen';
 
 // Ensure splash screen doesn't stay forever
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+import * as Haptics from 'expo-haptics';
 
 const MainTabs = () => {
     const user = useAuthStore((state) => state.user);
@@ -64,6 +68,15 @@ const MainTabs = () => {
                     fontWeight: '700',
                     marginBottom: Platform.OS === 'ios' ? 0 : 8,
                 },
+                tabBarButton: (props) => (
+                    <TouchableOpacity 
+                        {...props} 
+                        onPress={(e) => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            props.onPress?.(e);
+                        }}
+                    />
+                ),
                 tabBarStyle: {
                     height: Platform.OS === 'ios' ? 88 : 68,
                     paddingTop: 10,
@@ -88,14 +101,23 @@ const MainTabs = () => {
 
 const AppNavigator = () => {
     const token = useAuthStore(state => state.token);
+    const user = useAuthStore(state => state.user);
     const isLoading = useAuthStore(state => state.isLoading);
     const loadCredentials = useAuthStore(state => state.loadCredentials);
     
     // We want the SVG animation to play for at least 3.5s 
     const [isSplashAnimationDone, setIsSplashAnimationDone] = React.useState(false);
 
-    const { isDarkMode } = useThemeStore();
+    const { isDarkMode, setRole } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
+    // Sync theme with role
+    useEffect(() => {
+        if (user?.role) {
+            setRole(user.role);
+        }
+    }, [user?.role, setRole]);
+
 
     // 1. Initial Load
     useEffect(() => {
@@ -159,6 +181,8 @@ const AppNavigator = () => {
                         <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
                         <Stack.Screen name="Notifications" component={NotificationsScreen} />
                         <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+                        <Stack.Screen name="SavedJobs" component={SavedJobsScreen} />
+                        <Stack.Screen name="InterestSelection" component={InterestSelectionScreen} />
                         <Stack.Screen 
                             name="ResumeViewer" 
                             component={ResumeViewerScreen} 

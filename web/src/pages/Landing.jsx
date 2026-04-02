@@ -1,218 +1,254 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, Star, TrendingUp, Users, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
+import { Search, MapPin, Briefcase, Star, TrendingUp, Users, ArrowRight, ShieldCheck, Globe, CheckCircle2, ChevronRight, Zap } from 'lucide-react';
 import Button from '../components/ui/Button';
 import HeroIllustration from '../components/HeroIllustration';
 
 const Landing = () => {
   return (
     <div className="w-full relative overflow-hidden bg-[#020617]">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-secondary/5 blur-[100px] rounded-full opacity-30" />
+      {/* 🌌 Advanced Background System */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {/* Main Navy Gradient */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-[#0B3C91]/20 via-transparent to-transparent" />
+
+        {/* Animated Glow Orbs */}
+        <div className="glow-orb top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#2563EB]/20 animate-glow" />
+        <div className="glow-orb bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-[#EF4444]/10 animate-glow" style={{ animationDelay: '-5s' }} />
+        <div className="glow-orb top-[20%] right-[10%] w-[30%] h-[30%] bg-primary/10 animate-glow" style={{ animationDelay: '-2s' }} />
+
+        {/* Subtle Light Flare */}
+        <div className="absolute top-[10%] left-[20%] w-[1px] h-[300px] bg-gradient-to-b from-transparent via-[#2563EB]/40 to-transparent rotate-45" />
       </div>
 
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-0" />
-      
-      {/* Hero Section */}
-      <section className="relative pt-28 pb-24 px-6 z-10">
+      {/* Grid Pattern with Fade */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay pointer-events-none z-0" />
+
+      {/* 🚀 Hero Section */}
+      <section className="relative pt-30 pb-16 px-6 z-10">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 text-left space-y-8">
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <div className="flex-1 text-left space-y-6 lg:space-y-8">
+              {/* Badge - Left Aligned */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest text-primary-light"
+                className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-primary-light shadow-2xl"
               >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                Trusted by 500+ Global Companies
+                <Zap className="w-4 h-4 text-[#EF4444] animate-pulse" />
+                Connecting the World's Elite Talent
               </motion.div>
 
+              {/* Headline - Universal and Impactful */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-6xl md:text-8xl font-extrabold leading-[1.1] tracking-tight"
+                className="text-5xl md:text-7xl font-black leading-[1] tracking-tight"
               >
-                Hire the top <br />
-                <span className="gradient-text">1% Talent</span>
+                The Easiest Way <br />
+                To Land Your <br />
+                <span className="gradient-text">Dream Career.</span>
               </motion.h1>
 
+              {/* Subtext - Focus on Universal Opportunities */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-xl md:text-2xl text-slate-400 max-w-2xl leading-relaxed"
+                className="text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed font-medium opacity-80"
               >
-                The modern job board for the next generation of builders. Connect with pioneers and lead the future of technology.
+                Browse over 100,000+ top jobs in India across all industries. From entry-level roles to executive positions, connect with the world's most trusted companies.
               </motion.p>
 
-              <motion.div 
+              {/* CTAs */}
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="flex flex-wrap gap-5 pt-4"
+                className="flex flex-wrap gap-4 pt-2"
               >
-                <Button size="lg" variant="cta" className="w-auto px-10">
-                  Get Started <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="w-auto px-10">
-                  Post a Job
-                </Button>
-              </motion.div>
-              
-              {/* Trust Badges */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1, duration: 1 }}
-                className="flex items-center gap-8 pt-6 grayscale opacity-50"
-              >
-                <div className="flex items-center gap-2 font-bold text-white/40"><Globe className="w-4 h-4" /> GLOBAL</div>
-                <div className="flex items-center gap-2 font-bold text-white/40"><ShieldCheck className="w-4 h-4" /> VERIFIED</div>
-                <div className="flex items-center gap-2 font-bold text-white/40 font-serif italic text-lg">Fortune 500</div>
+                <button className="btn-power group px-8 py-4">
+                  <span className="flex items-center gap-3">
+                    Scale Your Team <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </button>
+                <button className="px-8 py-4 rounded-[1.2rem] bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all text-sm uppercase tracking-widest">
+                  View Career Paths
+                </button>
               </motion.div>
             </div>
 
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+            {/* Sidebar Cards Illustration - Scaled and Repositioned */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 50 }}
+              animate={{ opacity: 1, scale: 1.1, x: 0 }}
               transition={{ duration: 1 }}
-              className="flex-1 hidden lg:block relative"
+              className="flex-1 hidden lg:flex justify-center items-center relative pl-10 h-[500px]"
             >
-              <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full animate-pulse" />
               <HeroIllustration />
             </motion.div>
           </div>
 
-          {/* Search Island */}
+          {/* 🏝️ The Search Island (Conversion Focused) */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-24 max-w-5xl mx-auto"
+            className="mt-16 max-w-6xl mx-auto"
           >
-            <div className="glass-card p-2 rounded-[2rem] flex flex-col md:flex-row gap-2 shadow-2xl border-white/5 group">
-              <div className="flex-[1.5] relative flex items-center">
-                <Search className="absolute left-6 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+            <div className="glass-island p-3 rounded-[2.5rem] flex flex-col lg:flex-row items-center gap-3 transition-all hover:border-white/20">
+              <div className="flex-1 w-full relative flex items-center">
+                <Search className="absolute left-8 w-6 h-6 text-[#2563EB]" />
                 <input
                   type="text"
-                  placeholder="Design, Engineering, Marketing..."
-                  className="w-full bg-transparent border-none outline-none text-white placeholder:text-slate-600 pl-16 pr-4 py-6 text-lg font-medium"
+                  placeholder="Role, Skill, or Company..."
+                  className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
                 />
               </div>
-              <div className="hidden md:block w-[1px] h-12 self-center bg-white/10" />
-              <div className="flex-1 relative flex items-center">
-                <MapPin className="absolute left-6 w-5 h-5 text-slate-500" />
+
+              <div className="hidden lg:block w-[1px] h-14 bg-white/10" />
+
+              <div className="flex-1 w-full relative flex items-center">
+                <MapPin className="absolute left-8 w-6 h-6 text-[#EF4444]" />
                 <input
                   type="text"
-                  placeholder="Remote, NYC, London"
-                  className="w-full bg-transparent border-none outline-none text-white placeholder:text-slate-600 pl-16 pr-4 py-6 text-lg font-medium"
+                  placeholder="Location (Remote, NYC...)"
+                  className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
                 />
               </div>
-              <Button size="lg" variant="primary" className="md:w-48 rounded-[1.5rem] py-6 shadow-2xl">
-                Search Jobs
-              </Button>
+
+              <button className="btn-power w-full lg:w-auto h-full !py-8 !rounded-[1.8rem] !shadow-none hover:shadow-[0_0_30px_rgba(37,99,235,0.3)]">
+                Search Opportunities
+              </button>
             </div>
-            
-            <div className="flex justify-center gap-6 mt-6">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Popular:</span>
-              {['Remote', 'Product', 'AI', 'JavaScript'].map(tag => (
-                <button key={tag} className="text-xs font-bold text-slate-400 hover:text-primary-light transition-colors">{tag}</button>
+
+            {/* Quick Links - Common Sectors */}
+            <div className="flex flex-wrap justify-center items-center gap-8 mt-10">
+              <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em]">Top Sectors</span>
+              {['Marketing', 'Finance', 'Sales', 'Customer Success', 'Operations', 'Design'].map(tag => (
+                <button key={tag} className="text-xs font-bold text-text-secondary hover:text-primary transition-all flex items-center gap-2 group">
+                  <div className="w-1 h-1 bg-[#2563EB] rounded-full group-hover:scale-150 transition-transform" /> {tag}
+                </button>
               ))}
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 border-y border-white/5 bg-white/[0.01]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            {[
-              { label: 'Active Jobs', value: '12,400+', icon: Briefcase, color: 'text-blue-400' },
-              { label: 'Top Companies', value: '850+', icon: Users, color: 'text-purple-400' },
-              { label: 'Candidates', value: '250k+', icon: Star, color: 'text-amber-400' },
-              { label: 'Successful Hires', value: '45k+', icon: TrendingUp, color: 'text-emerald-400' },
-            ].map((stat, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex flex-col items-center text-center space-y-2"
-              >
-                <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
-                </div>
-                <span className="text-4xl font-black text-white">{stat.value}</span>
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-tighter">{stat.label}</span>
-              </motion.div>
-            ))}
+      {/* 💼 Social Proof / Trust Section - General Corporate */}
+      <section className="py-24 border-y border-white/5 bg-white/[0.01] relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-bg-main via-transparent to-bg-main pointer-events-none z-10" />
+        <div className="max-w-7xl mx-auto px-6 relative z-0">
+          <div className="text-center mb-16">
+            <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em]">Connect with 5,000+ Verified Companies</span>
+          </div>
+          <div className="flex flex-wrap justify-center items-center gap-x-20 gap-y-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-80 transition-all duration-700">
+            <div className="flex items-center gap-3 font-black text-2xl text-white tracking-tighter">ZOMATO</div>
+            <div className="flex items-center gap-3 font-black text-2xl text-white tracking-widest">RELIANCE</div>
+            <div className="flex items-center gap-3 font-bold text-2xl text-white tracking-tight">HDFC BANK</div>
+            <div className="flex items-center gap-3 font-black text-2xl text-white uppercase italic">TATA</div>
+            <div className="flex items-center gap-3 font-black text-2xl text-white">INFOSYS</div>
           </div>
         </div>
       </section>
 
-      {/* Featured Jobs */}
-      <section className="py-32 px-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-          <div className="space-y-4">
-            <h2 className="text-4xl md:text-5xl font-black">Latest <span className="text-primary-light">Openings</span></h2>
-            <p className="text-slate-400 text-lg max-w-xl font-medium line-clamp-2">
-              Don't miss out on your dream job. Handpicked opportunities from the world's most innovative companies.
-            </p>
-          </div>
-          <Button variant="outline" className="w-auto">View All Jobs</Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+      {/* 📊 High-Performance Metrics */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          {[
+            { label: 'Activated Talents', value: '450k+', icon: Users, color: 'text-[#2563EB]' },
+            { label: 'Daily Opportunities', value: '1,200+', icon: Zap, color: 'text-[#EF4444]' },
+            { label: 'Success Rate', value: '98%', icon: Star, color: 'text-amber-400' },
+            { label: 'Avg Salary Peak', value: '45%', icon: TrendingUp, color: 'text-emerald-400' },
+          ].map((stat, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -8 }}
-              className="glass-card p-8 group relative overflow-hidden"
+              className="glass-card p-10 group relative flex flex-col items-center text-center space-y-4"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl group-hover:bg-primary/10 transition-colors" />
-              
-              <div className="flex justify-between items-start mb-6">
-                <div className="w-14 h-14 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner group-hover:border-primary/40 transition-colors">
-                  <span className="text-2xl font-black text-white/50 group-hover:text-primary-light">{String.fromCharCode(64 + i)}</span>
-                </div>
-                <div className="flex gap-1">
-                  <span className="px-3 py-1 bg-primary/10 text-primary-light text-[10px] font-black uppercase tracking-widest rounded-full border border-primary/20">Featured</span>
-                </div>
+              <div className={`p-4 rounded-2xl bg-white/[0.02] border border-white/5 group-hover:border-primary/20 ${stat.color} transition-all`}>
+                <stat.icon className="w-8 h-8" />
               </div>
-
-              <h3 className="text-xl font-bold mb-2 group-hover:text-primary-light transition-colors">Senior Software Engineer</h3>
-              <p className="text-slate-400 text-sm mb-6 font-medium flex items-center gap-2">
-                TechVanguard Ltd <span className="w-1 h-1 bg-slate-600 rounded-full" /> Remote
-              </p>
-              
-              <div className="flex flex-wrap gap-2 mb-8 mt-auto">
-                {['React', 'Go', '₹15L+'].map(tag => (
-                  <span key={tag} className="px-3 py-1 bg-white/5 rounded-lg text-xs font-bold text-slate-300 border border-white/5 group-hover:border-white/10 transition-colors">{tag}</span>
-                ))}
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Posted 2h ago</span>
-                <button className="flex items-center gap-2 text-sm font-bold text-white group/btn">
-                  Apply Now <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                </button>
+              <div>
+                <h4 className="text-4xl font-black text-white">{stat.value}</h4>
+                <p className="text-xs font-black text-text-muted uppercase tracking-widest mt-2">{stat.label}</p>
               </div>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* ⚡ Latest Openings Section */}
+      <section className="py-32 px-6 bg-white/[0.01] relative z-10 border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+            <div className="space-y-4">
+              <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
+                Latest <span className="gradient-text">Openings</span>
+              </h2>
+              <p className="text-xl text-text-secondary max-w-2xl font-medium opacity-80">
+                Don't miss out on your dream job. Handpicked opportunities from the world's most innovative companies.
+              </p>
+            </div>
+            <button className="px-10 py-5 rounded-[1.2rem] bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all text-sm uppercase tracking-widest whitespace-nowrap">
+              View All Jobs
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { id: 1, initial: 'Z', title: 'Senior Marketing Strategist', company: 'Zomato', location: 'Remote', tags: ['Growth', 'Brand', '₹12L+'], posted: '2h ago' },
+              { id: 2, initial: 'R', title: 'Lead Operations Manager', company: 'Reliance', location: 'Mumbai', tags: ['Strategy', 'Lean', '₹18L+'], posted: '4h ago' },
+              { id: 3, initial: 'H', title: 'Financial Analyst', company: 'HDFC Bank', location: 'Delhi', tags: ['Fintech', 'Excel', '₹15L+'], posted: '1h ago' },
+              { id: 4, initial: 'T', title: 'Product Manager', company: 'Tata Group', location: 'Bangalore', tags: ['Agile', 'User Research', '₹22L+'], posted: '5h ago' },
+              { id: 5, initial: 'I', title: 'Strategic HR Lead', company: 'Infosys', location: 'Hyderabad', tags: ['Talent', 'Culture', '₹14L+'], posted: '3h ago' },
+              { id: 6, initial: 'W', title: 'Business Development Executive', company: 'Wipro', location: 'Remote', tags: ['Sales', 'Growth', '₹10L+'], posted: '6h ago' },
+            ].map((job) => (
+              <motion.div
+                key={job.id}
+                whileHover={{ y: -10 }}
+                className="glass-card p-10 group relative overflow-hidden flex flex-col h-full border-white/5 hover:border-[#2563EB]/40 transition-all shadow-2xl"
+              >
+                {/* Header with Featured Badge */}
+                <div className="flex justify-between items-start mb-10">
+                   <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all shadow-inner">
+                      <span className="text-3xl font-black text-white">{job.initial}</span>
+                   </div>
+                   <span className="px-4 py-1.5 bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-full text-[9px] font-black text-[#2563EB] uppercase tracking-[0.2em] shadow-sm">
+                      Featured
+                   </span>
+                </div>
+
+                <div className="space-y-3 mb-10">
+                   <h3 className="text-2xl font-black text-white tracking-tight leading-tight group-hover:text-[#2563EB] transition-colors">{job.title}</h3>
+                   <p className="text-sm font-black text-text-secondary opacity-60 flex items-center gap-2">
+                     {job.company} <span className="w-1.5 h-1.5 bg-white/10 rounded-full" /> {job.location}
+                   </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-10">
+                  {job.tags.map(tag => (
+                    <span key={tag} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-white/50 border border-white/5 uppercase tracking-tighter">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-auto flex items-center justify-between pt-6 border-t border-white/5">
+                  <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">
+                    Posted {job.posted}
+                  </span>
+                  <button className="flex items-center gap-2 text-sm font-black text-white hover:text-[#2563EB] transition-all group/btn">
+                    Apply Now <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+                {/* Decorative Hover Glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/0 to-[#2563EB]/0 group-hover:from-[#2563EB]/5 group-hover:to-transparent pointer-events-none transition-all duration-500" />
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
     </div>

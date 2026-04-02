@@ -1,23 +1,33 @@
 import React from 'react';
-import { View, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useThemeStore } from '../store/useThemeStore';
 import { LIGHT_COLORS, DARK_COLORS } from '../constants/theme';
 
 /**
- * ScreenWrapper provides a consistent layout with proper safe area handling.
- * It prevents UI from overlapping with the status bar and navigation bar.
+ * Premium ScreenWrapper
+ * Handles Safe Areas, Status Bar, and consistent background coloring.
  */
-const ScreenWrapper = ({ children, style, top = true, bottom = true }) => {
+const ScreenWrapper = ({ 
+    children, 
+    style, 
+    top = true, 
+    bottom = true,
+    backgroundColor,
+    statusBarStyle
+}) => {
     const insets = useSafeAreaInsets();
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
+    const bg = backgroundColor || COLORS.background;
 
     return (
         <View style={[
             styles.container, 
             { 
-                backgroundColor: COLORS.background,
+                backgroundColor: bg,
                 paddingTop: top ? insets.top : 0,
                 paddingBottom: bottom ? insets.bottom : 0,
                 paddingLeft: insets.left,
@@ -25,7 +35,11 @@ const ScreenWrapper = ({ children, style, top = true, bottom = true }) => {
             },
             style
         ]}>
-            <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+            <StatusBar 
+                style={statusBarStyle || (isDarkMode ? 'light' : 'dark')} 
+                backgroundColor="transparent"
+                translucent
+            />
             {children}
         </View>
     );

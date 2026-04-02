@@ -6,17 +6,24 @@ import {
     TextInput, 
     ScrollView, 
     TouchableOpacity, 
-    ActivityIndicator, 
     Alert,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
-import ModernButton from '../components/ModernButton';
+
+// Premium Components
 import ScreenWrapper from '../components/ScreenWrapper';
+import PremiumButton from '../components/PremiumButton';
+import PremiumInput from '../components/PremiumInput';
+import EliteGradient from '../components/EliteGradient';
+
+const { width } = Dimensions.get('window');
 
 const CreateJobScreen = ({ navigation }) => {
     const { isDarkMode } = useThemeStore();
@@ -38,10 +45,6 @@ const CreateJobScreen = ({ navigation }) => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const setJobType = (type) => {
-        setFormData({ ...formData, type });
-    };
-
     const handleSubmit = async () => {
         if (!formData.title || !formData.description || !formData.location) {
             Alert.alert('Required Fields', 'Please fill in the Job Title, Description, and Location to continue.');
@@ -50,7 +53,6 @@ const CreateJobScreen = ({ navigation }) => {
 
         try {
             setLoading(true);
-
             const payload = {
                 title: formData.title,
                 description: formData.description,
@@ -68,45 +70,32 @@ const CreateJobScreen = ({ navigation }) => {
             }
 
             const res = await api.post('/jobs', payload);
-
             if (res.data.success) {
                 Alert.alert('Success!', 'Your job posting is now live and visible to candidates.');
                 navigation.goBack();
             }
         } catch (error) {
-            console.log('Error posting job:', error.response?.data?.message || error.message);
-            Alert.alert('Post Failed', error.response?.data?.message || 'Something went wrong while publishing your job.');
+            console.error('Post job error:', error);
+            Alert.alert('Post Failed', 'Something went wrong while publishing your job.');
         } finally {
             setLoading(false);
         }
     };
 
-    const InputField = ({ label, icon, ...props }) => (
-        <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: COLORS.textPrimary }]}>{label}</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
-                <Ionicons name={icon} size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                <TextInput
-                    style={[styles.input, { color: COLORS.textPrimary }]}
-                    placeholderTextColor={COLORS.textTertiary}
-                    {...props}
-                />
-            </View>
-        </View>
-    );
-
     return (
-        <ScreenWrapper>
-            <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
+        <ScreenWrapper bottom={false}>
+            <View style={[styles.header, { borderBottomColor: COLORS.border }]}>
                 <TouchableOpacity 
-                    style={[styles.closeBtn, { backgroundColor: COLORS.background }]} 
+                    style={[styles.headerBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]} 
                     onPress={() => navigation.goBack()}
-                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >
                     <Ionicons name="close" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>New Posting</Text>
-                <View style={{ width: 44 }} />
+                <View style={styles.headerTitleArea}>
+                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Post a Job</Text>
+                    <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>Find your next elite hire</Text>
+                </View>
+                <View style={{ width: 48 }} />
             </View>
 
             <KeyboardAvoidingView 
@@ -117,43 +106,42 @@ const CreateJobScreen = ({ navigation }) => {
                     contentContainerStyle={styles.scrollContent} 
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.section}>
-                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Job Details</Text>
+                    <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Basic Information</Text>
                         
-                        <InputField 
-                            label="Job Title *" 
-                            icon="briefcase-outline"
-                            placeholder="e.g. Senior Software Engineer"
+                        <PremiumInput 
+                            label="Job Title" 
+                            placeholder="e.g. Senior Product Designer"
                             value={formData.title}
                             onChangeText={(text) => handleInputChange('title', text)}
+                            iconLeft={<Ionicons name="briefcase-outline" size={20} color={COLORS.textTertiary} />}
                         />
 
-                        <InputField 
-                            label="Location *" 
-                            icon="location-outline"
-                            placeholder="e.g. Remote or New York, NY"
+                        <PremiumInput 
+                            label="Location" 
+                            placeholder="e.g. Remote or San Francisco, CA"
                             value={formData.location}
                             onChangeText={(text) => handleInputChange('location', text)}
+                            iconLeft={<Ionicons name="location-outline" size={20} color={COLORS.textTertiary} />}
                         />
 
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Type</Text>
-                            <View style={styles.typeSwitcher}>
+                        <View style={styles.typeContainer}>
+                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Employment Type</Text>
+                            <View style={styles.typeGrid}>
                                 {['Full-time', 'Part-time', 'Contract', 'Internship'].map((type) => (
                                     <TouchableOpacity
                                         key={type}
                                         style={[
-                                            styles.typeOption, 
-                                            { backgroundColor: COLORS.background, borderColor: COLORS.border },
+                                            styles.typeBtn, 
+                                            { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border },
                                             formData.type === type && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
                                         ]}
-                                        onPress={() => setJobType(type)}
-                                        activeOpacity={0.8}
+                                        onPress={() => handleInputChange('type', type)}
                                     >
                                         <Text style={[
-                                            styles.typeOptionText, 
+                                            styles.typeTxt, 
                                             { color: COLORS.textSecondary },
-                                            formData.type === type && { color: COLORS.white }
+                                            formData.type === type && { color: '#FFF' }
                                         ]}>
                                             {type}
                                         </Text>
@@ -161,27 +149,26 @@ const CreateJobScreen = ({ navigation }) => {
                                 ))}
                             </View>
                         </View>
-                    </View>
+                    </Animated.View>
 
-                    <View style={styles.section}>
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                         <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Compensation & Skills</Text>
                         
-                        <View style={styles.salaryRow}>
+                        <View style={styles.row}>
                             <View style={{ flex: 1 }}>
-                                <InputField 
+                                <PremiumInput 
                                     label="Min Salary ($)" 
-                                    icon="wallet-outline"
                                     placeholder="80,000"
                                     keyboardType="numeric"
                                     value={formData.minSalary}
                                     onChangeText={(text) => handleInputChange('minSalary', text)}
                                 />
                             </View>
-                            <View style={{ flex: 1, marginLeft: 16 }}>
-                                <InputField 
+                            <View style={{ width: 16 }} />
+                            <View style={{ flex: 1 }}>
+                                <PremiumInput 
                                     label="Max Salary ($)" 
-                                    icon="cash-outline"
-                                    placeholder="120,000"
+                                    placeholder="150,000"
                                     keyboardType="numeric"
                                     value={formData.maxSalary}
                                     onChangeText={(text) => handleInputChange('maxSalary', text)}
@@ -189,23 +176,23 @@ const CreateJobScreen = ({ navigation }) => {
                             </View>
                         </View>
 
-                        <InputField 
-                            label="Required Skills (Comma separated)" 
-                            icon="code-working-outline"
-                            placeholder="React, TypeScript, Node.js"
+                        <PremiumInput 
+                            label="Required Skills" 
+                            placeholder="React, TypeScript, Figma..."
                             value={formData.skills}
                             onChangeText={(text) => handleInputChange('skills', text)}
+                            iconLeft={<Ionicons name="code-working-outline" size={20} color={COLORS.textTertiary} />}
                         />
-                    </View>
+                    </Animated.View>
 
-                    <View style={styles.section}>
-                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Role Description</Text>
+                    <Animated.View entering={FadeInDown.delay(300).springify()} style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                        <Text style={[styles.sectionHeading, { color: COLORS.primary }]}>Role Details</Text>
                         
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Description *</Text>
+                            <Text style={[styles.label, { color: COLORS.textPrimary }]}>Job Description</Text>
                             <TextInput
-                                style={[styles.textArea, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.textPrimary }]}
-                                placeholder="Describe the role and responsibilities..."
+                                style={[styles.textArea, { backgroundColor: COLORS.backgroundSecondary, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="Describe the mission and responsibilities..."
                                 placeholderTextColor={COLORS.textTertiary}
                                 multiline
                                 numberOfLines={6}
@@ -217,8 +204,8 @@ const CreateJobScreen = ({ navigation }) => {
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: COLORS.textPrimary }]}>Candidate Requirements</Text>
                             <TextInput
-                                style={[styles.textArea, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.textPrimary }]}
-                                placeholder="List required experience, certifications, etc."
+                                style={[styles.textArea, { backgroundColor: COLORS.backgroundSecondary, borderColor: COLORS.border, color: COLORS.textPrimary }]}
+                                placeholder="Qualifications, experience, etc."
                                 placeholderTextColor={COLORS.textTertiary}
                                 multiline
                                 numberOfLines={4}
@@ -226,15 +213,14 @@ const CreateJobScreen = ({ navigation }) => {
                                 onChangeText={(text) => handleInputChange('requirements', text)}
                             />
                         </View>
-                    </View>
+                    </Animated.View>
 
-                    <ModernButton 
+                    <PremiumButton 
                         title="Publish Job Posting"
                         onPress={handleSubmit}
                         loading={loading}
-                        style={styles.submitBtn}
+                        style={styles.publishBtn}
                     />
-
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -243,35 +229,43 @@ const CreateJobScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: SIZES.lg,
-        paddingVertical: 15,
+        paddingVertical: 16,
         borderBottomWidth: 1,
     },
-    closeBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+    headerBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
         justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+    },
+    headerTitleArea: {
+        flex: 1,
         alignItems: 'center',
     },
     headerTitle: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '800',
-        letterSpacing: -0.3,
+        letterSpacing: -0.5,
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        fontWeight: '600',
     },
     scrollContent: {
         padding: SIZES.lg,
     },
     section: {
-        marginBottom: 32,
+        borderRadius: 24,
+        padding: 20,
+        borderWidth: 1,
+        marginBottom: 20,
+        ...SHADOWS.soft,
     },
     sectionHeading: {
         fontSize: 12,
@@ -280,63 +274,48 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
         marginBottom: 20,
     },
-    inputGroup: {
-        marginBottom: 20,
-    },
     label: {
         fontSize: 14,
         fontWeight: '700',
-        marginBottom: 8,
+        marginBottom: 10,
     },
-    inputWrapper: {
+    inputGroup: {
+        marginBottom: 20,
+    },
+    typeContainer: {
+        marginTop: 10,
+    },
+    typeGrid: {
         flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 16,
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    typeBtn: {
         paddingHorizontal: 16,
-        height: 56,
+        paddingVertical: 10,
+        borderRadius: 12,
         borderWidth: 1,
     },
-    inputIcon: {
-        marginRight: 12,
+    typeTxt: {
+        fontSize: 13,
+        fontWeight: '700',
     },
-    input: {
-        flex: 1,
-        fontSize: 15,
-        fontWeight: '600',
+    row: {
+        flexDirection: 'row',
     },
     textArea: {
         borderRadius: 16,
         padding: 16,
-        height: 140,
+        height: 120,
         textAlignVertical: 'top',
         fontSize: 15,
         borderWidth: 1,
         fontWeight: '600',
     },
-    typeSwitcher: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginTop: 4,
-    },
-    typeOption: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 20,
-        borderWidth: 1.5,
-    },
-    typeOptionText: {
-        fontSize: 13,
-        fontWeight: '700',
-    },
-    salaryRow: {
-        flexDirection: 'row',
-    },
-    submitBtn: {
-        marginTop: 10,
+    publishBtn: {
         height: 60,
+        marginTop: 10,
     }
 });
 
 export default CreateJobScreen;
-

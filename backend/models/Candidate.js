@@ -11,6 +11,13 @@ const candidateSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    resumeUploadedAt: {
+        type: Date,
+    },
+    resumeOriginalName: {
+        type: String,
+        default: ''
+    },
     headline: {
         type: String,
         default: ''
@@ -63,7 +70,8 @@ const candidateSchema = new mongoose.Schema({
         profileVisibility: { type: Boolean, default: true },
         showPhone: { type: Boolean, default: true },
         whatsappUpdates: { type: Boolean, default: false }
-    }
+    },
+    interests: [{ type: String }]
 }, {
     timestamps: true
 });

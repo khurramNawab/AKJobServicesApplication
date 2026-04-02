@@ -1,29 +1,201 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
     View, 
     Text, 
     StyleSheet, 
     FlatList, 
-    ActivityIndicator, 
     TouchableOpacity, 
-    Alert 
+    Alert,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, Layout, ZoomIn } from 'react-native-reanimated';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
-import ModernButton from '../components/ModernButton';
-import ScreenWrapper from '../components/ScreenWrapper';
 
-const getStyles = (COLORS, SIZES) => StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+// Premium Components
+import ScreenWrapper from '../components/ScreenWrapper';
+import PremiumButton from '../components/PremiumButton';
+import EliteGradient from '../components/EliteGradient';
+import SkeletonLoader from '../components/SkeletonLoader';
+
+const { width } = Dimensions.get('window');
+
+const RecruiterJobItem = React.memo(({ item, index, navigation, COLORS }) => (
+    <Animated.View 
+        entering={FadeInDown.delay(index * 100).springify()}
+        layout={Layout.springify()}
+        style={styles.cardPadding}
+    >
+        <TouchableOpacity
+            style={[styles.jobCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('JobApplicants', { jobId: item._id, jobTitle: item.title })}
+        >
+            <View style={styles.cardHeader}>
+                <View style={styles.titleArea}>
+                    <Text style={[styles.jobTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>{item.title}</Text>
+                    <View style={styles.metaRow}>
+                        <Ionicons name="location-outline" size={14} color={COLORS.textTertiary} />
+                        <Text style={[styles.metaText, { color: COLORS.textTertiary }]}>{item.location}</Text>
+                        <View style={[styles.dot, { backgroundColor: COLORS.border }]} />
+                        <Text style={[styles.metaText, { color: COLORS.textTertiary }]}>{item.type}</Text>
+                    </View>
+                </View>
+                <View style={[styles.applicantsBadge, { backgroundColor: COLORS.primary + '10' }]}>
+                    <Text style={[styles.applicantCount, { color: COLORS.primary }]}>{item.applicantsCount || 0}</Text>
+                    <Text style={[styles.applicantLabel, { color: COLORS.primary }]}>Apps</Text>
+                </View>
+            </View>
+
+            <View style={[styles.cardDivider, { backgroundColor: COLORS.border + '50' }]} />
+
+            <View style={styles.cardFooter}>
+                <View style={styles.footerInfo}>
+                    <Ionicons name="calendar-outline" size={14} color={COLORS.textTertiary} />
+                    <Text style={[styles.footerText, { color: COLORS.textSecondary }]}>
+                        Posted {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </Text>
+                </View>
+                <View style={styles.actionBtn}>
+                    <Text style={[styles.actionText, { color: COLORS.primary }]}>View Candidates</Text>
+                    <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+                </View>
+            </View>
+        </TouchableOpacity>
+    </Animated.View>
+));
+
+const RecruiterJobsScreen = ({ navigation }) => {
+    const { isDarkMode } = useThemeStore();
+    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchMyJobs = async () => {
+        try {
+            if (!refreshing) setLoading(true);
+            const res = await api.get('/jobs/me');
+            if (res.data.success) {
+                setJobs(res.data.data);
+            }
+        } catch (error) {
+            console.error('Fetch my jobs error:', error);
+            Alert.alert('Network Error', 'Could not load your job postings.');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchMyJobs();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    const renderItem = useCallback(({ item, index }) => {
+        if (loading) {
+            return (
+                <View style={styles.skeletonPadding}>
+                    <SkeletonLoader height={140} borderRadius={24} />
+                </View>
+            );
+        }
+        return (
+            <RecruiterJobItem 
+                item={item} 
+                index={index} 
+                navigation={navigation} 
+                COLORS={COLORS} 
+            />
+        );
+    }, [loading, navigation, COLORS]);
+
+    const keyExtractor = useCallback((item, index) => item?._id || index.toString(), []);
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        fetchMyJobs();
+    }, []);
+
+    const renderHeader = useMemo(() => (
+        <View style={styles.header}>
+            <View style={styles.headerTop}>
+                <View>
+                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Hiring Dashboard</Text>
+                    <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>
+                        You have {jobs.length} active postings
+                    </Text>
+                </View>
+                <TouchableOpacity 
+                    style={[styles.headerIcon, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                    onPress={() => navigation.navigate('ChatList')}
+                >
+                    <Ionicons name="chatbubbles-outline" size={22} color={COLORS.textPrimary} />
+                </TouchableOpacity>
+            </View>
+        </View>
+    ), [jobs.length, COLORS, navigation]);
+
+    return (
+        <ScreenWrapper bottom={false}>
+            <FlatList
+                data={loading ? Array(4).fill(0) : jobs}
+                keyExtractor={keyExtractor}
+                renderItem={renderItem}
+                ListHeaderComponent={renderHeader}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                onRefresh={onRefresh}
+                refreshing={refreshing}
+                initialNumToRender={5}
+                maxToRenderPerBatch={8}
+                windowSize={10}
+                ListEmptyComponent={
+                    !loading && (
+                        <Animated.View entering={FadeInDown} style={styles.emptyContainer}>
+                            <View style={[styles.emptyIcon, { backgroundColor: COLORS.surfaceSecondary }]}>
+                                <Ionicons name="rocket-outline" size={60} color={COLORS.primary} />
+                            </View>
+                            <Text style={[styles.emptyTitle, { color: COLORS.textPrimary }]}>Ready to hire?</Text>
+                            <Text style={[styles.emptySubtitle, { color: COLORS.textSecondary }]}>
+                                Post your first job and find the perfect talent for your professional team.
+                            </Text>
+                            <PremiumButton 
+                                title="Post a New Job" 
+                                onPress={() => navigation.navigate('CreateJob')}
+                                style={styles.postBtn}
+                            />
+                        </Animated.View>
+                    )
+                }
+            />
+
+            <Animated.View entering={ZoomIn.delay(500)} style={styles.fabWrapper}>
+                <TouchableOpacity 
+                    style={[styles.fab, SHADOWS.medium]} 
+                    onPress={() => navigation.navigate('CreateJob')}
+                    activeOpacity={0.9}
+                >
+                    <EliteGradient style={styles.fabGradient}>
+                        <Ionicons name="add" size={32} color="#FFF" />
+                    </EliteGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        </ScreenWrapper>
+    );
+};
+
+const styles = StyleSheet.create({
     header: {
         paddingHorizontal: SIZES.lg,
-        paddingTop: 10,
-        paddingBottom: 20,
+        paddingTop: SIZES.md,
+        paddingBottom: SIZES.xl,
     },
     headerTop: {
         flexDirection: 'row',
@@ -31,154 +203,148 @@ const getStyles = (COLORS, SIZES) => StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: '800',
         letterSpacing: -0.5,
     },
     headerSubtitle: {
         fontSize: 14,
-        fontWeight: '500',
+        fontWeight: '600',
         marginTop: 2,
     },
-    notificationBtn: {
+    headerIcon: {
         width: 48,
         height: 48,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-    },
-    dot: {
-        position: 'absolute',
-        top: 12,
-        right: 12,
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: COLORS.primary,
-        borderWidth: 2,
+        ...SHADOWS.soft,
     },
     listContent: {
+        paddingBottom: 120,
+    },
+    cardPadding: {
         paddingHorizontal: SIZES.lg,
-        paddingBottom: 100,
-        paddingTop: 10,
+        marginBottom: 16,
     },
     jobCard: {
         borderRadius: 24,
-        marginBottom: 20,
-        borderWidth: 1,
-        overflow: 'hidden',
-    },
-    cardTop: {
-        flexDirection: 'row',
         padding: 20,
-        alignItems: 'flex-start',
+        borderWidth: 1,
+        ...SHADOWS.soft,
     },
-    jobInfo: {
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+    },
+    titleArea: {
         flex: 1,
+        marginRight: 10,
     },
     jobTitle: {
         fontSize: 18,
         fontWeight: '800',
-        letterSpacing: -0.3,
+        marginBottom: 6,
     },
     metaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 6,
         gap: 6,
     },
-    locationText: {
+    metaText: {
         fontSize: 13,
         fontWeight: '600',
     },
-    typeBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 10,
+    dot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
     },
-    typeBadgeText: {
-        fontSize: 11,
-        fontWeight: '800',
-        textTransform: 'uppercase',
-    },
-    cardStats: {
-        flexDirection: 'row',
-        marginHorizontal: 20,
+    applicantsBadge: {
+        width: 54,
+        height: 54,
         borderRadius: 16,
-        paddingVertical: 12,
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    statBox: {
-        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    statLabel: {
+    applicantCount: {
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    applicantLabel: {
         fontSize: 10,
         fontWeight: '700',
         textTransform: 'uppercase',
-        marginBottom: 4,
     },
-    statValue: {
-        fontSize: 15,
-        fontWeight: '800',
+    cardDivider: {
+        height: 1,
+        width: '100%',
+        marginBottom: 16,
     },
-    statDivider: {
-        width: 1,
-        height: '60%',
-        backgroundColor: COLORS.border,
+    cardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    cardAction: {
+    footerInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        gap: 8,
+        gap: 6,
+    },
+    footerText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    actionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
     actionText: {
         fontSize: 14,
-        fontWeight: '700',
-        color: COLORS.primary,
+        fontWeight: '800',
     },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    skeletonPadding: {
+        paddingHorizontal: SIZES.lg,
+        marginBottom: 16,
     },
-    emptyState: {
+    emptyContainer: {
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 80,
         paddingHorizontal: 40,
+        marginTop: 40,
     },
-    emptyIconBox: {
-        width: 100,
-        height: 100,
-        borderRadius: 30,
+    emptyIcon: {
+        width: 110,
+        height: 110,
+        borderRadius: 36,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     emptyTitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '800',
-        marginBottom: 10,
+        marginBottom: 8,
     },
-    emptyDesc: {
+    emptySubtitle: {
         fontSize: 14,
         textAlign: 'center',
         lineHeight: 22,
         fontWeight: '500',
-        marginBottom: 30,
+        marginBottom: 32,
     },
-    emptyBtn: {
+    postBtn: {
         width: '100%',
     },
-    fab: {
+    fabWrapper: {
         position: 'absolute',
         bottom: 30,
         right: 24,
+    },
+    fab: {
         width: 64,
         height: 64,
         borderRadius: 22,
@@ -190,140 +356,5 @@ const getStyles = (COLORS, SIZES) => StyleSheet.create({
         alignItems: 'center',
     }
 });
-
-const RecruiterJobsScreen = ({ navigation }) => {
-    const { isDarkMode } = useThemeStore();
-    const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
-    const styles = getStyles(COLORS, SIZES);
-
-    const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            fetchMyJobs();
-        });
-        return unsubscribe;
-    }, [navigation]);
-
-    const fetchMyJobs = async () => {
-        try {
-            const res = await api.get('/jobs/me');
-            if (res.data.success) {
-                setJobs(res.data.data);
-            }
-        } catch (error) {
-            console.error('Error fetching jobs:', error);
-            Alert.alert('Network Error', 'Could not load your job postings. Please try again later.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const renderItem = ({ item }) => (
-        <TouchableOpacity
-            style={[styles.jobCard, SHADOWS.soft, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('JobApplicants', { jobId: item._id, jobTitle: item.title })}
-        >
-            <View style={styles.cardTop}>
-                <View style={styles.jobInfo}>
-                    <Text style={[styles.jobTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>{item.title}</Text>
-                    <View style={styles.metaRow}>
-                        <Ionicons name="location-outline" size={14} color={COLORS.textTertiary} />
-                        <Text style={[styles.locationText, { color: COLORS.textTertiary }]}>{item.location}</Text>
-                    </View>
-                </View>
-                <View style={[styles.typeBadge, { backgroundColor: COLORS.secondary + '15' }]}>
-                    <Text style={[styles.typeBadgeText, { color: COLORS.secondary }]}>{item.type}</Text>
-                </View>
-            </View>
-            
-            <View style={[styles.cardStats, { backgroundColor: COLORS.background + '50', borderColor: COLORS.border }]}>
-                <View style={styles.statBox}>
-                    <Text style={[styles.statLabel, { color: COLORS.textTertiary }]}>Applicants</Text>
-                    <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>{item.applicantsCount || 0}</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statBox}>
-                    <Text style={[styles.statLabel, { color: COLORS.textTertiary }]}>Posted On</Text>
-                    <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>
-                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </Text>
-                </View>
-            </View>
-
-            <View style={styles.cardAction}>
-                <Text style={styles.actionText}>View Applicants</Text>
-                <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
-            </View>
-        </TouchableOpacity>
-    );
-
-    return (
-        <ScreenWrapper bottom={false}>
-            <View style={styles.header}>
-                <View style={styles.headerTop}>
-                    <View>
-                        <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>My Job Postings</Text>
-                        <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>Manage your active opportunities</Text>
-                    </View>
-                    <TouchableOpacity 
-                        style={[styles.notificationBtn, SHADOWS.soft, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-                        onPress={() => navigation.navigate('ChatList')}
-                    >
-                        <Ionicons name="chatbubbles-outline" size={22} color={COLORS.textPrimary} />
-                        {jobs.reduce((acc, job) => acc + (job.applicantsCount || 0), 0) > 0 && (
-                            <View style={[styles.dot, { borderColor: COLORS.surface }]} />
-                        )}
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            {loading ? (
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                </View>
-            ) : (
-                <FlatList
-                    data={jobs}
-                    keyExtractor={(item) => item._id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={
-                        <View style={styles.emptyState}>
-                            <View style={[styles.emptyIconBox, { backgroundColor: COLORS.surface }]}>
-                                <Ionicons name="briefcase-outline" size={60} color={COLORS.textTertiary} />
-                            </View>
-                            <Text style={[styles.emptyTitle, { color: COLORS.textPrimary }]}>No Job Postings</Text>
-                            <Text style={[styles.emptyDesc, { color: COLORS.textSecondary }]}>
-                                You haven't posted any jobs yet. Start hiring by creating your first job posting today.
-                            </Text>
-                            <ModernButton 
-                                title="Create First Posting"
-                                onPress={() => navigation.navigate('CreateJob')}
-                                style={styles.emptyBtn}
-                            />
-                        </View>
-                    }
-                />
-            )}
-
-            <TouchableOpacity 
-                style={[styles.fab, SHADOWS.medium]} 
-                onPress={() => navigation.navigate('CreateJob')}
-                activeOpacity={0.9}
-            >
-                <LinearGradient
-                    colors={[COLORS.primary, COLORS.primaryLight]}
-                    style={styles.fabGradient}
-                >
-                    <Ionicons name="add" size={32} color={COLORS.white} />
-                </LinearGradient>
-            </TouchableOpacity>
-        </ScreenWrapper>
-    );
-};
 
 export default RecruiterJobsScreen;

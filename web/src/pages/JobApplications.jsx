@@ -14,6 +14,7 @@ const JobApplications = () => {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [updating, setUpdating] = useState(null);
+  const [selectedResume, setSelectedResume] = useState(null); // ✅ was missing — caused crash
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,9 +53,13 @@ const JobApplications = () => {
     ? applicants 
     : applicants.filter(app => app.status === activeFilter);
 
+  // Build Google Docs Viewer URL for any resume URL
+  const getViewerUrl = (url) =>
+    url ? `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true` : null;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] pt-40 px-6 flex flex-col items-center gap-6">
+      <div className="min-h-screen bg-bg-main pt-40 px-6 flex flex-col items-center gap-6">
         <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Reviewing Applications...</p>
       </div>
@@ -62,7 +67,7 @@ const JobApplications = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] py-32 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-bg-main py-32 px-6 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="max-w-7xl mx-auto z-10 space-y-12">
@@ -98,7 +103,7 @@ const JobApplications = () => {
         {/* Filters Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/5 pb-8">
            <div className="flex overflow-x-auto gap-3 pb-2 md:pb-0 scroll-hide">
-              {['All', 'Pending', 'Accepted', 'Rejected'].map(filter => (
+              {['All', 'APPLIED', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED'].map(filter => (
                  <button 
                   key={filter} 
                   onClick={() => setActiveFilter(filter)}
@@ -106,7 +111,7 @@ const JobApplications = () => {
                     activeFilter === filter ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/10'
                   }`}
                  >
-                    {filter === 'Accepted' ? 'Shortlisted' : filter}
+                    {filter === 'APPLIED' ? 'New' : filter === 'REVIEWING' ? 'Reviewing' : filter === 'SHORTLISTED' ? 'Shortlisted' : filter === 'HIRED' ? 'Hired' : filter === 'REJECTED' ? 'Rejected' : filter}
                  </button>
               ))}
            </div>
@@ -157,14 +162,51 @@ const JobApplications = () => {
                         </div>
                       </div>
 
-                      {/* Experience / Resume Preview Mock */}
+                      {/* Resume Access */}
                       <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <div className="p-2 bg-primary/10 rounded-lg"><FileText className="w-5 h-5 text-primary-light" /></div>
-                        <div className="flex-1">
-                           <p className="text-xs font-black uppercase tracking-widest text-primary-light/60">Resume Attached</p>
-                           <p className="text-sm font-bold truncate">cv_v4_frontend.pdf</p>
+                        <div 
+                          className="p-2 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                          onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume uploaded')}
+                          title="Preview Resume"
+                        >
+                          <FileText className="w-5 h-5 text-primary-light" />
                         </div>
-                        <Download className="w-4 h-4 text-slate-600 mt-1 hover:text-white cursor-pointer" />
+                        <div className="flex-1 overflow-hidden">
+                           <p className="text-xs font-black uppercase tracking-widest text-primary-light/60">Candidate Resume</p>
+                           <p className="text-sm font-bold truncate">
+                             {app.profile?.resumeOriginalName || `${app.candidateId?.name || 'candidate'}_CV.pdf`}
+                           </p>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          {/* Preview */}
+                          <button
+                            title="Preview"
+                            className="p-1 text-slate-600 hover:text-white transition-colors"
+                            onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume uploaded')}
+                          >
+                            <Search className="w-4 h-4" />
+                          </button>
+                          {/* Download — open in new tab */}
+                          {app.profile?.resumeUrl ? (
+                            <a
+                              href={app.profile.resumeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download Resume"
+                              className="p-1 text-slate-600 hover:text-white transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          ) : (
+                            <button
+                              className="p-1 text-slate-700 cursor-not-allowed"
+                              onClick={() => alert('No resume uploaded')}
+                              title="No resume"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Actions */}
@@ -221,6 +263,52 @@ const JobApplications = () => {
            </AnimatePresence>
         </div>
       </div>
+
+      {/* Resume Preview Modal */}
+      <AnimatePresence>
+        {selectedResume && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-[#020617]/90 backdrop-blur-sm"
+          >
+            <div className="glass-card w-full h-full max-w-5xl rounded-[3rem] border-white/10 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+               <div className="px-10 py-6 border-b border-white/5 flex items-center justify-between">
+                  <h3 className="text-lg font-black uppercase tracking-widest">Document <span className="gradient-text">Preview</span></h3>
+                  <button 
+                    onClick={() => setSelectedResume(null)}
+                    className="p-3 bg-white/5 hover:bg-secondary/20 rounded-xl text-slate-400 hover:text-white transition-all shadow-inner"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+               </div>
+               <div className="flex-1 bg-[#0F172A]">
+                 {/* Use Google Docs Viewer — raw Cloudinary URLs don't render in plain iframes */}
+                 <iframe 
+                   src={getViewerUrl(selectedResume)}
+                   className="w-full h-full border-none"
+                   title="Resume Preview"
+                   allowFullScreen
+                 />
+              </div>
+              <div className="px-10 py-6 border-t border-white/5 flex justify-between items-center">
+                 <p className="text-xs text-slate-500 font-medium">If the preview doesn't load, use the download button →</p>
+                 <div className="flex gap-3">
+                   <a
+                     href={selectedResume}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="px-6 py-3 text-xs font-black uppercase tracking-widest bg-primary text-white rounded-xl hover:bg-primary/80 transition-colors"
+                   >
+                     Download / Open
+                   </a>
+                 </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -21,7 +21,8 @@ export const applyForJob = async (req, res) => {
         const applicationData = {
             jobId,
             candidateId: req.user._id,
-            coverLetter: req.body.coverLetter || ''
+            coverLetter: req.body.coverLetter || '',
+            statusHistory: [{ status: 'APPLIED', timestamp: new Date() }]
         };
 
         // Attempt to create application (will throw error if duplicate due to schema index)
@@ -181,6 +182,7 @@ export const updateApplicationStatus = async (req, res) => {
         }
 
         application.status = status;
+        application.statusHistory.push({ status, timestamp: new Date() });
         await application.save();
 
         // Send notification to candidate

@@ -77,7 +77,7 @@ const PostJob = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-bg-main flex items-center justify-center px-6">
         <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -97,7 +97,7 @@ const PostJob = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] py-32 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-bg-main py-32 px-6 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="max-w-4xl mx-auto z-10 space-y-12">
@@ -179,7 +179,7 @@ const PostJob = () => {
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        className="w-full bg-[#0F172A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
+                        className="w-full bg-bg-main-surface border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
                     >
                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -191,7 +191,7 @@ const PostJob = () => {
                         name="jobType"
                         value={formData.jobType}
                         onChange={handleChange}
-                        className="w-full bg-[#0F172A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
+                        className="w-full bg-bg-main-surface border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
                     >
                         {jobTypes.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -203,7 +203,7 @@ const PostJob = () => {
                         name="experienceLevel"
                         value={formData.experienceLevel}
                         onChange={handleChange}
-                        className="w-full bg-[#0F172A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
+                        className="w-full bg-bg-main-surface border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
                     >
                         {expLevels.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>

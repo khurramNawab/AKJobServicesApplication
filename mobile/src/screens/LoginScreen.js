@@ -2,110 +2,29 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
-    ScrollView
+    ScrollView,
+    TouchableOpacity,
+    Dimensions
 } from 'react-native';
-import ScreenWrapper from '../components/ScreenWrapper';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import api from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
-import ModernButton from '../components/ModernButton';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
-const getStyles = (COLORS, SIZES) => StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: SIZES.xl,
-        paddingTop: 60,
-        paddingBottom: 40,
-    },
-    headerSection: {
-        alignItems: 'center',
-        marginBottom: 48,
-    },
-    logoBadge: {
-        width: 72,
-        height: 72,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 24,
-        ...SHADOWS.medium,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: '800',
-        letterSpacing: -1,
-    },
-    subtitle: {
-        fontSize: 16,
-        marginTop: 10,
-        textAlign: 'center',
-        fontWeight: '500',
-        lineHeight: 24,
-        paddingHorizontal: 20,
-    },
-    formSection: {
-        gap: 20,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 18,
-        paddingHorizontal: 16,
-        height: 64,
-        borderWidth: 1,
-    },
-    inputIcon: {
-        marginRight: 12,
-    },
-    input: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    eyeIcon: {
-        padding: 4,
-    },
-    forgotPass: {
-        alignSelf: 'flex-end',
-    },
-    forgotPassText: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: COLORS.primary,
-    },
-    loginBtn: {
-        marginTop: 10,
-    },
-    footerLinks: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    footerText: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: COLORS.textSecondary,
-    },
-    registerLinkText: {
-        fontSize: 15,
-        fontWeight: '800',
-        color: COLORS.primary,
-    },
-});
+// Premium Components
+import ScreenWrapper from '../components/ScreenWrapper';
+import PremiumButton from '../components/PremiumButton';
+import PremiumInput from '../components/PremiumInput';
+import EliteGradient from '../components/EliteGradient';
+
+const { height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -116,7 +35,6 @@ const LoginScreen = ({ navigation }) => {
     const setCredentials = useAuthStore((state) => state.setCredentials);
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
-    const styles = getStyles(COLORS, SIZES);
 
     const handleLogin = async () => {
         if (!phoneNumber || !password) {
@@ -146,7 +64,9 @@ const LoginScreen = ({ navigation }) => {
     };
 
     return (
-        <ScreenWrapper bottom={false}>
+        <ScreenWrapper top={false} bottom={false}>
+            <EliteGradient style={StyleSheet.absoluteFill} />
+            
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -155,80 +75,135 @@ const LoginScreen = ({ navigation }) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.headerSection}>
-                        <LinearGradient
-                            colors={[COLORS.primary, COLORS.primaryLight]}
-                            style={styles.logoBadge}
-                        >
-                            <Ionicons name="briefcase" size={34} color="#FFFFFF" />
-                        </LinearGradient>
-                        <Text style={[styles.title, { color: COLORS.textPrimary }]}>Welcome Back</Text>
-                        <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Log in to continue your professional journey.</Text>
+                    <View style={styles.header}>
+                        <Animated.View entering={FadeInDown.duration(800)} style={styles.logoContainer}>
+                            <View style={[styles.logoIcon, { backgroundColor: '#FFF' }]}>
+                                <Ionicons name="briefcase" size={40} color={COLORS.primary} />
+                            </View>
+                        </Animated.View>
+                        <Animated.Text entering={FadeInDown.delay(200)} style={styles.welcomeTxt}>Welcome Back</Animated.Text>
+                        <Animated.Text entering={FadeInDown.delay(400)} style={styles.subTxt}>Log in to access your professional opportunities.</Animated.Text>
                     </View>
 
-                    <View style={styles.formSection}>
-                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="call-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Phone Number"
-                                placeholderTextColor={COLORS.textTertiary}
-                                keyboardType="phone-pad"
-                                value={phoneNumber}
-                                onChangeText={setPhoneNumber}
-                                autoComplete="tel"
-                            />
-                        </View>
+                    <Animated.View entering={FadeInUp.delay(600)} style={[styles.formCard, { backgroundColor: COLORS.surface }]}>
+                        <PremiumInput
+                            label="Phone Number"
+                            placeholder="e.g. 9876543210"
+                            value={phoneNumber}
+                            onChangeText={setPhoneNumber}
+                            keyboardType="phone-pad"
+                            iconLeft={<Ionicons name="call-outline" size={20} color={COLORS.textTertiary} />}
+                        />
 
-                        <View style={[styles.inputWrapper, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                            <Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: COLORS.textPrimary }]}
-                                placeholder="Password"
-                                placeholderTextColor={COLORS.textTertiary}
-                                secureTextEntry={!showPassword}
-                                value={password}
-                                onChangeText={setPassword}
-                                autoComplete="password"
-                            />
-                            <TouchableOpacity
-                                style={styles.eyeIcon}
-                                onPress={() => setShowPassword(!showPassword)}
-                            >
-                                <Ionicons
-                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                                    size={20}
-                                    color={COLORS.textTertiary}
-                                />
-                            </TouchableOpacity>
-                        </View>
+                        <PremiumInput
+                            label="Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                            iconLeft={<Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} />}
+                            iconRight={
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.textTertiary} />
+                                </TouchableOpacity>
+                            }
+                        />
 
-                        <TouchableOpacity
-                            style={styles.forgotPass}
+                        <TouchableOpacity 
+                            style={styles.forgotBtn}
                             onPress={() => navigation.navigate('ForgotPassword')}
                         >
-                            <Text style={styles.forgotPassText}>Forgot Password?</Text>
+                            <Text style={[styles.forgotTxt, { color: COLORS.primary }]}>Forgot Password?</Text>
                         </TouchableOpacity>
 
-                        <ModernButton
+                        <PremiumButton
                             title="Log In"
                             onPress={handleLogin}
                             loading={loading}
                             style={styles.loginBtn}
                         />
 
-                        <View style={styles.footerLinks}>
-                            <Text style={styles.footerText}>Don't have an account? </Text>
+                        <View style={styles.footer}>
+                            <Text style={[styles.footerTxt, { color: COLORS.textSecondary }]}>Don't have an account? </Text>
                             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                                <Text style={styles.registerLinkText}>Register</Text>
+                                <Text style={[styles.linkTxt, { color: COLORS.primary }]}>Register</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </ScreenWrapper>
     );
 };
 
+const styles = StyleSheet.create({
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: SIZES.lg,
+        paddingTop: 80,
+        paddingBottom: 40,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    logoContainer: {
+        marginBottom: 24,
+    },
+    logoIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...SHADOWS.medium,
+    },
+    welcomeTxt: {
+        fontSize: 32,
+        fontWeight: '800',
+        color: '#FFF',
+        letterSpacing: -1,
+    },
+    subTxt: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.8)',
+        textAlign: 'center',
+        marginTop: 8,
+        fontWeight: '500',
+        paddingHorizontal: 20,
+    },
+    formCard: {
+        borderRadius: 32,
+        padding: SIZES.xl,
+        ...SHADOWS.glass,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    forgotBtn: {
+        alignSelf: 'flex-end',
+        marginBottom: 24,
+    },
+    forgotTxt: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    loginBtn: {
+        height: 60,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 24,
+    },
+    footerTxt: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    linkTxt: {
+        fontSize: 15,
+        fontWeight: '800',
+    }
+});
 
 export default LoginScreen;

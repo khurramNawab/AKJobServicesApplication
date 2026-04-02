@@ -27,6 +27,15 @@ export const useAuthStore = create((set) => ({
         }
     },
 
+    setUser: async (user) => {
+        try {
+            await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+            set({ user });
+        } catch (e) {
+            console.error('Error updating userInfo in storage:', e);
+        }
+    },
+
     loadCredentials: async () => {
         console.log('[AuthStore] Loading credentials...');
         try {

@@ -86,12 +86,12 @@ const JobApplicantsScreen = ({ route, navigation }) => {
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'APPLIED': return { color: COLORS.primary, bg: COLORS.primary + '15', label: 'New' };
-            case 'REVIEWING': return { color: COLORS.secondary, bg: COLORS.secondary + '15', label: 'Reviewing' };
-            case 'SHORTLISTED': return { color: '#059669', bg: '#D1FAE5', label: 'Shortlisted' };
-            case 'REJECTED': return { color: COLORS.danger, bg: COLORS.danger + '15', label: 'Rejected' };
-            case 'HIRED': return { color: '#10B981', bg: '#D1FAE5', label: 'Hired' };
-            default: return { color: COLORS.textTertiary, bg: COLORS.surface, label: status };
+            case 'APPLIED': return { color: COLORS.primary, bg: COLORS.primary + '25', label: 'New' };
+            case 'REVIEWING': return { color: COLORS.warning, bg: COLORS.warning + '25', label: 'Reviewing' };
+            case 'SHORTLISTED': return { color: COLORS.success, bg: COLORS.success + '25', label: 'Shortlisted' };
+            case 'REJECTED': return { color: COLORS.danger, bg: COLORS.danger + '20', label: 'Rejected' };
+            case 'HIRED': return { color: COLORS.success, bg: COLORS.success + '30', label: 'Hired' };
+            default: return { color: COLORS.textTertiary, bg: COLORS.surfaceSecondary, label: status };
         }
     };
 

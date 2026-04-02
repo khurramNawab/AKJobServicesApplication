@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema({
     otpExpire: {
         type: Date,
         select: false
+    },
+    loginCount: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true
@@ -50,8 +54,9 @@ const userSchema = new mongoose.Schema({
 // Encrypt password using bcrypt
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        return; // Just return for async hooks
+        return;
     }
+    console.log('[USER SCHEMA] Hashing password for user:', this.phoneNumber);
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });

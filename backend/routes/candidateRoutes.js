@@ -33,22 +33,40 @@ router.route("/me/resume").post(
   uploadResume,
 );
 
-router.route("/me/photo").put(
-  protect,
-  authorize("CANDIDATE"),
-  (req, res, next) => {
-    upload.single("photo")(req, res, function (err) {
-      if (err) {
-        console.error("Multer Upload Error:", err);
-        return res.status(400).json({
-          success: false,
-          message: err.message || "Unknown Upload Error",
-        });
-      }
-      next();
-    });
-  },
-  uploadProfilePhoto,
-);
+router.route("/me/photo")
+  .put(
+    protect,
+    authorize("CANDIDATE"),
+    (req, res, next) => {
+      upload.single("photo")(req, res, function (err) {
+        if (err) {
+          console.error("Multer Upload Error:", err);
+          return res.status(400).json({
+            success: false,
+            message: err.message || "Unknown Upload Error",
+          });
+        }
+        next();
+      });
+    },
+    uploadProfilePhoto,
+  )
+  .post(
+    protect,
+    authorize("CANDIDATE"),
+    (req, res, next) => {
+      upload.single("photo")(req, res, function (err) {
+        if (err) {
+          console.error("Multer Upload Error:", err);
+          return res.status(400).json({
+            success: false,
+            message: err.message || "Unknown Upload Error",
+          });
+        }
+        next();
+      });
+    },
+    uploadProfilePhoto,
+  );
 
 export default router;

@@ -8,15 +8,30 @@ import {
     ActivityIndicator, 
     Image, 
     Alert,
-    Share
+    Share,
+    Dimensions,
+    Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import Animated, { 
+    FadeInDown, 
+    FadeInUp,
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring
+} from 'react-native-reanimated';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAuthStore } from '../store/useAuthStore';
-import ModernButton from '../components/ModernButton';
+
+// Premium Components
 import ScreenWrapper from '../components/ScreenWrapper';
+import PremiumButton from '../components/PremiumButton';
+import EliteGradient from '../components/EliteGradient';
+
+const { width } = Dimensions.get('window');
 
 const JobDetailsScreen = ({ route, navigation }) => {
     const { jobId } = route.params;
@@ -88,11 +103,9 @@ const JobDetailsScreen = ({ route, navigation }) => {
         } catch (error) {
             console.error('Error applying for job:', error);
             const errorMessage = error.response?.data?.message || 'Something went wrong.';
-            
             if (errorMessage.toLowerCase().includes('already applied')) {
                 setHasApplied(true);
             }
-            
             Alert.alert('Application Failed', errorMessage);
         } finally {
             setApplying(false);
@@ -111,131 +124,137 @@ const JobDetailsScreen = ({ route, navigation }) => {
 
     if (loading) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <ScreenWrapper>
+                <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            </ScreenWrapper>
         );
     }
 
     if (!job) {
         return (
-            <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
-                <Text style={{ color: COLORS.textPrimary }}>Job not found</Text>
-            </View>
+            <ScreenWrapper>
+                <View style={[styles.centerContainer, { backgroundColor: COLORS.background }]}>
+                    <Text style={{ color: COLORS.textPrimary }}>Job not found</Text>
+                </View>
+            </ScreenWrapper>
         );
     }
 
-    const initial = (job.recruiterId?.companyName || job.recruiterId?.name || 'C').charAt(0).toUpperCase();
+    const companyName = job.recruiterId?.companyName || job.recruiterId?.name || 'Company Name';
 
     return (
         <ScreenWrapper bottom={false}>
-            <View style={[styles.header, { backgroundColor: COLORS.surface }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            {/* Transparent Header */}
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={[styles.headerIconBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                >
+                    <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleShare} style={styles.shareBtn}>
-                    <Ionicons name="share-social-outline" size={24} color={COLORS.textPrimary} />
+                <TouchableOpacity 
+                    onPress={handleShare} 
+                    style={[styles.headerIconBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                >
+                    <Ionicons name="share-outline" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <View style={[styles.mainCard, { backgroundColor: COLORS.surface }]}>
-                    <View style={[styles.logoBox, SHADOWS.soft, { backgroundColor: COLORS.background }]}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false} 
+                contentContainerStyle={styles.scrollContent}
+            >
+                <Animated.View entering={FadeInUp.duration(600)} style={styles.heroSection}>
+                    <View style={[styles.logoWrapper, { backgroundColor: COLORS.surface, ...SHADOWS.medium }]}>
                         {job.recruiterId?.companyLogo ? (
-                            <Image source={{ uri: job.recruiterId.companyLogo }} style={styles.logoImg} />
+                            <Image source={{ uri: job.recruiterId.companyLogo }} style={styles.logo} />
                         ) : (
-                            <View style={[styles.logoPlaceholder, { backgroundColor: COLORS.primary + '15' }]}>
-                                <Text style={[styles.logoInitial, { color: COLORS.primary }]}>{initial}</Text>
-                            </View>
+                            <EliteGradient style={styles.logoPlaceholder}>
+                                <Text style={styles.logoText}>{companyName.charAt(0).toUpperCase()}</Text>
+                            </EliteGradient>
                         )}
                     </View>
-
+                    
                     <Text style={[styles.title, { color: COLORS.textPrimary }]}>{job.title}</Text>
-                    <Text style={[styles.company, { color: COLORS.textSecondary }]}>
-                        {job.recruiterId?.companyName || job.recruiterId?.name || 'Company Name'}
-                    </Text>
+                    <Text style={[styles.company, { color: COLORS.textSecondary }]}>{companyName}</Text>
+                </Animated.View>
 
-                    <View style={styles.badgeRow}>
-                        <View style={[styles.badge, { backgroundColor: COLORS.primary + '10' }]}>
-                            <Text style={[styles.badgeText, { color: COLORS.primary }]}>{job.type}</Text>
+                <View style={styles.quickInfoRow}>
+                    <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.primary + '10' }]}>
+                            <Ionicons name="location" size={18} color={COLORS.primary} />
                         </View>
-                        <View style={[styles.badge, { backgroundColor: COLORS.secondary + '10' }]}>
-                            <Text style={[styles.badgeText, { color: COLORS.secondary }]}>
-                                {job.salaryRange ? `${job.salaryRange.min} - ${job.salaryRange.max}` : 'Competitive'}
-                            </Text>
+                        <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Location</Text>
+                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>{job.location}</Text>
+                    </View>
+                    <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.success + '10' }]}>
+                            <Ionicons name="wallet" size={18} color={COLORS.success} />
                         </View>
+                        <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Salary</Text>
+                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>
+                            {job.salaryRange?.min} - {job.salaryRange?.max}
+                        </Text>
+                    </View>
+                    <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.warning + '10' }]}>
+                            <Ionicons name="time" size={18} color={COLORS.warning} />
+                        </View>
+                        <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Type</Text>
+                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>{job.type}</Text>
                     </View>
                 </View>
 
-                <View style={styles.detailsSection}>
-                    <View style={styles.infoRow}>
-                        <View style={styles.infoItem}>
-                            <View style={[styles.iconWrapper, { backgroundColor: COLORS.background }]}>
-                                <Ionicons name="location-outline" size={20} color={COLORS.primary} />
-                            </View>
-                            <View>
-                                <Text style={[styles.infoLabel, { color: COLORS.textTertiary }]}>Location</Text>
-                                <Text style={[styles.infoValue, { color: COLORS.textPrimary }]}>{job.location}</Text>
-                            </View>
-                        </View>
+                <Animated.View entering={FadeInDown.delay(200)} style={styles.contentSection}>
+                    <Text style={[styles.sectionHeading, { color: COLORS.textPrimary }]}>About the Role</Text>
+                    <Text style={[styles.para, { color: COLORS.textSecondary }]}>{job.description}</Text>
 
-                        <View style={styles.infoItem}>
-                            <View style={[styles.iconWrapper, { backgroundColor: COLORS.background }]}>
-                                <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
-                            </View>
-                            <View>
-                                <Text style={[styles.infoLabel, { color: COLORS.textTertiary }]}>Posted On</Text>
-                                <Text style={[styles.infoValue, { color: COLORS.textPrimary }]}>
-                                    {new Date(job.createdAt).toLocaleDateString()}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
+                    <Text style={[styles.sectionHeading, { color: COLORS.textPrimary }]}>Requirements</Text>
+                    <Text style={[styles.para, { color: COLORS.textSecondary }]}>{job.requirements}</Text>
 
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Description</Text>
-                    <Text style={[styles.description, { color: COLORS.textSecondary }]}>{job.description}</Text>
-
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Requirements</Text>
-                    <Text style={[styles.description, { color: COLORS.textSecondary }]}>{job.requirements}</Text>
-
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Required Skills</Text>
-                    <View style={styles.skillsContainer}>
+                    <Text style={[styles.sectionHeading, { color: COLORS.textPrimary }]}>Skills Required</Text>
+                    <View style={styles.skillsWrapper}>
                         {job.skills?.map((skill, index) => (
-                            <View key={index} style={[styles.skillChip, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
+                            <View key={index} style={[styles.skillTag, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                                 <Text style={[styles.skillText, { color: COLORS.textSecondary }]}>{skill}</Text>
                             </View>
                         ))}
                     </View>
-                </View>
-                
-                <View style={{ height: 100 }} />
+                </Animated.View>
+
+                <View style={{ height: 120 }} />
             </ScrollView>
 
-            <View style={[styles.footer, { backgroundColor: COLORS.surface, borderTopColor: COLORS.border }]}>
+            {/* Sticky Footer */}
+            <BlurView 
+                intensity={Platform.OS === 'ios' ? 80 : 100} 
+                tint={isDarkMode ? 'dark' : 'light'} 
+                style={styles.footer}
+            >
                 {user?.role === 'RECRUITER' ? (
-                    // Show View Candidates ONLY if this is their job
                     (job.recruiterId?._id === user._id || job.recruiterId === user._id) ? (
-                        <ModernButton 
-                            title="View Candidates" 
+                        <PremiumButton 
+                            title="Manage Applicants" 
                             onPress={() => navigation.navigate('JobApplicants', { jobId: job._id, jobTitle: job.title })}
-                            style={styles.applyBtn}
                         />
                     ) : (
-                        <Text style={{ textAlign: 'center', color: COLORS.textTertiary, fontWeight: '700' }}>
-                           You are viewing this as a recruiter.
-                        </Text>
+                        <View style={styles.recruiterNotice}>
+                            <Ionicons name="information-circle-outline" size={20} color={COLORS.textTertiary} />
+                            <Text style={[styles.noticeText, { color: COLORS.textTertiary }]}>Viewing as Recruiter</Text>
+                        </View>
                     )
                 ) : (
-                    <ModernButton 
-                        title={hasApplied ? 'Applied Successfully' : (applying ? 'Applying...' : 'Apply Now')} 
-                        onPress={handleApply}
-                        disabled={hasApplied || applying}
+                    <PremiumButton 
+                        title={hasApplied ? 'Application Sent' : (applying ? 'Processing...' : 'Apply Now')} 
                         variant={hasApplied ? 'secondary' : 'primary'}
-                        icon={hasApplied ? <Ionicons name="checkmark-circle" size={20} color={COLORS.secondary} /> : null}
-                        style={styles.applyBtn}
+                        disabled={hasApplied || applying}
+                        onPress={handleApply}
+                        iconRight={hasApplied ? <Ionicons name="checkmark-circle" size={22} color="#FFF" /> : null}
                     />
                 )}
-            </View>
+            </BlurView>
         </ScreenWrapper>
     );
 };
@@ -249,38 +268,40 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
         alignItems: 'center',
+        paddingHorizontal: SIZES.lg,
+        paddingTop: SIZES.md,
+        zIndex: 10,
     },
-    backBtn: {
-        padding: 5,
-    },
-    shareBtn: {
-        padding: 5,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-    },
-    mainCard: {
-        alignItems: 'center',
-        paddingTop: 10,
-        paddingBottom: 25,
-        borderRadius: 30,
-        ...SHADOWS.soft,
-    },
-    logoBox: {
-        width: 80,
-        height: 80,
-        borderRadius: 24,
-        marginBottom: 16,
+    headerIconBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#f0f0f0',
-        overflow: 'hidden',
+        ...SHADOWS.soft,
     },
-    logoImg: {
+    scrollContent: {
+        paddingTop: SIZES.md,
+    },
+    heroSection: {
+        alignItems: 'center',
+        paddingHorizontal: SIZES.xl,
+        marginBottom: SIZES.xl,
+    },
+    logoWrapper: {
+        width: 90,
+        height: 90,
+        borderRadius: 24,
+        overflow: 'hidden',
+        marginBottom: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    logo: {
         width: '100%',
         height: '100%',
         resizeMode: 'contain',
@@ -291,90 +312,84 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    logoInitial: {
-        fontSize: 32,
-        fontWeight: 'bold',
+    logoText: {
+        fontSize: 36,
+        fontWeight: '800',
+        color: '#FFF',
     },
     title: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: '800',
         textAlign: 'center',
-        paddingHorizontal: 10,
+        letterSpacing: -0.5,
     },
     company: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
         marginTop: 6,
     },
-    badgeRow: {
+    quickInfoRow: {
         flexDirection: 'row',
-        marginTop: 15,
-        gap: 10,
+        paddingHorizontal: SIZES.lg,
+        gap: 12,
+        marginBottom: SIZES.xxl,
     },
-    badge: {
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 12,
-    },
-    badgeText: {
-        fontSize: 13,
-        fontWeight: '800',
-    },
-    detailsSection: {
-        marginTop: 30,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 30,
-    },
-    infoItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    infoCard: {
         flex: 1,
+        padding: 14,
+        borderRadius: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.03)',
+        ...SHADOWS.soft,
     },
-    iconWrapper: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+    iconCircle: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginBottom: 10,
     },
-    infoLabel: {
-        fontSize: 12,
-        fontWeight: '600',
+    infoTitle: {
+        fontSize: 11,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 4,
     },
     infoValue: {
         fontSize: 14,
         fontWeight: '800',
-        marginTop: 2,
     },
-    sectionTitle: {
-        fontSize: 18,
+    contentSection: {
+        paddingHorizontal: SIZES.lg,
+    },
+    sectionHeading: {
+        fontSize: 20,
         fontWeight: '800',
         marginBottom: 12,
-        marginTop: 10,
+        marginTop: SIZES.lg,
     },
-    description: {
+    para: {
         fontSize: 15,
-        lineHeight: 24,
+        lineHeight: 26,
         fontWeight: '500',
-        marginBottom: 20,
     },
-    skillsContainer: {
+    skillsWrapper: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 10,
+        marginTop: 4,
     },
-    skillChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 10,
+    skillTag: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
         borderWidth: 1,
     },
     skillText: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '700',
     },
     footer: {
@@ -382,13 +397,20 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 20,
-        paddingBottom: 30,
-        paddingTop: 15,
-        borderTopWidth: 1,
+        paddingHorizontal: SIZES.xl,
+        paddingTop: 20,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     },
-    applyBtn: {
-        height: 60,
+    recruiterNotice: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+    },
+    noticeText: {
+        fontWeight: '700',
+        fontSize: 14,
     }
 });
 

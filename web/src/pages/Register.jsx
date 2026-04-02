@@ -59,11 +59,14 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-24 bg-[#020617] relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[60%] h-[60%] bg-secondary/5 blur-[120px] rounded-full opacity-30" />
+      {/* 🌌 Advanced Background System */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
       </div>
+
+      {/* Grid Pattern with Fade */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -71,7 +74,7 @@ const Register = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-xl z-10"
       >
-        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl">
+        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl bg-white/[0.02] backdrop-blur-2xl">
           
           <AnimatePresence mode="wait">
             {step === 1 ? (
@@ -83,9 +86,9 @@ const Register = () => {
                 exit="exit"
                 className="space-y-10"
               >
-                <div className="text-center space-y-2">
-                  <h1 className="text-4xl font-extrabold tracking-tight">Create <span className="gradient-text">Account</span></h1>
-                  <p className="text-slate-400 font-medium">To get started, please tell us who you are</p>
+                <div className="text-center space-y-3">
+                  <h1 className="text-4xl font-black tracking-tight text-white">Create <span className="gradient-text">Account</span></h1>
+                  <p className="text-text-secondary font-medium opacity-80">To get started, please tell us who you are</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -93,18 +96,18 @@ const Register = () => {
                     onClick={() => handleRoleSelect('CANDIDATE')}
                     className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${
                       formData.role === 'CANDIDATE' 
-                        ? 'bg-primary/10 border-primary shadow-lg shadow-primary/20' 
+                        ? 'bg-[#2563EB]/10 border-[#2563EB] shadow-lg shadow-[#2563EB]/20' 
                         : 'bg-white/5 border-white/10 hover:border-white/20'
                     }`}
                   >
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      formData.role === 'CANDIDATE' ? 'bg-primary text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
+                      formData.role === 'CANDIDATE' ? 'bg-[#2563EB] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
                     }`}>
                       <UserCheck className="w-7 h-7" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">I'm a Candidate</h3>
-                      <p className="text-sm text-slate-500 font-medium">Discover opportunities and grow your career</p>
+                      <h3 className="text-xl font-bold text-white">I'm a Job Seeker</h3>
+                      <p className="text-sm text-text-secondary font-medium opacity-60">Discover opportunities and grow your career</p>
                     </div>
                   </button>
 
@@ -112,18 +115,18 @@ const Register = () => {
                     onClick={() => handleRoleSelect('RECRUITER')}
                     className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${
                       formData.role === 'RECRUITER' 
-                        ? 'bg-secondary/10 border-secondary shadow-lg shadow-secondary/20' 
+                        ? 'bg-[#EF4444]/10 border-[#EF4444] shadow-lg shadow-[#EF4444]/20' 
                         : 'bg-white/5 border-white/10 hover:border-white/20'
                     }`}
                   >
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      formData.role === 'RECRUITER' ? 'bg-secondary text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
+                      formData.role === 'RECRUITER' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
                     }`}>
                       <Briefcase className="w-7 h-7" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-white">I'm a Recruiter</h3>
-                      <p className="text-sm text-slate-500 font-medium">Post jobs and find the best talent</p>
+                      <p className="text-sm text-text-secondary font-medium opacity-60">Post jobs and find the best talent</p>
                     </div>
                   </button>
                 </div>
