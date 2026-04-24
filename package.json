@@ -1,11 +1,11 @@
 {
-  "dependencies": {
-    "cloudinary": "^2.0.0",
-    "expo": "^52.0.25"
-
-  },
-  "devDependencies": {
-    "@types/react": "~18.3.12",
-    "typescript": "~5.3.3"
+  "name": "job-portal-unified",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node backend/server.js",
+    "postinstall": "npm install --prefix backend && npm run postinstall --prefix backend",
+    "build": "npm run postinstall"
   }
 }
