@@ -139,39 +139,41 @@ app.use(cookieParser());
 app.use(requestTimer);
 app.use(generateCsrfToken);
 
+// 🧪 DEBUG: Log cookies for session troubleshooting
 app.use((req, res, next) => {
-    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
-    
-    // Whitelist auth entry points for CSRF bootstrap
-    const csrfExcludedPaths = [
-        '/api/v1/auth/login',
-        '/api/v1/auth/google-login',
-        '/api/v1/auth/register',
-        '/api/v1/auth/refresh-token',
-        '/api/v1/auth/admin/login',
-        '/api/v1/auth/forgot-password/send-otp',
-        '/api/v1/auth/forgot-password/verify'
-    ];
-    if (csrfExcludedPaths.some(path => req.path.includes(path))) {
-        // Enforce strict Origin validation for CSRF excluded routes
-        const origin = req.headers.origin || req.headers.referer;
-        const allowedOrigin = process.env.CLIENT_URL || 'https://akjobservices.com';
-        
-        // In production, if the origin matches the domain or is missing (same-origin), allow it
-        if (origin && !origin.startsWith(allowedOrigin) && !origin.includes('localhost')) {
-            console.warn(`[SECURITY] Blocked Request from Unauthorized Origin: ${origin}`);
-            return res.status(403).json({ success: false, message: 'Unauthorized origin' });
-        }
-        return next();
+    if (process.env.NODE_ENV === 'production' && req.path.includes('/auth')) {
+        const cookies = Object.keys(req.cookies || {}).length;
+        console.log(`🔍 [Session] Request to ${req.path} | Cookies count: ${cookies} | Proto: ${req.get('X-Forwarded-Proto')}`);
     }
-
-    csrfProtection(req, res, next);
+    next();
 });
 
-// Request logging (always enabled for monitoring)
+// 🛡️ SECURITY: Force HTTPS in production
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'production' && req.get('X-Forwarded-Proto') !== 'https') {
+        return res.redirect('https://' + req.get('Host') + req.url);
+    }
+    next();
+});
+
+// Request logging
 app.use(morgan('dev'));
 
 // 🛤️ ROUTES
+app.use((req, res, next) => {
+    if (req.path.includes('/api/v1/auth')) {
+        const origin = req.headers.origin || req.headers.referer || '';
+        const allowedDomains = ['akjobservices.com', 'localhost', '127.0.0.1'];
+        const isAllowed = allowedDomains.some(domain => origin.includes(domain));
+
+        if (origin && !isAllowed) {
+            console.warn(`[SECURITY] Blocked Origin: ${origin}`);
+            return res.status(403).json({ success: false, message: 'Unauthorized origin' });
+        }
+    }
+    next();
+});
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/applications", applicationRoutes);

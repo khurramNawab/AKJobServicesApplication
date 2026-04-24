@@ -33,9 +33,11 @@ const isHttps = (process.env.CLIENT_URL || '').startsWith('https://');
 const getCookieOptions = (maxAgeMs) => ({
     maxAge: maxAgeMs,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies only in production
-    sameSite: 'Lax',                               // 'Lax' is more compatible with production environments
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'Lax' : 'Lax',
     path: '/',
+    // If in production, ensure the cookie is valid for the whole domain
+    domain: process.env.NODE_ENV === 'production' ? '.akjobservices.com' : undefined
 });
 
 /**
