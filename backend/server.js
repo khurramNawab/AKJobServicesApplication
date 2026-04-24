@@ -155,8 +155,11 @@ app.use((req, res, next) => {
     if (csrfExcludedPaths.some(path => req.path.includes(path))) {
         // Enforce strict Origin validation for CSRF excluded routes
         const origin = req.headers.origin || req.headers.referer;
-        const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-        if (origin && !origin.startsWith(allowedOrigin)) {
+        const allowedOrigin = process.env.CLIENT_URL || 'https://akjobservices.com';
+        
+        // In production, if the origin matches the domain or is missing (same-origin), allow it
+        if (origin && !origin.startsWith(allowedOrigin) && !origin.includes('localhost')) {
+            console.warn(`[SECURITY] Blocked Request from Unauthorized Origin: ${origin}`);
             return res.status(403).json({ success: false, message: 'Unauthorized origin' });
         }
         return next();
