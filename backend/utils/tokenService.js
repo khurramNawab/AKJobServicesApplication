@@ -33,8 +33,8 @@ const isHttps = (process.env.CLIENT_URL || '').startsWith('https://');
 const getCookieOptions = (maxAgeMs) => ({
     maxAge: maxAgeMs,
     httpOnly: true,
-    secure: isHttps,                    // true only when frontend is HTTPS (real production)
-    sameSite: isHttps ? 'Strict' : 'Lax',
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies only in production
+    sameSite: 'Lax',                               // 'Lax' is more compatible with production environments
     path: '/',
 });
 
@@ -101,6 +101,7 @@ export const rotateRefreshToken = async (req, res) => {
     try {
         const incomingToken = req.cookies?.refreshToken;
         if (!incomingToken) {
+            console.warn(`[AUTH] Refresh failed: No cookie found. Cookies present: ${Object.keys(req.cookies || {}).join(', ')}`);
             return res.status(401).json({ success: false, message: 'No refresh token' });
         }
 
