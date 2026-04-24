@@ -29,21 +29,6 @@ const __dirname = path.resolve();
 // Connect to database
 connectDB();
 
-// 🚀 AUTO-BUILD FAILSAFE: If dist is missing (common on first Hostinger deploy), build it now.
-import { execSync } from 'child_process';
-import fs from 'fs';
-const distPath = path.join(__dirname, '..', 'web', 'dist');
-if (!fs.existsSync(distPath)) {
-    console.log('⚠️ [DEPLOY] Frontend dist missing. Initializing emergency build...');
-    try {
-        // Run build from the root directory
-        execSync('npm run build', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
-        console.log('✅ [DEPLOY] Build completed successfully.');
-    } catch (err) {
-        console.error('❌ [DEPLOY] Build failed:', err.message);
-    }
-}
-
 const app = express();
 
 // Trust first proxy (needed for accurate req.ip behind Nginx/Cloudflare)

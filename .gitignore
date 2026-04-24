@@ -1,6 +1,11 @@
+# node_modules/ is still ignored
 node_modules/
 backend/node_modules/
-mobile/node_modules/
+web/node_modules/
+
+# but we explicitly ALLOW the built dist folder for Hostinger deployment
+!web/dist/
+
 .expo/
 .idea/
 .env
