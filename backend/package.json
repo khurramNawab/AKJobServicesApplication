@@ -9,6 +9,7 @@
     "dev": "nodemon server.js",
     "build:frontend": "cd ../web && npm run build",
     "build": "npm run build:frontend",
+    "postinstall": "cd ../web && npm install && npm run build",
     "start:unified": "npm run build && node server.js"
   },
   "keywords": [],
