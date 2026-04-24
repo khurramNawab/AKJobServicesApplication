@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
+    "start": "node -e \"const fs=require('fs'); if(!fs.existsSync('./web/dist')) { console.log('🚀 Dist missing, building...'); require('child_process').execSync('npm run build', {stdio:'inherit'}); }\" && node backend/server.js",
     "build": "npm install --prefix backend && npm install --prefix web --include=dev --legacy-peer-deps && npm run build --prefix web",
     "postinstall": "npm run build"
   }
