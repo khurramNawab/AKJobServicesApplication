@@ -183,13 +183,30 @@ app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/newsletter", newsletterRoutes);
 
 // 🌐 SERVE FRONTEND (Unified Port — backend serves built React app)
-const frontendDist = path.join(__dirname, '..', 'web', 'dist');
-console.log(`📂 [Static] Serving from: ${frontendDist}`);
+const frontendDist = path.resolve(__dirname, '..', 'web', 'dist');
+
+// Diagnostic check to see if the path exists at runtime
+import fs from 'fs';
+if (fs.existsSync(frontendDist)) {
+    console.log(`✅ [Static] Found dist folder at: ${frontendDist}`);
+} else {
+    console.error(`❌ [Static] DIST FOLDER MISSING AT: ${frontendDist}`);
+}
+
 app.use(express.static(frontendDist));
 
-// SPA Fallback: All non-API routes serve index.html (React Router handles them)
+// SPA Fallback: All non-API routes serve index.html
 app.get(/^(?!\/api).*/, (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
+    const indexPath = path.join(frontendDist, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).json({ 
+            success: false, 
+            message: "Frontend files not found. Please ensure 'web/dist' exists.",
+            debug_path: indexPath
+        });
+    }
 });
 
 // ERROR HANDLER
