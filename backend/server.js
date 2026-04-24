@@ -183,14 +183,28 @@ app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/newsletter", newsletterRoutes);
 
 // 🌐 SERVE FRONTEND (Unified Port — backend serves built React app)
-const frontendDist = path.resolve(__dirname, '..', 'web', 'dist');
-
-// Diagnostic check to see if the path exists at runtime
 import fs from 'fs';
-if (fs.existsSync(frontendDist)) {
-    console.log(`✅ [Static] Found dist folder at: ${frontendDist}`);
-} else {
-    console.error(`❌ [Static] DIST FOLDER MISSING AT: ${frontendDist}`);
+
+// Dynamic Path Discovery: Check multiple possible locations for Hostinger environment
+const possiblePaths = [
+    path.resolve(__dirname, '..', 'web', 'dist'), // Standard
+    path.resolve(__dirname, '..', '..', 'web', 'dist'), // One level up
+    path.resolve(__dirname, '..', 'nodejs', 'web', 'dist'), // Inside nodejs folder
+    path.join(process.cwd(), 'web', 'dist') // Current working directory
+];
+
+let frontendDist = possiblePaths[0];
+
+for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+        frontendDist = p;
+        console.log(`✅ [Discovery] Found dist folder at: ${p}`);
+        break;
+    }
+}
+
+if (!fs.existsSync(frontendDist)) {
+    console.error(`❌ [Discovery] FAILED to find dist folder. Checked: ${possiblePaths.join(', ')}`);
 }
 
 app.use(express.static(frontendDist));
@@ -203,8 +217,9 @@ app.get(/^(?!\/api).*/, (req, res) => {
     } else {
         res.status(404).json({ 
             success: false, 
-            message: "Frontend files not found. Please ensure 'web/dist' exists.",
-            debug_path: indexPath
+            message: "Frontend files not found.",
+            checked_paths: possiblePaths,
+            resolved_path: indexPath
         });
     }
 });
