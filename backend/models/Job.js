@@ -16,12 +16,8 @@ const jobSchema = new mongoose.Schema(
     },
     skills: [String],
     salaryRange: {
-      min: Number,
-      max: Number,
-      currency: {
-        type: String,
-        default: "USD",
-      },
+      type: String,
+      default: "Competitive",
     },
     location: {
       type: String,
@@ -29,7 +25,7 @@ const jobSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Full-time", "Part-time", "Remote", "Contract", "Internship"],
+      enum: ["Full-time", "Part-time", "Remote", "Contract", "Internship", "Freelance"],
       required: [true, "Please specify job type"],
     },
     status: {
@@ -51,6 +47,13 @@ const jobSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+// ═══ INDEXES ═══════════════════════════════════════════════════════
+// Compound index for search: title + location (case-insensitive regex perf)
+jobSchema.index({ title: 'text', location: 'text' });
+// Status-based listing (most common query pattern)
+jobSchema.index({ status: 1, createdAt: -1 });
+// Recruiter's own jobs lookup
+jobSchema.index({ recruiterId: 1, createdAt: -1 });
 
 const Job = mongoose.model("Job", jobSchema);
 export default Job;

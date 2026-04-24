@@ -4,6 +4,7 @@
  * This service currently uses a mock flow for development.
  * For industrial use, integrate Twilio, MSG91 or similar.
  */
+import crypto from 'crypto';
 
 export const sendSMS = async (phoneNumber, message) => {
     try {
@@ -23,5 +24,5 @@ export const sendSMS = async (phoneNumber, message) => {
  * Generates a 6-digit OTP for internal use
  */
 export const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return crypto.randomInt(100000, 999999).toString();
 };

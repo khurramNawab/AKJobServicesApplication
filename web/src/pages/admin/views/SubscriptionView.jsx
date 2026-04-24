@@ -10,29 +10,12 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 
-const plans = [
-   {
-      name: 'Basic',
-      price: 'Free',
-      color: 'slate',
-      icon: Shield,
-      features: ['5 Job Applications/mo', 'Basic Profile', 'Email Support'],
-   },
-   {
-      name: 'Pro',
-      price: '₹999/mo',
-      color: 'blue',
-      icon: Star,
-      features: ['Unlimited Applications', 'Priority Listing', 'Resume Builder', 'Chat Support'],
-   },
-   {
-      name: 'Elite',
-      price: '₹2,499/mo',
-      color: 'indigo',
-      icon: Crown,
-      features: ['Everything in Pro', 'Dedicated Manager', 'Analytics Dashboard', 'API Access'],
-   },
-];
+// Static features to keep the code clean
+const PLAN_FEATURES = {
+   BASIC: ['5 Job Applications/mo', 'Basic Profile', 'Email Support'],
+   PRO: ['Unlimited Applications', 'Priority Listing', 'Resume Builder', 'Chat Support'],
+   ELITE: ['Everything in Pro', 'Dedicated Manager', 'Analytics Dashboard', 'API Access']
+};
 
 const SubscriptionView = () => {
    const { stats } = useOutletContext();
@@ -48,10 +31,10 @@ const SubscriptionView = () => {
          } catch {
             // Use mock data if endpoint not available
             setSubscriptions([
-               { _id: '1', user: { name: 'Rahul Sharma', phoneNumber: '9876543210' }, plan: 'PRO', status: 'ACTIVE', startDate: '2026-03-01', endDate: '2026-04-01', amount: 999 },
-               { _id: '2', user: { name: 'Digital Solutions', phoneNumber: '9123456789' }, plan: 'ELITE', status: 'ACTIVE', startDate: '2026-03-15', endDate: '2026-04-15', amount: 2499 },
-               { _id: '3', user: { name: 'Tech Corp', phoneNumber: '9988776655' }, plan: 'PRO', status: 'EXPIRED', startDate: '2026-02-01', endDate: '2026-03-01', amount: 999 },
-               { _id: '4', user: { name: 'Ananya Iyer', phoneNumber: '9871234560' }, plan: 'BASIC', status: 'ACTIVE', startDate: '2026-03-20', endDate: null, amount: 0 },
+               { _id: '1', user: { name: 'Rahul Sharma', email: 'rahul@example.com' }, plan: 'PRO', status: 'ACTIVE', startDate: '2026-03-01', endDate: '2026-04-01', amount: 999 },
+               { _id: '2', user: { name: 'Digital Solutions', email: 'hello@digitalsolutions.com' }, plan: 'ELITE', status: 'ACTIVE', startDate: '2026-03-15', endDate: '2026-04-15', amount: 2499 },
+               { _id: '3', user: { name: 'Tech Corp', email: 'admin@techcorp.com' }, plan: 'PRO', status: 'EXPIRED', startDate: '2026-02-01', endDate: '2026-03-01', amount: 999 },
+               { _id: '4', user: { name: 'Ananya Iyer', email: 'ananya@example.com' }, plan: 'BASIC', status: 'ACTIVE', startDate: '2026-03-20', endDate: null, amount: 0 },
             ]);
          } finally {
             setLoading(false);
@@ -128,6 +111,33 @@ const SubscriptionView = () => {
       PRO: subscriptions.filter(s => s.plan === 'PRO').length,
       ELITE: subscriptions.filter(s => s.plan === 'ELITE').length,
    };
+
+   // Dynamic plan cards based on config
+   const plans = [
+      {
+         name: 'Basic',
+         price: 'Free',
+         color: 'slate',
+         icon: Shield,
+         features: PLAN_FEATURES.BASIC,
+      },
+      {
+         name: 'Pro',
+         price: `₹${config.proMonthlyPrice}/mo`,
+         subtext: config.proEnabled ? 'Active' : 'Disabled',
+         color: config.proEnabled ? 'blue' : 'slate',
+         icon: Star,
+         features: PLAN_FEATURES.PRO,
+      },
+      {
+         name: 'Elite',
+         price: `₹${config.eliteMonthlyPrice}/mo`,
+         subtext: config.eliteEnabled ? 'Active' : 'Disabled',
+         color: config.eliteEnabled ? 'indigo' : 'slate',
+         icon: Crown,
+         features: PLAN_FEATURES.ELITE,
+      }
+   ];
 
    const filtered = activeFilter === 'ALL'
       ? subscriptions
@@ -270,11 +280,33 @@ const SubscriptionView = () => {
                         </div>
                         <div className="space-y-2">
                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Application Limit</label>
-                           <input type="number" value={config.freeTierJobApplicationLimit} onChange={e => setConfig(c => ({ ...c, freeTierJobApplicationLimit: Number(e.target.value) }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
+                           <input 
+                              type="text"
+                              inputMode="numeric" 
+                              value={config.freeTierJobApplicationLimit === 0 ? "" : config.freeTierJobApplicationLimit} 
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                 const val = e.target.value.replace(/[^0-9]/g, '');
+                                 setConfig(c => ({ ...c, freeTierJobApplicationLimit: val === '' ? 0 : parseInt(val, 10) }));
+                              }}
+                              placeholder="0"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                           />
                         </div>
                         <div className="space-y-2">
                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Job Post Limit</label>
-                           <input type="number" value={config.freeTierJobPostLimit} onChange={e => setConfig(c => ({ ...c, freeTierJobPostLimit: Number(e.target.value) }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
+                           <input 
+                              type="text"
+                              inputMode="numeric"
+                              value={config.freeTierJobPostLimit === 0 ? "" : config.freeTierJobPostLimit} 
+                              onFocus={e => e.target.select()}
+                              onChange={e => {
+                                 const val = e.target.value.replace(/[^0-9]/g, '');
+                                 setConfig(c => ({ ...c, freeTierJobPostLimit: val === '' ? 0 : parseInt(val, 10) }));
+                              }}
+                              placeholder="0"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                           />
                         </div>
                      </div>
                   )}
@@ -293,16 +325,41 @@ const SubscriptionView = () => {
                               {config[plan.enabledKey] ? <ToggleRight size={28} className={plan.color} /> : <ToggleLeft size={28} className="text-gray-600" />}
                            </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                           <div className="space-y-2">
-                              <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Monthly (₹)</label>
-                              <input type="number" value={config[plan.monthlyKey]} onChange={e => setConfig(c => ({ ...c, [plan.monthlyKey]: Number(e.target.value) }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
+                        {config[plan.enabledKey] && (
+                           <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Monthly (₹)</label>
+                                 <input 
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={config[plan.monthlyKey] === 0 ? "" : config[plan.monthlyKey]} 
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => {
+                                       const val = e.target.value.replace(/[^0-9]/g, '');
+                                       setConfig(c => ({ ...c, [plan.monthlyKey]: val === '' ? 0 : parseInt(val, 10) }));
+                                    }}
+                                    placeholder="0"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Yearly (₹)</label>
+                                 <input 
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={config[plan.yearlyKey] === 0 ? "" : config[plan.yearlyKey]} 
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => {
+                                       const val = e.target.value.replace(/[^0-9]/g, '');
+                                       setConfig(c => ({ ...c, [plan.yearlyKey]: val === '' ? 0 : parseInt(val, 10) }));
+                                    }}
+                                    placeholder="0"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                                 />
+                              </div>
                            </div>
-                           <div className="space-y-2">
-                              <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Yearly (₹)</label>
-                              <input type="number" value={config[plan.yearlyKey]} onChange={e => setConfig(c => ({ ...c, [plan.yearlyKey]: Number(e.target.value) }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
-                           </div>
-                        </div>
+                        )}
+
                      </div>
                   ))}
                </div>
@@ -363,7 +420,7 @@ const SubscriptionView = () => {
                            >
                               <td className="px-8 py-5">
                                  <p className="text-white font-black text-sm">{sub.user?.name || 'Unknown'}</p>
-                                 <p className="text-[10px] text-gray-500 font-bold mt-0.5">{sub.user?.phoneNumber}</p>
+                                 <p className="text-[10px] text-gray-500 font-bold mt-0.5">{sub.user?.email}</p>
                               </td>
                               <td className="px-8 py-5">
                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${sub.plan === 'ELITE' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :

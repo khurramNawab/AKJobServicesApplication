@@ -14,23 +14,36 @@ const AdminDashboard = () => {
     const [jobs, setJobs] = useState([]);
     const [activity, setActivity] = useState([]);
     
+    // Pagination Metadata
+    const [pagination, setPagination] = useState({
+        users: { total: 0, pages: 1, current: 1 },
+        jobs: { total: 0, pages: 1, current: 1 }
+    });
+    
     // UI/UX States
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
-    const fetchAdminData = async () => {
+    const fetchAdminData = async (userPage = 1, jobPage = 1) => {
         setLoading(true);
         try {
             const [statsRes, usersRes, jobsRes, activityRes] = await Promise.all([
                 api.get('/admin/stats'),
-                api.get('/admin/users'),
-                api.get('/admin/jobs'),
+                api.get(`/admin/users?page=${userPage}&limit=10`),
+                api.get(`/admin/jobs?page=${jobPage}&limit=10`),
                 api.get('/admin/activity')
             ]);
+            
+            // Backend returns { success, data: [], pagination: {} }
             setStats(statsRes.data.data);
-            setUsers(usersRes.data.data);
-            setJobs(jobsRes.data.data);
-            setActivity(activityRes.data.data);
+            setUsers(usersRes.data.data || []);
+            setJobs(jobsRes.data.data || []);
+            setActivity(activityRes.data.data || []);
+            
+            setPagination({
+                users: usersRes.data.pagination || { total: usersRes.data.data?.length, pages: 1, current: 1 },
+                jobs: jobsRes.data.pagination || { total: jobsRes.data.data?.length, pages: 1, current: 1 }
+            });
         } catch (err) {
             console.error('Failed to fetch admin matrix data:', err);
         } finally {
@@ -42,7 +55,7 @@ const AdminDashboard = () => {
         fetchAdminData();
     }, []);
 
-    // 🛡️ Admin Command Handlers (Passed via Context or Props)
+    // 🛡️ Admin Command Handlers (Contextual Sudo Protection)
     const handleRoleUpdate = async (userId, newRole) => {
         try {
             const res = await api.put(`/admin/users/${userId}`, { role: newRole });
@@ -50,7 +63,7 @@ const AdminDashboard = () => {
                 setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
             }
         } catch (err) {
-            alert('Failed to update role');
+            console.error('Role update failed');
         }
     };
 
@@ -61,35 +74,40 @@ const AdminDashboard = () => {
                 setUsers(users.map(u => u._id === userId ? { ...u, isVerified: !currentStatus } : u));
             }
         } catch (err) {
-            alert('Failed to toggle verification');
+            console.error('Verification toggle failed');
         }
     };
 
     const handleDeleteUser = async (userId) => {
-        if (!window.confirm('CRITICAL: Permanently delete this terminal access?')) return;
+        const password = window.prompt('CRITICAL ACTION: Enter Admin Password to confirm user deletion:');
+        if (!password) return;
+
         setActionLoading(true);
         try {
-            const res = await api.delete(`/admin/users/${userId}`);
+            // Send sudoPassword as required by backend reauthMiddleware
+            const res = await api.delete(`/admin/users/${userId}`, { data: { sudoPassword: password } });
             if (res.data.success) {
                 setUsers(users.filter(u => u._id !== userId));
             }
         } catch (err) {
-            alert('Deletion failed');
+            alert(err.response?.data?.message || 'Deletion failed');
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleDeleteJob = async (jobId) => {
-        if (!window.confirm('MODERATION: Takedown this posting?')) return;
+        const password = window.prompt('MODERATION ACTION: Enter Admin Password to confirm job takedown:');
+        if (!password) return;
+
         setActionLoading(true);
         try {
-            const res = await api.delete(`/admin/jobs/${jobId}`);
+            const res = await api.delete(`/admin/jobs/${jobId}`, { data: { sudoPassword: password } });
             if (res.data.success) {
                 setJobs(jobs.filter(j => j._id !== jobId));
             }
         } catch (err) {
-            alert('Job takedown failed');
+            alert(err.response?.data?.message || 'Job takedown failed');
         } finally {
             setActionLoading(false);
         }
@@ -109,7 +127,8 @@ const AdminDashboard = () => {
         }
     };
 
-    if (loading) {
+    // Only show full-screen spinner on initial cold start (no stats yet)
+    if (loading && !stats) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-8">
                 <div className="w-16 h-16 border-t-4 border-blue-600 border-r-4 border-r-blue-600/20 rounded-full animate-spin shadow-[0_0_30px_rgba(37,99,235,0.2)]" />
@@ -126,6 +145,8 @@ const AdminDashboard = () => {
         users,
         jobs,
         activity,
+        pagination,
+        fetchAdminData,
         handleRoleUpdate,
         handleToggleVerification,
         handleDeleteUser,

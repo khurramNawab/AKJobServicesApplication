@@ -9,7 +9,6 @@
     "scheme": "jobportal",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.jobportal"
@@ -25,7 +24,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.jobportal"
     },
-
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png"
@@ -42,7 +40,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "reactCompiler": false

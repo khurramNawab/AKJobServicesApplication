@@ -14,7 +14,8 @@ const JobApplications = () => {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [updating, setUpdating] = useState(null);
-  const [selectedResume, setSelectedResume] = useState(null); // ✅ was missing — caused crash
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [viewMode, setViewMode] = useState('Grid');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,7 +94,7 @@ const JobApplications = () => {
                  </div>
                  <div className="w-[1px] h-8 bg-white/10" />
                  <div className="text-center">
-                    <p className="text-xl font-black text-emerald-400">{applicants.filter(a => a.status === 'Accepted').length}</p>
+                    <p className="text-xl font-black text-emerald-400">{applicants.filter(a => a.status === 'SHORTLISTED').length}</p>
                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Shortlisted</p>
                  </div>
               </div>
@@ -102,153 +103,173 @@ const JobApplications = () => {
 
         {/* Filters Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/5 pb-8">
-           <div className="flex overflow-x-auto gap-3 pb-2 md:pb-0 scroll-hide">
-              {['All', 'APPLIED', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED'].map(filter => (
-                 <button 
-                  key={filter} 
-                  onClick={() => setActiveFilter(filter)}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    activeFilter === filter ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/10'
-                  }`}
-                 >
-                    {filter === 'APPLIED' ? 'New' : filter === 'REVIEWING' ? 'Reviewing' : filter === 'SHORTLISTED' ? 'Shortlisted' : filter === 'HIRED' ? 'Hired' : filter === 'REJECTED' ? 'Rejected' : filter}
-                 </button>
-              ))}
+           <div className="flex items-center gap-6 overflow-x-auto scroll-hide">
+              <div className="flex gap-2">
+                 {['All', 'PENDING', 'SHORTLISTED', 'REJECTED', 'HIRED'].map(filter => (
+                    <button 
+                     key={filter} 
+                     onClick={() => setActiveFilter(filter)}
+                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                       activeFilter === filter ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white/5 text-slate-500 hover:text-white'
+                     }`}
+                    >
+                       {filter === 'PENDING' ? 'New' : filter === 'SHORTLISTED' ? 'Shortlisted' : filter === 'HIRED' ? 'Hired' : filter === 'REJECTED' ? 'Rejected' : filter}
+                    </button>
+                 ))}
+              </div>
+              <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
+              <div className="bg-white/5 p-1 rounded-xl flex gap-1 border border-white/5">
+                 {['Grid', 'Table'].map(v => (
+                    <button 
+                     key={v} 
+                     onClick={() => setViewMode(v)}
+                     className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === v ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white'}`}
+                    >
+                       {v}
+                    </button>
+                 ))}
+              </div>
            </div>
-           <div className="relative w-full md:w-80 group">
+           <div className="relative w-full md:w-64 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors" />
-              <input type="text" placeholder="Search applicants by name..." className="w-full bg-white/5 border border-white/5 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" />
+              <input type="text" placeholder="Search..." className="w-full bg-white/5 border border-white/5 rounded-xl py-2.5 pl-12 pr-4 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" />
            </div>
         </div>
 
-        {/* Applicants Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Applicants Matrix Container */}
+        <div className="space-y-8">
            <AnimatePresence mode="popLayout">
               {filteredApplicants.length > 0 ? (
-                filteredApplicants.map((app, i) => (
-                  <motion.div
-                    key={app._id}
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="glass-card p-1 rounded-[2.5rem] border-white/5 hover:border-white/10 transition-all group overflow-hidden shadow-2xl relative"
-                  >
-                    <div className="p-8 space-y-8">
-                      {/* Top Header */}
-                      <div className="flex justify-between items-start">
-                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-primary/20 border border-primary/20 flex items-center justify-center relative shadow-inner">
-                            <User className="w-8 h-8 text-primary-light" />
-                            <div className={`absolute -bottom-1 -right-1 p-1 borderRadius-md ${
-                              app.status === 'Pending' ? 'bg-amber-400' : app.status === 'Accepted' ? 'bg-emerald-500' : 'bg-secondary'
-                            } rounded-lg shadow-lg`}>
-                               {app.status === 'Pending' ? <Clock className="w-3 h-3 text-white" /> : app.status === 'Accepted' ? <CheckCircle2 className="w-3 h-3 text-white" /> : <XCircle className="w-3 h-3 text-white" />}
+                viewMode === 'Grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredApplicants.map((app, i) => (
+                      <motion.div
+                        key={app._id}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="glass-card p-1 rounded-[2.5rem] border-white/5 hover:border-white/10 transition-all group overflow-hidden shadow-2xl relative"
+                      >
+                        {/* ... existing card content ... */}
+                        <div className="p-8 space-y-8">
+                          <div className="flex justify-between items-start">
+                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-primary/20 border border-primary/20 flex items-center justify-center relative shadow-inner">
+                                <User className="w-8 h-8 text-primary-light" />
+                                <div className={`absolute -bottom-1 -right-1 p-1 borderRadius-md ${
+                                  app.status === 'PENDING' || app.status === 'APPLIED' ? 'bg-amber-400' : app.status === 'SHORTLISTED' ? 'bg-emerald-500' : 'bg-secondary'
+                                } rounded-lg shadow-lg`}>
+                                   {app.status === 'PENDING' || app.status === 'APPLIED' ? <Clock className="w-3 h-3 text-white" /> : app.status === 'SHORTLISTED' ? <CheckCircle2 className="w-3 h-3 text-white" /> : <XCircle className="w-3 h-3 text-white" />}
+                                </div>
+                             </div>
+                             <button className="p-3 bg-white/5 rounded-xl text-slate-600 hover:text-white transition-colors border border-white/5">
+                                <MessageSquare className="w-5 h-5" />
+                             </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h3 className="text-2xl font-black tracking-tight line-clamp-1">{app.candidateId?.name || 'Anonymous User'}</h3>
+                            <div className="flex flex-col gap-3 pt-2">
+                               <div className="flex items-center gap-3 text-slate-500 text-sm font-medium">
+                                  <Mail className="w-4 h-4 text-slate-700" /> {app.candidateId?.email || 'N/A'}
+                               </div>
                             </div>
-                         </div>
-                         <button className="p-3 bg-white/5 rounded-xl text-slate-600 hover:text-white transition-colors border border-white/5">
-                            <MessageSquare className="w-5 h-5" />
-                         </button>
-                      </div>
+                          </div>
 
-                      {/* Info Body */}
-                      <div className="space-y-2">
-                        <h3 className="text-2xl font-black tracking-tight line-clamp-1">{app.candidateId?.name || 'Anonymous User'}</h3>
-                        <div className="flex flex-col gap-3 pt-2">
-                           <div className="flex items-center gap-3 text-slate-500 text-sm font-medium">
-                              <Mail className="w-4 h-4 text-slate-700" /> {app.candidateId?.email || 'N/A'}
-                           </div>
-                           <div className="flex items-center gap-3 text-slate-500 text-sm font-medium">
-                              <Phone className="w-4 h-4 text-slate-700" /> {app.candidateId?.phoneNumber || 'N/A'}
-                           </div>
-                        </div>
-                      </div>
-
-                      {/* Resume Access */}
-                      <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <div 
-                          className="p-2 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
-                          onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume uploaded')}
-                          title="Preview Resume"
-                        >
-                          <FileText className="w-5 h-5 text-primary-light" />
-                        </div>
-                        <div className="flex-1 overflow-hidden">
-                           <p className="text-xs font-black uppercase tracking-widest text-primary-light/60">Candidate Resume</p>
-                           <p className="text-sm font-bold truncate">
-                             {app.profile?.resumeOriginalName || `${app.candidateId?.name || 'candidate'}_CV.pdf`}
-                           </p>
-                        </div>
-                        <div className="flex gap-2 items-center">
-                          {/* Preview */}
-                          <button
-                            title="Preview"
-                            className="p-1 text-slate-600 hover:text-white transition-colors"
-                            onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume uploaded')}
-                          >
-                            <Search className="w-4 h-4" />
-                          </button>
-                          {/* Download — open in new tab */}
-                          {app.profile?.resumeUrl ? (
-                            <a
-                              href={app.profile.resumeUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Download Resume"
-                              className="p-1 text-slate-600 hover:text-white transition-colors"
+                          <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <div 
+                              className="p-2 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                              onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume uploaded')}
                             >
-                              <Download className="w-4 h-4" />
-                            </a>
-                          ) : (
-                            <button
-                              className="p-1 text-slate-700 cursor-not-allowed"
-                              onClick={() => alert('No resume uploaded')}
-                              title="No resume"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="pt-6 border-t border-white/5 flex gap-3">
-                         {app.status === 'Pending' ? (
-                            <>
-                               <Button 
-                                variant="cta" 
-                                size="sm" 
-                                className="flex-1 py-4 text-[10px]" 
-                                loading={updating === app._id}
-                                onClick={() => handleStatusUpdate(app._id, 'Accepted')}
-                               >
-                                 Shortlist
-                               </Button>
-                               <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1 py-4 text-[10px] text-secondary-soft border-secondary/20 hover:bg-secondary/10"
-                                loading={updating === app._id}
-                                onClick={() => handleStatusUpdate(app._id, 'Rejected')}
-                               >
-                                 Reject
-                               </Button>
-                            </>
-                         ) : (
-                            <div className="w-full flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                               <span className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${app.status === 'Accepted' ? 'text-emerald-400' : 'text-secondary-soft'}`}>
-                                  {app.status === 'Accepted' ? <><CheckCircle2 className="w-4 h-4" /> Shortlisted</> : <><XCircle className="w-4 h-4" /> Rejected</>}
-                               </span>
-                               <button 
-                                onClick={() => handleStatusUpdate(app._id, 'Pending')}
-                                className="text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-widest underline underline-offset-4"
-                               >
-                                  UNDO
-                               </button>
+                              <FileText className="w-5 h-5 text-primary-light" />
                             </div>
-                         )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
+                            <div className="flex-1 overflow-hidden">
+                               <p className="text-xs font-black uppercase tracking-widest text-primary-light/60">Candidate Resume</p>
+                               <p className="text-sm font-bold truncate">{app.profile?.resumeOriginalName || 'CV.pdf'}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-6 border-t border-white/5 flex gap-3">
+                             {(app.status === 'PENDING' || app.status === 'APPLIED' || app.status === 'REVIEWING') ? (
+                                <>
+                                   <Button variant="cta" size="sm" className="flex-1 py-4 text-[10px] uppercase tracking-widest font-black" loading={updating === app._id} onClick={() => handleStatusUpdate(app._id, 'SHORTLISTED')}>Shortlist</Button>
+                                   <Button variant="outline" size="sm" className="flex-1 py-4 text-[10px] uppercase tracking-widest font-black text-secondary-soft border-secondary/20 hover:bg-secondary/10" loading={updating === app._id} onClick={() => handleStatusUpdate(app._id, 'REJECTED')}>Reject</Button>
+                                </>
+                             ) : (
+                                <div className="w-full flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                                   <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${app.status === 'SHORTLISTED' || app.status === 'HIRED' ? 'text-emerald-400' : 'text-secondary-soft'}`}>
+                                      {app.status === 'SHORTLISTED' ? <><CheckCircle2 className="w-4 h-4" /> Shortlisted</> : app.status === 'HIRED' ? <><CheckCircle2 className="w-4 h-4" /> Hired</> : <><XCircle className="w-4 h-4" /> Rejected</>}
+                                   </span>
+                                   <button onClick={() => handleStatusUpdate(app._id, 'PENDING')} className="text-[10px] font-black text-slate-600 hover:text-white uppercase tracking-widest underline underline-offset-4">UNDO</button>
+                                </div>
+                             )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="glass-card rounded-[2rem] border-white/5 bg-white/[0.01] overflow-hidden shadow-2xl">
+                     <table className="w-full text-left border-collapse">
+                        <thead>
+                           <tr className="bg-white/5 border-b border-white/10">
+                              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Candidate Matrix</th>
+                              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Status Vector</th>
+                              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Resume Artifact</th>
+                              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 text-right">Command</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                           {filteredApplicants.map((app) => (
+                             <tr key={app._id} className="hover:bg-white/[0.02] transition-colors group">
+                                <td className="px-8 py-6">
+                                   <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-indigo-500/10 flex items-center justify-center border border-white/5 group-hover:border-primary/30 transition-all">
+                                         <User className="w-5 h-5 text-primary-light" />
+                                      </div>
+                                      <div>
+                                         <p className="text-sm font-black text-white">{app.candidateId?.name || 'Anonymous'}</p>
+                                         <p className="text-[10px] text-slate-500 font-bold">{app.candidateId?.email}</p>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <div className="flex items-center gap-2">
+                                      <div className={`w-1.5 h-1.5 rounded-full ${
+                                         app.status === 'SHORTLISTED' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 
+                                         app.status === 'REJECTED' ? 'bg-secondary' : 'bg-amber-400 animate-pulse'
+                                      }`} />
+                                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                         app.status === 'SHORTLISTED' ? 'text-emerald-400' : 
+                                         app.status === 'REJECTED' ? 'text-secondary-soft' : 'text-amber-400'
+                                      }`}>{app.status}</span>
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <button 
+                                     onClick={() => app.profile?.resumeUrl ? setSelectedResume(app.profile.resumeUrl) : alert('No resume')}
+                                     className="flex items-center gap-2 text-primary-light hover:text-white transition-colors group/link"
+                                   >
+                                      <FileText className="w-4 h-4" />
+                                      <span className="text-[10px] font-black uppercase tracking-widest underline underline-offset-4">View CV</span>
+                                      <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                                   </button>
+                                </td>
+                                <td className="px-8 py-6 text-right">
+                                   {(app.status === 'PENDING' || app.status === 'APPLIED') ? (
+                                      <div className="flex justify-end gap-2">
+                                         <button onClick={() => handleStatusUpdate(app._id, 'SHORTLISTED')} className="px-4 py-2 bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-500 hover:text-white transition-all">Shortlist</button>
+                                         <button onClick={() => handleStatusUpdate(app._id, 'REJECTED')} className="px-4 py-2 bg-secondary/10 text-secondary-soft text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-secondary hover:text-white transition-all">Reject</button>
+                                      </div>
+                                   ) : (
+                                      <button onClick={() => handleStatusUpdate(app._id, 'PENDING')} className="text-[9px] font-black text-slate-600 hover:text-white uppercase tracking-widest underline underline-offset-4">Reset Status</button>
+                                   )}
+                                </td>
+                             </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+                )
               ) : (
                 <div className="col-span-full py-32 text-center space-y-8">
                    <div className="w-24 h-24 bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center mx-auto shadow-inner animate-float">

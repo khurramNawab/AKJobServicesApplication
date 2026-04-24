@@ -26,7 +26,7 @@ const PostJob = () => {
   const [success, setSuccess] = useState(false);
 
   const categories = ['Technology', 'Design', 'Marketing', 'Sales', 'Finance', 'Healthcare', 'Engineering', 'Other'];
-  const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
+  const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship', 'Remote'];
   const expLevels = ['Entry Level', 'Mid-Level', 'Senior Level', 'Executive'];
 
   const handleChange = (e) => {

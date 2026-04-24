@@ -5,7 +5,7 @@ import {
   Briefcase, 
   FileText, 
   TrendingUp, 
-  DollarSign, 
+  IndianRupee, 
   Zap, 
   ShieldCheck, 
   Activity,
@@ -19,10 +19,40 @@ import { useOutletContext } from 'react-router-dom';
 
 const DashboardView = () => {
   const { stats, activity } = useOutletContext();
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [manualLog, setManualLog] = useState('');
+
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    // Simulate a manual entry commit
+    alert(`System Manual Entry Committed: ${manualLog}`);
+    setShowManualModal(false);
+    setManualLog('');
+  };
+
+  const handleExport = () => {
+    const reportData = [
+      ['DASHBOARD OPERATIONAL REPORT', new Date().toLocaleString()],
+      ['---------------------------', '---------------------------'],
+      ['KPI METRIC', 'VALUE SIGNAL'],
+      ['Total Users', stats?.totalUsers || 0],
+      ['Active Jobs', stats?.totalJobs || 0],
+      ['Platform Revenue', stats?.totalRevenue || 0],
+      ['System Health', 'Optimal']
+    ];
+    const csvContent = "data:text/csv;charset=utf-8," + reportData.map(e => e.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `operational_summary_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const kpiData = [
     { label: 'Total Signal', value: stats?.totalUsers || 0, icon: Users, color: 'blue', change: '+12%', positive: true },
     { label: 'Active Jobs', value: stats?.totalJobs || 0, icon: Briefcase, color: 'emerald', change: '+5%', positive: true },
-    { label: 'Platform Revenue', value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, icon: DollarSign, color: 'indigo', change: '+18%', positive: true },
+    { label: 'Platform Revenue', value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, icon: IndianRupee, color: 'indigo', change: '+18%', positive: true },
     { label: 'Active Plans', value: stats?.activeSubscriptions || 0, icon: Zap, color: 'amber', change: '-2%', positive: false },
   ];
 
@@ -36,10 +66,16 @@ const DashboardView = () => {
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Real-time operational metrics across all sectors.</p>
         </div>
         <div className="flex gap-4">
-          <button className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
+          <button 
+            onClick={handleExport}
+            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+          >
             Export Report
           </button>
-          <button className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+          <button 
+            onClick={() => setShowManualModal(true)}
+            className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+          >
             <Plus size={14} /> New Manual Entry
           </button>
         </div>
@@ -139,6 +175,47 @@ const DashboardView = () => {
         </div>
 
       </div>
+
+      {/* 🛡️ Manual Entry Modal Interface */}
+      {showManualModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <motion.div 
+             initial={{ scale: 0.9, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1 }}
+             className="w-full max-w-md bg-[#1E293B] border border-white/10 rounded-[2.5rem] p-10 space-y-8 shadow-2xl shadow-blue-500/10"
+           >
+              <div className="space-y-2 text-left">
+                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Manual <span className="text-blue-500">Node Entry</span>.</h3>
+                 <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Inject manual protocol logs into system matrix.</p>
+              </div>
+              
+              <form onSubmit={handleManualSubmit} className="space-y-6">
+                 <textarea 
+                   required
+                   value={manualLog}
+                   onChange={(e) => setManualLog(e.target.value)}
+                   placeholder="DESCRIBE MANUAL ACTION / LOG ENTRY..."
+                   className="w-full bg-white/5 border border-white/10 rounded-3xl px-6 py-5 text-[11px] font-black text-white tracking-widest focus:outline-none focus:border-blue-500 transition-all min-h-[120px] resize-none uppercase shadow-inner"
+                 />
+                 <div className="flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setShowManualModal(false)}
+                      className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all"
+                    >
+                      Abort
+                    </button>
+                    <button 
+                      type="submit"
+                      className="flex-2 px-8 py-4 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all"
+                    >
+                      Commit Entry
+                    </button>
+                 </div>
+              </form>
+           </motion.div>
+        </div>
+      )}
 
     </div>
   );

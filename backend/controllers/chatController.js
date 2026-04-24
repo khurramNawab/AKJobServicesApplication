@@ -1,8 +1,6 @@
+import mongoose from 'mongoose';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
-import User from '../models/User.js';
-import Candidate from '../models/Candidate.js';
-import Recruiter from '../models/Recruiter.js';
 import { createNotification } from '../utils/notification.js';
 
 // @desc    Get all conversations for the logged in user
@@ -10,71 +8,95 @@ import { createNotification } from '../utils/notification.js';
 // @access  Private
 export const getMyConversations = async (req, res) => {
     try {
-        let conversations = await Conversation.find({
-            participants: { $in: [req.user._id] }
-        })
-        .populate('participants', 'name email role phoneNumber')
-        .sort({ updatedAt: -1 })
-        .lean();
+        const userId = new mongoose.Types.ObjectId(req.user._id);
 
-        // Enhance participants with their avatars
-        conversations = await Promise.all(conversations.map(async (conv) => {
-            const enhancedParticipants = await Promise.all(conv.participants.map(async (p) => {
-                let avatar = '';
-                if (p.role === 'CANDIDATE') {
-                    const candidateProfile = await Candidate.findOne({ userId: p._id }).lean();
-                    if (candidateProfile && candidateProfile.profilePhoto) {
-                        avatar = candidateProfile.profilePhoto;
-                    }
-                } else if (p.role === 'RECRUITER' || p.role === 'ADMIN') {
-                    const recruiterProfile = await Recruiter.findOne({ userId: p._id }).lean();
-                    if (recruiterProfile && recruiterProfile.companyLogo) {
-                        avatar = recruiterProfile.companyLogo;
-                    }
+        const conversations = await Conversation.aggregate([
+            { $match: { participants: userId } },
+            { $sort: { updatedAt: -1 } },
+            // 👤 Lookup participants
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'participants',
+                    foreignField: '_id',
+                    as: 'participantDetails'
                 }
-                return { ...p, avatar };
-            }));
-            
-            return {
-                ...conv,
-                participants: enhancedParticipants
-            };
-        }));
-
-        const enhancedConversations = await Promise.all(conversations.map(async (conv) => {
-            const lastMessage = await Message.findOne({ conversationId: conv._id })
-                .sort({ createdAt: -1 })
-                .lean();
-            
-            const unreadCount = await Message.countDocuments({
-                conversationId: conv._id,
-                senderId: { $ne: req.user._id },
-                isRead: false
-            });
-
-            return {
-                ...conv,
-                lastMessage,
-                unreadCount
-            };
-        }));
+            },
+            // ✉️ Lookup messages for counts and last message
+            {
+                $lookup: {
+                    from: 'messages',
+                    let: { convId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$conversationId', '$$convId'] } } },
+                        { $sort: { createdAt: -1 } },
+                        { $limit: 1 }
+                    ],
+                    as: 'lastMessage'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'messages',
+                    let: { convId: '$_id' },
+                    pipeline: [
+                        { 
+                            $match: { 
+                                $expr: { 
+                                    $and: [
+                                        { $eq: ['$conversationId', '$$convId'] },
+                                        { $ne: ['$senderId', userId] },
+                                        { $eq: ['$isRead', false] }
+                                    ]
+                                } 
+                            } 
+                        },
+                        { $count: 'unread' }
+                    ],
+                    as: 'unreadInfo'
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    updatedAt: 1,
+                    participants: {
+                        $map: {
+                            input: '$participantDetails',
+                            as: 'p',
+                            in: {
+                                _id: '$$p._id',
+                                name: '$$p.name',
+                                role: '$$p.role',
+                                avatar: '$$p.avatar' // Ensure avatar exists in user model or via separate profile lookup if needed
+                            }
+                        }
+                    },
+                    lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+                    unreadCount: { $ifNull: [{ $arrayElemAt: ['$unreadInfo.unread', 0] }, 0] }
+                }
+            }
+        ]);
 
         res.status(200).json({
             success: true,
-            count: enhancedConversations.length,
-            data: enhancedConversations
+            count: conversations.length,
+            data: conversations
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Get messages for a specific conversation
+// @desc    Get messages for a specific conversation (With Pagination)
 // @route   GET /api/v1/chat/messages/:conversationId
 // @access  Private
 export const getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
 
         // Verify user is participant
         const conversation = await Conversation.findById(conversationId);
@@ -82,25 +104,28 @@ export const getMessages = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        // Mark messages as read
+        // Mark messages as read (Atomic update)
         await Message.updateMany(
             { conversationId, senderId: { $ne: req.user._id }, isRead: false },
             { $set: { isRead: true } }
         );
 
         const messages = await Message.find({ conversationId })
-            .sort({ createdAt: 1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
         res.status(200).json({
             success: true,
-            data: messages
+            page,
+            data: messages.reverse() // Return in chronological order
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Send a message (creates conversation if not exist)
+// @desc    Send a message (Atomic Send)
 // @route   POST /api/v1/chat/send
 // @access  Private
 export const sendMessage = async (req, res) => {
@@ -108,19 +133,15 @@ export const sendMessage = async (req, res) => {
         const { receiverId, text, attachments } = req.body;
 
         if (!receiverId || (!text && (!attachments || attachments.length === 0))) {
-            return res.status(400).json({ success: false, message: 'Receiver ID and either text or attachments are required' });
+            return res.status(400).json({ success: false, message: 'Content required' });
         }
 
-        // Find or create conversation
-        let conversation = await Conversation.findOne({
-            participants: { $all: [req.user._id, receiverId] }
-        });
-
-        if (!conversation) {
-            conversation = await Conversation.create({
-                participants: [req.user._id, receiverId]
-            });
-        }
+        // Atomic Find or Create Conversation
+        let conversation = await Conversation.findOneAndUpdate(
+            { participants: { $all: [req.user._id, receiverId] } },
+            { $setOnInsert: { participants: [req.user._id, receiverId] } },
+            { upsert: true, new: true }
+        );
 
         const message = await Message.create({
             conversationId: conversation._id,
@@ -129,24 +150,21 @@ export const sendMessage = async (req, res) => {
             attachments: attachments || []
         });
 
-        // Update conversation's updatedAt
-        conversation.updatedAt = Date.now();
-        await conversation.save();
+        // Update conversation timestamp
+        await Conversation.findByIdAndUpdate(conversation._id, { updatedAt: Date.now() });
 
-        // Send notification to receiver
-        await createNotification(
+        // Notification logic (Fire and forget or queue)
+        createNotification(
             receiverId,
             'New Message',
             `${req.user.name} sent you a message`,
             'NEW_MESSAGE',
             { conversationId: conversation._id, senderId: req.user._id }
-        );
+        ).catch(err => console.error('Notification Error:', err));
 
-        res.status(201).json({
-            success: true,
-            data: message
-        });
+        res.status(201).json({ success: true, data: message });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+

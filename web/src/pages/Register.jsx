@@ -1,18 +1,19 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Lock, UserCheck, Briefcase, ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Phone, Lock, UserCheck, Briefcase, ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useContext(AuthContext);
-  
+  const { register, googleLogin } = useContext(AuthContext);
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
-    phoneNumber: '',
+    email: '',
     password: '',
     role: '', // CANDIDATE or RECRUITER
   });
@@ -29,23 +30,23 @@ const Register = () => {
     setStep(2);
   };
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.role) {
       setError('Please select a role first.');
       setStep(1);
       return;
     }
-    
+
     setError('');
     setIsLoading(true);
 
     try {
       await register(formData);
-      // Registration successful, navigate to verification
-      navigate('/verify-account', { state: { phoneNumber: formData.phoneNumber } });
+      // Redirect to "check your email" page — NOT login
+      navigate('/check-email', { state: { email: formData.email } });
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +66,7 @@ const Register = () => {
         <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
       </div>
 
-      {/* Grid Pattern with Fade */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
+      {/* Background layer simplified - removed dead noise.svg URL */}
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -75,7 +75,7 @@ const Register = () => {
         className="w-full max-w-xl z-10"
       >
         <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl bg-white/[0.02] backdrop-blur-2xl">
-          
+
           <AnimatePresence mode="wait">
             {step === 1 ? (
               <motion.div
@@ -94,15 +94,13 @@ const Register = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <button
                     onClick={() => handleRoleSelect('CANDIDATE')}
-                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${
-                      formData.role === 'CANDIDATE' 
-                        ? 'bg-[#2563EB]/10 border-[#2563EB] shadow-lg shadow-[#2563EB]/20' 
+                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${formData.role === 'CANDIDATE'
+                        ? 'bg-[#2563EB]/10 border-[#2563EB] shadow-lg shadow-[#2563EB]/20'
                         : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      formData.role === 'CANDIDATE' ? 'bg-[#2563EB] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
-                    }`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${formData.role === 'CANDIDATE' ? 'bg-[#2563EB] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
+                      }`}>
                       <UserCheck className="w-7 h-7" />
                     </div>
                     <div>
@@ -113,15 +111,13 @@ const Register = () => {
 
                   <button
                     onClick={() => handleRoleSelect('RECRUITER')}
-                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${
-                      formData.role === 'RECRUITER' 
-                        ? 'bg-[#EF4444]/10 border-[#EF4444] shadow-lg shadow-[#EF4444]/20' 
+                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${formData.role === 'RECRUITER'
+                        ? 'bg-[#EF4444]/10 border-[#EF4444] shadow-lg shadow-[#EF4444]/20'
                         : 'bg-white/5 border-white/10 hover:border-white/20'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      formData.role === 'RECRUITER' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
-                    }`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${formData.role === 'RECRUITER' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
+                      }`}>
                       <Briefcase className="w-7 h-7" />
                     </div>
                     <div>
@@ -150,7 +146,7 @@ const Register = () => {
                 className="space-y-8"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <button 
+                  <button
                     onClick={() => setStep(1)}
                     className="p-2 -ml-2 text-slate-500 hover:text-white transition-colors"
                   >
@@ -192,15 +188,15 @@ const Register = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
                       <div className="relative group">
-                        <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
                         <input
-                          type="tel"
-                          name="phoneNumber"
-                          value={formData.phoneNumber}
+                          type="email"
+                          name="email"
+                          value={formData.email}
                           onChange={handleChange}
-                          placeholder="Your contact number"
+                          placeholder="Your email address"
                           required
                           className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
                         />
@@ -234,6 +230,35 @@ const Register = () => {
                     >
                       Complete Registration <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
+                  </div>
+
+                  <div className="flex items-center gap-4 py-1">
+                    <div className="flex-1 h-px bg-white/10"></div>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">OR</span>
+                    <div className="flex-1 h-px bg-white/10"></div>
+                  </div>
+                  
+                  <div className="flex justify-center pb-2">
+                    <GoogleLogin 
+                      onSuccess={async (credentialResponse) => {
+                        setError('');
+                        setIsLoading(true);
+                        try {
+                          const data = await googleLogin(credentialResponse.credential);
+                          const user = data.user || data.data || data;
+                          navigate(user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
+                        } catch (err) {
+                          setError(err.message || 'Google Registration failed');
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      onError={() => setError('Google Signup Failed')}
+                      theme="filled_black"
+                      shape="circle"
+                      size="large"
+                      text="signup_with"
+                    />
                   </div>
 
                   <p className="text-[11px] text-center text-slate-500 leading-relaxed max-w-xs mx-auto">

@@ -1,13 +1,16 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
-import { ShieldCheck, Phone, Lock, Loader2, ArrowLeft } from 'lucide-react';
-import Button from '../../components/ui/Button';
+import api from '../../services/api';
 
 const AdminLogin = () => {
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, user, loading, error } = useContext(AuthContext);
+    const [submitting, setSubmitting] = useState(false);
+    const { user, fetchUser } = useContext(AuthContext);
+    const [localError, setLocalError] = useState('');
     const navigate = useNavigate();
 
     // Redirect if already logged in as admin
@@ -19,11 +22,25 @@ const AdminLogin = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const success = await login(phoneNumber, password);
-        if (success) {
-            navigate('/admin');
+        setSubmitting(true);
+        setLocalError('');
+        try {
+            // Using the standardized login flow which handles cookie placement
+            const res = await api.post('/auth/admin/login', { email, password });
+            if (res.data.success) {
+                // IMPORTANT: Synchronize the AuthContext state with the new cookie
+                // before attempting navigation. 
+                await fetchUser();
+                navigate('/admin');
+            }
+        } catch (err) {
+            console.error('Admin Login Failed:', err);
+            setLocalError(err.response?.data?.message || 'Unauthorized Access');
+        } finally {
+            setSubmitting(false);
         }
     };
+
 
     return (
         <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 relative overflow-hidden">
@@ -49,22 +66,22 @@ const AdminLogin = () => {
                 {/* Login Form */}
                 <div className="bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
+                        {localError && (
                             <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-[10px] font-black uppercase tracking-widest text-center">
-                                {error}
+                                {localError}
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">Terminal Identify (Phone)</label>
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">Terminal Identify (Email)</label>
                             <div className="relative group">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
-                                    type="tel"
+                                    type="email"
                                     required
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    placeholder="9122049005"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="admin@matrix.com"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -87,11 +104,11 @@ const AdminLogin = () => {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={submitting}
                             className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-blue-600/20 transition-all transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                            {loading ? 'Authenticating...' : 'Enter Matrix'}
+                            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                            {submitting ? 'Authenticating...' : 'Enter Matrix'}
                         </button>
                     </form>
                 </div>
@@ -105,5 +122,4 @@ const AdminLogin = () => {
     );
 };
 
-import { motion } from 'framer-motion';
 export default AdminLogin;

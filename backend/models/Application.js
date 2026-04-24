@@ -11,10 +11,23 @@ const applicationSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    recruiterId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    resume: {
+        type: String,
+        required: true
+    },
     status: {
         type: String,
-        enum: ['APPLIED', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED'],
-        default: 'APPLIED'
+        enum: ['PENDING', 'APPROVED', 'REJECTED', 'APPLIED', 'REVIEWING', 'SHORTLISTED', 'HIRED'],
+        default: 'PENDING'
+    },
+    reviewedByAdmin: {
+        type: Boolean,
+        default: false
     },
     coverLetter: {
         type: String,
@@ -28,7 +41,7 @@ const applicationSchema = new mongoose.Schema({
         {
             status: {
                 type: String,
-                enum: ['APPLIED', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED'],
+                enum: ['PENDING', 'APPROVED', 'REJECTED', 'APPLIED', 'REVIEWING', 'SHORTLISTED', 'HIRED'],
                 required: true
             },
             timestamp: {

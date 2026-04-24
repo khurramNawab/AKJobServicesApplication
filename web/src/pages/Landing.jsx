@@ -22,10 +22,10 @@ const Landing = () => {
       </div>
 
       {/* Grid Pattern with Fade */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/noise.png')] opacity-[0.15] mix-blend-overlay pointer-events-none z-0" />
 
       {/* 🚀 Hero Section */}
-      <section className="relative pt-30 pb-16 px-6 z-10">
+      <section className="relative pt-20 mt-6 pb-10 px-6 z-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
             <div className="flex-1 text-left space-y-6 lg:space-y-8">
@@ -45,7 +45,7 @@ const Landing = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl md:text-7xl font-black leading-[1] tracking-tight"
+                className="text-4xl md:text-5xl font-black leading-[1.1] tracking-tight"
               >
                 The Easiest Way <br />
                 To Land Your <br />
@@ -57,7 +57,7 @@ const Landing = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed font-medium opacity-80"
+                className="text-base md:text-lg text-text-secondary max-w-xl leading-relaxed font-medium opacity-80"
               >
                 Browse over 100,000+ top jobs in India across all industries. From entry-level roles to executive positions, connect with the world's most trusted companies.
               </motion.p>
@@ -138,10 +138,10 @@ const Landing = () => {
       </section>
 
       {/* 💼 Social Proof / Trust Section - General Corporate */}
-      <section className="py-24 border-y border-white/5 bg-white/[0.01] relative">
+      <section className="py-10 border-y border-white/5 bg-white/[0.01] relative">
         <div className="absolute inset-0 bg-gradient-to-r from-bg-main via-transparent to-bg-main pointer-events-none z-10" />
         <div className="max-w-7xl mx-auto px-6 relative z-0">
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.4em]">Connect with 5,000+ Verified Companies</span>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-x-20 gap-y-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-80 transition-all duration-700">
@@ -155,8 +155,8 @@ const Landing = () => {
       </section>
 
       {/* 📊 High-Performance Metrics */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <section className="py-10 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Activated Talents', value: '450k+', icon: Users, color: 'text-[#2563EB]' },
             { label: 'Daily Opportunities', value: '1,200+', icon: Zap, color: 'text-[#EF4444]' },
@@ -165,14 +165,14 @@ const Landing = () => {
           ].map((stat, i) => (
             <motion.div
               key={i}
-              className="glass-card p-10 group relative flex flex-col items-center text-center space-y-4"
+              className="glass-card p-5 group relative flex flex-col items-center text-center space-y-2 rounded-xl"
             >
-              <div className={`p-4 rounded-2xl bg-white/[0.02] border border-white/5 group-hover:border-primary/20 ${stat.color} transition-all`}>
-                <stat.icon className="w-8 h-8" />
+              <div className={`p-3 rounded-xl bg-white/[0.02] border border-white/5 group-hover:border-primary/20 ${stat.color} transition-all`}>
+                <stat.icon className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-4xl font-black text-white">{stat.value}</h4>
-                <p className="text-xs font-black text-text-muted uppercase tracking-widest mt-2">{stat.label}</p>
+                <h4 className="text-2xl font-black text-white">{stat.value}</h4>
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1">{stat.label}</p>
               </div>
             </motion.div>
           ))}
@@ -180,14 +180,14 @@ const Landing = () => {
       </section>
 
       {/* ⚡ Latest Openings Section */}
-      <section className="py-32 px-6 bg-white/[0.01] relative z-10 border-t border-white/5">
+      <section className="py-16 px-6 bg-white/[0.01] relative z-10 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
-            <div className="space-y-4">
-              <h2 className="text-5xl md:text-6xl font-black text-white leading-tight">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-8">
+            <div className="space-y-2">
+              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
                 Latest <span className="gradient-text">Openings</span>
               </h2>
-              <p className="text-xl text-text-secondary max-w-2xl font-medium opacity-80">
+              <p className="text-base text-text-secondary max-w-2xl font-medium opacity-80">
                 Don't miss out on your dream job. Handpicked opportunities from the world's most innovative companies.
               </p>
             </div>
@@ -207,40 +207,40 @@ const Landing = () => {
             ].map((job) => (
               <motion.div
                 key={job.id}
-                whileHover={{ y: -10 }}
-                className="glass-card p-10 group relative overflow-hidden flex flex-col h-full border-white/5 hover:border-[#2563EB]/40 transition-all shadow-2xl"
+                whileHover={{ y: -5 }}
+                className="glass-card p-6 group relative overflow-hidden flex flex-col h-full border-white/5 hover:border-[#2563EB]/40 transition-all shadow-xl rounded-xl"
               >
                 {/* Header with Featured Badge */}
-                <div className="flex justify-between items-start mb-10">
-                   <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all shadow-inner">
-                      <span className="text-3xl font-black text-white">{job.initial}</span>
+                <div className="flex justify-between items-start mb-6">
+                   <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all shadow-inner">
+                      <span className="text-2xl font-black text-white">{job.initial}</span>
                    </div>
-                   <span className="px-4 py-1.5 bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-full text-[9px] font-black text-[#2563EB] uppercase tracking-[0.2em] shadow-sm">
+                   <span className="px-3 py-1 bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-full text-[8px] font-black text-[#2563EB] uppercase tracking-[0.2em] shadow-sm">
                       Featured
                    </span>
                 </div>
 
-                <div className="space-y-3 mb-10">
-                   <h3 className="text-2xl font-black text-white tracking-tight leading-tight group-hover:text-[#2563EB] transition-colors">{job.title}</h3>
-                   <p className="text-sm font-black text-text-secondary opacity-60 flex items-center gap-2">
-                     {job.company} <span className="w-1.5 h-1.5 bg-white/10 rounded-full" /> {job.location}
+                <div className="space-y-2 mb-6">
+                   <h3 className="text-lg font-black text-white tracking-tight leading-tight group-hover:text-[#2563EB] transition-colors line-clamp-1">{job.title}</h3>
+                   <p className="text-xs font-bold text-text-secondary opacity-80 flex items-center gap-2">
+                     {job.company} <span className="w-1 h-1 bg-white/20 rounded-full" /> {job.location}
                    </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-10">
+                <div className="flex flex-wrap gap-2 mb-6">
                   {job.tags.map(tag => (
-                    <span key={tag} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-white/50 border border-white/5 uppercase tracking-tighter">
+                    <span key={tag} className="px-3 py-1.5 bg-white/5 rounded-lg text-[9px] font-black text-white/50 border border-white/5 uppercase tracking-tighter">
                       {tag}
                     </span>
                   ))}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-6 border-t border-white/5">
-                  <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">
+                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                  <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">
                     Posted {job.posted}
                   </span>
-                  <button className="flex items-center gap-2 text-sm font-black text-white hover:text-[#2563EB] transition-all group/btn">
-                    Apply Now <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  <button className="flex items-center gap-1.5 text-xs font-black text-white hover:text-[#2563EB] transition-all group/btn">
+                    Apply Now <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                   </button>
                 </div>
 

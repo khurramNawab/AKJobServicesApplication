@@ -1,215 +1,474 @@
 import User from '../models/User.js';
-import generateToken from '../utils/generateToken.js';
-import { sendSMS, generateOTP } from '../utils/smsService.js';
+import { sendTokenResponse, clearTokens, clearAllSessions } from '../utils/tokenService.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendAccountLockedEmail } from '../utils/emailService.js';
+import { OAuth2Client } from "google-auth-library";
+import { z } from 'zod';
+import crypto from 'crypto';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// ── Validation Schemas ─────────────────────────────────────────────
+const registerSchema = z.object({
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+    password: z.string().min(6).max(128),
+    role: z.enum(['CANDIDATE', 'RECRUITER']).default('CANDIDATE'),
+});
+
+const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6).max(128),
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  REGISTER
+// ═══════════════════════════════════════════════════════════════════
 
 // @desc    Register new user
 // @route   POST /api/v1/auth/register
 // @access  Public
 export const registerUser = async (req, res) => {
     try {
-        const { name, phoneNumber, password, role } = req.body;
+        const validated = registerSchema.parse(req.body);
+        const { name, email, password, role } = validated;
 
-        const userExists = await User.findOne({ phoneNumber });
-
-        if (userExists) {
-            return res.status(400).json({ success: false, message: 'User with this phone number already exists' });
+        // Duplicate check
+        const emailExists = await User.findOne({ email });
+        if (emailExists) {
+            return res.status(400).json({ success: false, message: 'Email already registered' });
         }
-
-        // Auto-promote specific phone number to ADMIN
-        const finalRole = phoneNumber === '9122049005' ? 'ADMIN' : role;
 
         const user = await User.create({
             name,
-            phoneNumber,
+            email,
             password,
-            role: finalRole,
-            isVerified: false, // Start as unverified if using OTP
-            loginCount: 1
+            role,
+            isVerified: false,
+            loginCount: 0,
         });
 
-        if (user) {
-            // OPTIONAL: Send OTP automatically upon registration
-            // STATIC OTP BYPASS for Admin Number (9122049005)
-            const otpCode = phoneNumber === '9122049005' ? '123456' : generateOTP();
-            user.otp = otpCode;
-            user.otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-            await user.save();
-            
-            await sendSMS(phoneNumber, `Your Job Portal verification code is: ${otpCode}`);
+        // Generate secure, single-use SHA-256 hashed email verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+        user.verificationToken = hashedToken;
+        user.verificationTokenExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
+        await user.save();
 
-            res.status(201).json({
-                success: true,
-                message: 'User registered. Please verify your phone number.',
-                _id: user.id,
-                name: user.name,
-                phoneNumber: user.phoneNumber,
-                role: user.role,
-                token: generateToken(user._id),
-                isVerified: false,
-                loginCount: user.loginCount
-            });
-        } else {
-            res.status(400).json({ success: false, message: 'Invalid user data' });
-        }
+        // Send branded HTML verification email — link only, no OTP
+        await sendVerificationEmail(email, name, verificationToken);
+
+        res.status(201).json({
+            success: true,
+            message: 'Registration successful. Please check your email to verify your account.',
+            email: user.email,
+        });
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            const errorMsg = error.errors.map(e => e.message).join(', ');
+            return res.status(400).json({ success: false, message: errorMsg, errors: error.errors });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOGIN — with account locking & IP tracking
+// ═══════════════════════════════════════════════════════════════════
 
 // @desc    Authenticate a user
 // @route   POST /api/v1/auth/login
 // @access  Public
 export const loginUser = async (req, res) => {
     try {
-        const { phoneNumber, password } = req.body;
-        console.log('[LOGIN] Attempting login for:', phoneNumber);
+        const validated = loginSchema.parse(req.body);
+        const { email, password } = validated;
 
-        // NORMALIZE: Take last 10 digits for strict admin check
-        const cleanPhone = phoneNumber.replace(/\D/g, '').slice(-10);
-        const isAdminNumber = cleanPhone === '9122049005';
-        
-        let user = await User.findOne({ 
-            $or: [
-                { phoneNumber: phoneNumber },
-                { phoneNumber: new RegExp(cleanPhone + '$') }
-            ]
-        }).select('+password');
-
-        // SELF-HEALING ADMIN BYPASS
-        const isStaticBypass = isAdminNumber && password === '789456';
-        
-        if (!user && isStaticBypass) {
-            console.log('[ADMIN] Auto-creating missing admin account for:', phoneNumber);
-            user = await User.create({
-                name: 'Admin User',
-                phoneNumber: phoneNumber,
-                password: password, // Will be hashed by pre-save hook
-                role: 'ADMIN',
-                isVerified: true
-            });
-            // Re-fetch to include selected password (for consistency, though not needed for bypass below)
-            user = await User.findById(user._id).select('+password');
-        }
+        const user = await User.findOne({ email: email.toLowerCase() })
+            .select('+password +failedLoginAttempts +lockUntil');
 
         if (!user) {
-            console.warn('[LOGIN] User not found:', phoneNumber);
-            return res.status(401).json({ success: false, message: 'Invalid phone number or password' });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        const isMatch = isStaticBypass || (await user.matchPassword(password));
-        
-        if (isMatch) {
-            // If using bypass, ensure user is verified and promoted to ADMIN
-            if (isStaticBypass) {
-                await User.findByIdAndUpdate(user._id, { 
-                    isVerified: true, 
-                    role: 'ADMIN',
-                    $inc: { loginCount: 1 } 
-                });
-            } else {
-                // Atomically increment login count without triggering save hooks (safer)
-                await User.findByIdAndUpdate(user._id, { $inc: { loginCount: 1 } });
-            }
-
-            console.log('[LOGIN] Success:', phoneNumber);
-            res.json({
-                success: true,
-                _id: user.id,
-                name: user.name,
-                phoneNumber: user.phoneNumber,
-                role: user.role,
-                token: generateToken(user._id),
-                isVerified: user.isVerified,
-                loginCount: (user.loginCount || 0) + 1
+        if (!user.isVerified) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Please verify your email before logging in.',
+                needsVerification: true,
+                email: user.email 
             });
-        } else {
-            console.warn('[LOGIN] Password mismatch for:', phoneNumber);
-            res.status(401).json({ success: false, message: 'Invalid phone number or password' });
         }
+
+        // Check ban
+        if (user.isBanned) {
+            return res.status(403).json({ success: false, message: 'Account suspended. Contact support.' });
+        }
+
+        // Check account lock
+        if (user.lockUntil && user.lockUntil > Date.now()) {
+            const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+            return res.status(423).json({
+                success: false,
+                message: `Account locked. Try again in ${minutesLeft} minute(s).`,
+            });
+        }
+
+        // Verify password
+        if (!user.password) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'This account is linked with Google. To enable manual login, please use "Forgot Password" to set a credential, or simply use Google Sign-In.' 
+            });
+        }
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) {
+            const locked = await user.registerFailedLogin();
+            console.warn(`[AUTH] Login failed (Credentials): ${email} - Attempts remaining: ${5 - user.failedLoginAttempts}`);
+            if (locked && user.email) {
+                sendAccountLockedEmail(user.email, user.name).catch(() => {});
+            }
+            const remaining = 5 - (user.failedLoginAttempts || 0);
+            return res.status(401).json({
+                success: false,
+                message: locked
+                    ? 'Account locked due to too many failed attempts. Try again in 30 minutes.'
+                    : `Invalid credentials. ${remaining > 0 ? remaining : 0} attempt(s) remaining.`,
+            });
+        }
+
+        // ⚡ ATOMIC UPDATE: Track session and login count WITHOUT triggering pre-save hooks
+        const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+        const ipAddress = req.ip || req.connection.remoteAddress;
+
+        await User.findByIdAndUpdate(user._id, {
+            $inc: { loginCount: 1 },
+            $push: {
+                sessions: {
+                    $each: [{ deviceInfo, ipAddress, lastActive: new Date() }],
+                    $slice: -5 // Keep last 5 sessions
+                }
+            },
+            $set: {
+                failedLoginAttempts: 0,
+                lockUntil: null
+            }
+        });
+
+        console.log(`[AUTH] Login success (Local): ${user.email} (ID: ${user._id})`);
+        await sendTokenResponse(user, 200, res, req);
     } catch (error) {
-        console.error('[LOGIN] Error:', error);
+        if (error instanceof z.ZodError) {
+            const errorMsg = error.errors.map(e => e.message).join(', ');
+            return res.status(400).json({ success: false, message: errorMsg, errors: error.errors });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Send OTP to a phone number
+// ═══════════════════════════════════════════════════════════════════
+//  GOOGLE LOGIN
+// ═══════════════════════════════════════════════════════════════════
+
+// @desc    Authenticate a user via Google Identity Services
+// @route   POST /api/v1/auth/google-login
+// @access  Public
+export const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            return res.status(400).json({ success: false, message: 'No credential provided' });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        const { email, name, picture, email_verified, iss } = payload;
+
+        // Validate issuer
+        if (!['accounts.google.com', 'https://accounts.google.com'].includes(iss)) {
+             return res.status(403).json({ success: false, message: 'Invalid token issuer' });
+        }
+
+        if (!email_verified) {
+            return res.status(403).json({ success: false, message: 'Google email not verified' });
+        }
+
+        let user = await User.findOne({ email: email.toLowerCase() });
+
+        if (user) {
+            // Allow auto-linking if Google email is verified (which we checked above)
+            if (user.isBanned) {
+                return res.status(403).json({ success: false, message: 'Account suspended. Contact support.' });
+            }
+            // Update provider if it was local to allow hybrid access
+            if (user.authProvider === 'LOCAL') {
+                user.authProvider = 'GOOGLE'; // Mark as hybrid-capable
+            }
+        } else {
+            // Remove random password hack; model now requires password only for LOCAL
+            user = await User.create({
+                name,
+                email: email.toLowerCase(),
+                role: 'CANDIDATE',
+                authProvider: 'GOOGLE',
+                isVerified: true,
+                loginCount: 1,
+            });
+            // Google accounts are pre-verified — no welcome email needed here
+        }
+
+        // Add session logging
+        const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+        const ipAddress = req.ip || req.connection.remoteAddress;
+
+        user.sessions.push({
+            deviceInfo,
+            ipAddress,
+            lastActive: new Date()
+        });
+        user.loginCount += 1;
+
+        if (user.failedLoginAttempts > 0 || user.lockUntil) {
+            user.failedLoginAttempts = 0;
+            user.lockUntil = null;
+        }
+        await user.save();
+
+        console.log(`[AUTH] Login success (Google): ${user.email} (ID: ${user._id})`);
+        await sendTokenResponse(user, 200, res, req);
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        res.status(500).json({ success: false, message: 'Google authentication failed' });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  PASSWORD RESET — OTP-based (for forgot-password only)
+// ═══════════════════════════════════════════════════════════════════
+
+// @desc    Send password reset OTP
 // @route   POST /api/v1/auth/forgot-password/send-otp
 // @access  Public
 export const sendOTP = async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
-        
-        let user = await User.findOne({ phoneNumber });
-        
+        const { email } = req.body;
+        const user = await User.findOne({ email: email?.toLowerCase() });
+
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found with this phone number' });
+            // Security: don't reveal if email exists
+            return res.status(200).json({ success: true, message: 'If an account exists, a reset email has been sent.' });
         }
 
-        // STATIC OTP BYPASS for Admin Number (9122049005)
-        const otpCode = phoneNumber === '9122049005' ? '123456' : generateOTP();
-        user.otp = otpCode;
-        user.otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+        // Generate a secure password reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedReset = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.otp = hashedReset;  // reusing otp field as reset token store
+        user.otpExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 min
         await user.save();
 
-        const smsSent = await sendSMS(phoneNumber, `Your Job Portal verification code is: ${otpCode}`);
+        // Send password reset email
+        sendPasswordResetEmail(user.email, user.name, resetToken).catch(() => {});
 
-        if (smsSent) {
-            res.status(200).json({ success: true, message: 'OTP sent successfully' });
-        } else {
-            res.status(500).json({ success: false, message: 'Failed to send OTP' });
-        }
+        console.log(`[AUTH] Password reset requested for: ${user.email}`);
+        res.status(200).json({ success: true, message: 'If an account exists, a reset email has been sent.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Verify OTP and reset password or verify user
+// @desc    Verify reset token & set new password
 // @route   POST /api/v1/auth/forgot-password/verify
 // @access  Public
 export const verifyOTP = async (req, res) => {
     try {
-        const { phoneNumber, otp, newPassword } = req.body;
+        const { email, otp: resetToken, newPassword } = req.body;
 
-        const user = await User.findOne({ 
-            phoneNumber, 
-            otp,
-            otpExpire: { $gt: Date.now() }
+        const hashedReset = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+        const user = await User.findOne({
+            email: email?.toLowerCase(),
+            otp: hashedReset,
+            otpExpire: { $gt: Date.now() },
         }).select('+otp +otpExpire');
 
         if (!user) {
-            return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+            return res.status(400).json({ success: false, message: 'Invalid or expired reset token.' });
         }
 
-        // Reset variables
         user.otp = undefined;
         user.otpExpire = undefined;
-        user.isVerified = true;
-
-        if (newPassword) {
-            user.password = newPassword;
-        }
-
+        if (newPassword) user.password = newPassword;
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
         await user.save();
 
-        res.status(200).json({ 
-            success: true, 
-            message: newPassword ? 'Password reset successfully' : 'Phone number verified successfully' 
-        });
+        return res.status(200).json({ success: true, message: 'Password reset successful. You can now log in.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Get user profile
+// @desc    Resend email verification link (link-based only, no OTP)
+// @route   POST /api/v1/auth/resend-verification
+// @access  Public
+export const resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email: email?.toLowerCase(), isVerified: false });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Account not found or already verified.' });
+        }
+
+        // Generate new verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+        user.verificationToken = hashedToken;
+        user.verificationTokenExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        await user.save();
+
+        // Send fresh verification link email
+        await sendVerificationEmail(user.email, user.name, verificationToken);
+
+        console.log(`[AUTH] Resent verification link to: ${user.email}`);
+        res.status(200).json({ success: true, message: 'A new verification link has been sent to your email.' });
+    } catch (error) {
+        console.error('[AUTH] Resend Verification Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Verify Email via Token
+// @route   GET /api/v1/auth/verify-email/:token
+// @access  Public
+export const verifyEmail = async (req, res) => {
+    try {
+        const token = req.params.token;
+        if (!token) {
+            return res.status(400).json({ success: false, message: 'Verification token is required' });
+        }
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        // 1. Find user by token (unconditional on expiry for better error reporting)
+        const user = await User.findOne({
+            verificationToken: hashedToken
+        }).select('+verificationToken +verificationTokenExpire +isVerified');
+
+        // 2. CASE: Token not found
+        if (!user) {
+            console.warn(`[AUTH] Token not found in DB. Hash: ${hashedToken.substring(0, 16)}...`);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid verification link. It may have already been used or never existed.' 
+            });
+        }
+
+        // 3. CASE: Already verified (redundant but safe)
+        if (user.isVerified) {
+            user.verificationToken = undefined;
+            user.verificationTokenExpire = undefined;
+            await user.save();
+            return res.status(400).json({ success: false, message: 'Email is already verified. Please login.' });
+        }
+
+        // 4. CASE: Token expired
+        if (user.verificationTokenExpire && user.verificationTokenExpire < Date.now()) {
+            console.warn(`[AUTH] Expired token attempt by: ${user.email}`);
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Verification link expired. Please request a new one.',
+                expired: true,
+                email: user.email
+            });
+        }
+
+        // 5. SUCCESS: Mark as verified, enforce single-use token
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpire = undefined;
+        user.otp = undefined;
+        user.otpExpire = undefined;
+        user.loginCount = 1;
+        await user.save();
+
+        console.log(`[AUTH] Email verified successfully: ${user.email}`);
+
+        // Auto-login: issue access + refresh tokens in HTTP-only cookies
+        return sendTokenResponse(user, 200, res, req);
+    } catch (error) {
+        console.error('[AUTH] Verify Email Error:', error);
+        res.status(500).json({ success: false, message: 'Server error during verification' });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  PROFILE & SESSION MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+// @desc    Get current user profile
 // @route   GET /api/v1/auth/me
 // @access  Private
 export const getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        res.status(200).json({
-            success: true,
-            data: user,
-        });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const userData = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isVerified: user.isVerified
+        };
+        res.status(200).json({ success: true, data: userData });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Logout (current device)
+// @route   POST /api/v1/auth/logout
+// @access  Private
+export const logoutUser = async (req, res) => {
+    await clearTokens(req.user._id, res);
+    res.status(200).json({ success: true, message: 'Logged out' });
+};
+
+// @desc    Logout from ALL devices
+// @route   POST /api/v1/auth/logout-all
+// @access  Private
+export const logoutAllDevices = async (req, res) => {
+    await clearAllSessions(req.user._id, res);
+    res.status(200).json({ success: true, message: 'Logged out from all devices' });
+};
+
+// @desc    Get active sessions
+// @route   GET /api/v1/auth/sessions
+// @access  Private
+export const getActiveSessions = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('sessions');
+        res.status(200).json({ success: true, data: user.sessions || [] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Revoke specific session
+// @route   DELETE /api/v1/auth/sessions/:sessionId
+// @access  Private
+export const revokeSession = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $pull: { sessions: { _id: req.params.sessionId } } },
+            { new: true }
+        );
+        res.status(200).json({ success: true, message: 'Session revoked successfully', data: user.sessions });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

@@ -1,33 +1,59 @@
 import express from 'express';
-import { 
-    getStats, 
-    getAllUsers, 
-    updateUser, 
+import {
+    getStats,
+    getAllUsers,
+    updateUser,
     deleteJobAdmin,
     deleteUserAdmin,
     getAllJobsAdmin,
     broadcastNotification,
     getAdminActivity,
-    getPlatformPlan,
-    updatePlatformPlan
+    getPlatformPlanAdmin,
+    updatePlatformPlanAdmin,
+    getPlatformConfig,
+    updatePlatformConfig,
+    getAuditLogs,
+    reviewApplicationAdmin,
+    getApplicationsAdmin,
 } from '../controllers/adminController.js';
-import { protect, authorize } from '../middlewares/authMiddleware.js';
+import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
+import { requireReauth } from '../middlewares/reauthMiddleware.js';
 
 const router = express.Router();
 
-// Apply protection to all admin routes
+// Apply protection to ALL admin routes
 router.use(protect);
-router.use(authorize('ADMIN'));
+router.use(authorizeRoles('ADMIN', 'SUPER_ADMIN'));
 
+// Dashboard
 router.get('/stats', getStats);
-router.get('/users', getAllUsers);
-router.put('/users/:id', updateUser);
-router.delete('/users/:id', deleteUserAdmin);
-router.get('/jobs', getAllJobsAdmin);
-router.delete('/jobs/:id', deleteJobAdmin);
-router.post('/broadcast', broadcastNotification);
 router.get('/activity', getAdminActivity);
-router.get('/platform-plan', getPlatformPlan);
-router.put('/platform-plan', updatePlatformPlan);
+
+// User management
+router.get('/users', getAllUsers);
+router.put('/users/:id', requireReauth, updateUser);   // Updating users (like banning) requires re-auth
+router.delete('/users/:id', requireReauth, deleteUserAdmin);
+
+// Job moderation
+router.get('/jobs', getAllJobsAdmin);
+router.delete('/jobs/:id', requireReauth, deleteJobAdmin);
+
+// Application Review (STRICT Mode Verification)
+router.get('/applications', getApplicationsAdmin);
+router.put('/applications/:id/review', reviewApplicationAdmin);
+
+// Communication
+router.post('/broadcast', broadcastNotification);
+
+// Audit logs
+router.get('/audit-logs', getAuditLogs);
+
+// Platform config (Global Settings)
+router.get('/platform-config', getPlatformConfig);
+router.put('/platform-config', updatePlatformConfig);
+
+// Platform plan (Monetization/Pricing)
+router.get('/platform-plan', getPlatformPlanAdmin);
+router.put('/platform-plan', updatePlatformPlanAdmin);
 
 export default router;

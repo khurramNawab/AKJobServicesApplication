@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Lock, ShieldCheck, ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Lock, ShieldCheck, ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, RefreshCw, Mail } from 'lucide-react';
 import Button from '../components/ui/Button';
 import api from '../services/api';
 
@@ -10,7 +10,7 @@ const ForgotPassword = () => {
   
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    phoneNumber: '',
+    email: '',
     otp: ['', '', '', '', '', ''],
     newPassword: '',
   });
@@ -56,12 +56,12 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      await api.post('/auth/forgot-password/send-otp', { phoneNumber: formData.phoneNumber });
+      await api.post('/auth/forgot-password/send-otp', { email: formData.email });
       setStep(2);
       setTimer(60);
       setCanResend(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send verification code. Check your phone number.');
+      setError(err.response?.data?.message || 'Failed to send verification code. Check your email or phone number.');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +80,7 @@ const ForgotPassword = () => {
 
     try {
       await api.post('/auth/forgot-password/verify', {
-        phoneNumber: formData.phoneNumber,
+        email: formData.email,
         otp: otpValue,
         newPassword: formData.newPassword
       });
@@ -149,15 +149,17 @@ const ForgotPassword = () => {
 
                 <form onSubmit={handleSendOtp} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Registered Phone Number</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Registered Email Address</label>
                     <div className="relative group">
-                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                      <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-500 group-focus-within:text-primary transition-colors">
+                        <Mail size={16} />
+                      </div>
                       <input
-                        type="tel"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
+                        type="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleChange}
-                        placeholder="Enter your phone number"
+                        placeholder="Enter your email address"
                         required
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
                       />
@@ -196,7 +198,7 @@ const ForgotPassword = () => {
                   </div>
                   <div className="space-y-1">
                     <h1 className="text-2xl font-extrabold tracking-tight">Set <span className="gradient-text">New Password</span></h1>
-                    <p className="text-slate-500 font-medium text-sm">Enter the code sent to {formData.phoneNumber}</p>
+                    <p className="text-slate-500 font-medium text-sm">Enter the code sent to {formData.email}</p>
                   </div>
                 </div>
 

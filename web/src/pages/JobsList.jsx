@@ -1,48 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Briefcase, IndianRupee, Filter, SlidersHorizontal, ChevronRight, Bookmark, Clock, X, Zap, Star, TrendingUp } from 'lucide-react';
+import { Search, MapPin, Briefcase, IndianRupee, Filter, SlidersHorizontal, ChevronRight, Bookmark, Clock, X, Zap, Star, TrendingUp, CheckCircle2 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 
 const JobsList = () => {
+  const { user } = useContext(AuthContext);
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [userApplications, setUserApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedLocation, setDebouncedLocation] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const categories = ['All', 'Operations', 'Finance', 'Marketing', 'Sales', 'Customer Success', 'Technology', 'Healthcare', 'Engineering'];
 
+  // Debouncing logic
   useEffect(() => {
-    const fetchJobs = async () => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedLocation(locationQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [locationQuery]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/jobs');
-        setJobs(res.data.data);
-        setFilteredJobs(res.data.data);
+        const [jobsRes, appsRes] = await Promise.all([
+          api.get('/jobs'),
+          user && user.role === 'CANDIDATE' ? api.get('/applications/me') : Promise.resolve({ data: { data: [] } })
+        ]);
+        
+        setJobs(jobsRes.data.data);
+        const apps = appsRes.data.data || [];
+        setUserApplications(apps);
+        console.log('User applications loaded:', apps.length);
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchJobs();
-  }, []);
+    fetchData();
+  }, [user]);
 
-  useEffect(() => {
+  const filteredJobs = useMemo(() => {
     let result = jobs;
 
-    if (searchQuery) {
+    if (debouncedSearch) {
       result = result.filter(job => 
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        job.recruiterId?.companyName?.toLowerCase().includes(searchQuery.toLowerCase())
+        job.title.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+        job.recruiterId?.companyName?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
     }
 
-    if (locationQuery) {
+    if (debouncedLocation) {
       result = result.filter(job => 
-        job.location.toLowerCase().includes(locationQuery.toLowerCase())
+        job.location.toLowerCase().includes(debouncedLocation.toLowerCase())
       );
     }
 
@@ -50,26 +75,26 @@ const JobsList = () => {
       result = result.filter(job => job.category === selectedCategory);
     }
 
-    setFilteredJobs(result);
-  }, [searchQuery, locationQuery, selectedCategory, jobs]);
+    return result;
+  }, [debouncedSearch, debouncedLocation, selectedCategory, jobs]);
 
   return (
-    <div className="min-h-screen bg-[#020617] pt-40 pb-32 px-6 relative overflow-hidden">
+    <div className="min-h-[60vh] bg-[#020617] pt-24 pb-6 px-6 relative overflow-hidden">
       {/* 🌌 Advanced Background System */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
       </div>
 
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/noise.png')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
 
-      <div className="max-w-7xl mx-auto space-y-16 relative z-10">
+      <div className="max-w-7xl mx-auto space-y-10 relative z-10">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-tight">Explore <span className="gradient-text">Opportunities</span></h1>
-            <p className="text-text-secondary text-xl max-w-xl font-medium opacity-80 leading-relaxed">
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">Explore <span className="gradient-text">Opportunities</span></h1>
+            <p className="text-text-secondary text-base max-w-xl font-medium opacity-80 leading-relaxed">
               Browse through the latest openings across 5,000+ top-tier corporate companies in India.
             </p>
           </div>
@@ -131,15 +156,15 @@ const JobsList = () => {
             {loading ? (
               // Enhanced Skeleton Loading
               [1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="glass-card h-[400px] border-white/5 p-10 animate-pulse">
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl mb-8" />
-                  <div className="h-8 bg-white/5 rounded-lg w-3/4 mb-4" />
-                  <div className="h-4 bg-white/5 rounded-lg w-1/2 mb-10" />
-                  <div className="flex gap-3 mb-10">
-                    <div className="h-8 bg-white/5 rounded-lg w-24" />
-                    <div className="h-8 bg-white/5 rounded-lg w-24" />
+                <div key={i} className="glass-card h-[300px] border-white/5 p-6 rounded-xl animate-pulse">
+                  <div className="w-12 h-12 bg-white/5 rounded-xl mb-6" />
+                  <div className="h-6 bg-white/5 rounded-lg w-3/4 mb-3" />
+                  <div className="h-3 bg-white/5 rounded-lg w-1/2 mb-6" />
+                  <div className="flex gap-2 mb-6">
+                    <div className="h-6 bg-white/5 rounded-lg w-16" />
+                    <div className="h-6 bg-white/5 rounded-lg w-16" />
                   </div>
-                  <div className="h-10 bg-white/5 rounded-xl w-full mt-auto" />
+                  <div className="h-8 bg-white/5 rounded-lg w-full mt-auto" />
                 </div>
               ))
             ) : filteredJobs.length > 0 ? (
@@ -149,7 +174,7 @@ const JobsList = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -10 }}
-                  className="glass-card p-10 group relative flex flex-col h-full border-white/5 hover:border-[#2563EB]/30 transition-all shadow-xl"
+                  className="glass-card p-6 group relative flex flex-col h-full border-white/5 hover:border-[#2563EB]/30 transition-all shadow-xl rounded-xl"
                 >
                   {/* Featured Badge */}
                   <div className="absolute top-10 right-10 flex items-center gap-1.5 px-3 py-1 bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-full text-[9px] font-black text-[#2563EB] uppercase tracking-widest">
@@ -157,40 +182,50 @@ const JobsList = () => {
                     Featured
                   </div>
                   
-                  <div className="flex items-start gap-6 mb-10">
-                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all shadow-inner overflow-hidden">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 group-hover:bg-[#2563EB]/10 group-hover:border-[#2563EB]/40 transition-all shadow-inner overflow-hidden">
                       {job.recruiterId?.companyLogo ? (
-                        <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-cover" />
+                        <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-contain p-1" />
                       ) : (
-                        <span className="text-3xl font-black text-white/40 group-hover:text-white transition-colors">
+                        <span className="text-xl font-black text-white/40 group-hover:text-white transition-colors">
                           {job.recruiterId?.companyName?.charAt(0) || 'J'}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex-1 space-y-4">
-                    <h3 className="text-2xl font-black text-white tracking-tight group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2">{job.title}</h3>
-                    <p className="text-text-secondary font-bold text-sm opacity-60 flex items-center gap-2">
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-lg font-black text-white tracking-tight group-hover:text-[#2563EB] transition-colors leading-tight line-clamp-2">{job.title}</h3>
+                    <p className="text-text-secondary font-bold text-xs opacity-80 flex items-center gap-1.5">
                        {job.recruiterId?.companyName}
-                       <span className="w-1.5 h-1.5 bg-white/10 rounded-full" />
-                       <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {job.location}</span>
+                       <span className="w-1 h-1 bg-white/20 rounded-full" />
+                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-[#EF4444]" /> {job.location}</span>
                     </p>
                     
-                    <div className="flex flex-wrap gap-2 pt-4">
-                      <span className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-white/50 border border-white/5 group-hover:border-white/20 transition-all uppercase tracking-tighter">{job.jobType}</span>
-                      <span className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-white/50 border border-white/5 group-hover:border-white/20 transition-all uppercase tracking-tighter">{job.category}</span>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <span className="px-3 py-1 bg-white/5 rounded-md text-[9px] font-black text-white/50 border border-white/5 group-hover:border-white/20 transition-all uppercase tracking-tighter">{job.jobType}</span>
+                      <span className="px-3 py-1 bg-white/5 rounded-md text-[9px] font-black text-white/50 border border-white/5 group-hover:border-white/20 transition-all uppercase tracking-tighter">{job.category}</span>
                     </div>
                   </div>
 
-                  <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
-                       <Clock className="w-4 h-4" /> 
+                  <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black text-text-muted uppercase tracking-widest">
+                       <Clock className="w-3 h-3" /> 
                        Posted {new Date(job.createdAt).toLocaleDateString()}
                     </div>
-                    <Link to={`/jobs/${job._id}`} className="flex items-center gap-2 text-sm font-black text-white group/btn hover:text-[#2563EB] transition-colors">
-                      View Details <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-                    </Link>
+                    <div className="flex items-center gap-4">
+                      {user && user.role === 'CANDIDATE' && userApplications.some(app => {
+                        const appJobId = app.jobId?._id || app.jobId;
+                        return appJobId?.toString() === job._id?.toString();
+                      }) && (
+                        <span className="flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                          <CheckCircle2 className="w-3 h-3" /> Applied
+                        </span>
+                      )}
+                      <Link to={`/jobs/${job._id}`} className="flex items-center gap-1 text-xs font-black text-white group/btn hover:text-[#2563EB] transition-colors">
+                        View <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
                   </div>
 
                   {/* Decorative Hover Glow */}

@@ -9,7 +9,7 @@ import {
   CheckCircle, 
   XCircle,
   Download,
-  DollarSign,
+  IndianRupee,
   ExternalLink
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -79,7 +79,7 @@ const PaymentsView = () => {
                       </td>
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-1 text-white font-black text-sm tracking-tighter">
-                            <DollarSign size={14} className="text-gray-500" /> {t.amount.toLocaleString()}
+                            <IndianRupee size={14} className="text-gray-500" /> {t.amount.toLocaleString()}
                          </div>
                       </td>
                       <td className="px-8 py-6">

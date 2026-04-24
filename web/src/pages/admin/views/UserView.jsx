@@ -1,35 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Search, 
-  Filter, 
-  MoreVertical, 
   Trash2, 
-  UserCheck, 
-  UserMinus, 
-  ChevronLeft, 
-  ChevronRight,
-  ShieldAlert,
   ArrowUpDown,
   CheckCircle,
-  XCircle,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Pagination from '../../../components/ui/Pagination';
 
 const UserView = () => {
-  const { users, handleRoleUpdate: onUpdateRole, handleToggleVerification: onToggleVerify, handleDeleteUser: onDelete } = useOutletContext();
+  const { 
+    users, 
+    pagination, 
+    fetchAdminData,
+    handleRoleUpdate, 
+    handleToggleVerification, 
+    handleDeleteUser 
+  } = useOutletContext();
+  
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
 
-  const filtered = users.filter(u => 
-    (filterRole === 'ALL' || u.role === filterRole) &&
-    (u.name?.toLowerCase().includes(search.toLowerCase()) || u.phoneNumber?.includes(search))
-  );
+  // ⚡ Performance/UX Fix: Only fetch from backend when the sector (role) changes
+  // Local search (useMemo below) handles real-time filtering without flooding the API
+  React.useEffect(() => {
+    fetchAdminData(1, pagination.jobs.current);
+  }, [filterRole]);
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const currentItems = filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  // Local filtering (optional if backend is also filtering, but good for instant UI feel on current page)
+  const filteredItems = useMemo(() => {
+    return users.filter(u => 
+        (filterRole === 'ALL' || u.role === filterRole) &&
+        (u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [users, search, filterRole]);
+
+  const handlePageChange = (newPage) => {
+    fetchAdminData(newPage, pagination.jobs.current);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -82,7 +93,7 @@ const UserView = () => {
                 </tr>
              </thead>
              <tbody>
-                {currentItems.map((u, i) => (
+                {filteredItems.map((u, i) => (
                    <motion.tr 
                      key={u._id}
                      initial={{ opacity: 0, x: -10 }}
@@ -97,14 +108,14 @@ const UserView = () => {
                             </div>
                             <div className="text-left">
                                <p className="text-white font-black text-sm tracking-tight">{u.name}</p>
-                               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{u.phoneNumber}</p>
+                               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{u.email}</p>
                             </div>
                          </div>
                       </td>
                       <td className="px-8 py-6">
                          <select 
                            value={u.role}
-                           onChange={(e) => onUpdateRole(u._id, e.target.value)}
+                           onChange={(e) => handleRoleUpdate(u._id, e.target.value)}
                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black text-white focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest cursor-pointer"
                          >
                             <option value="CANDIDATE">Candidate</option>
@@ -114,7 +125,7 @@ const UserView = () => {
                       </td>
                       <td className="px-8 py-6">
                          <button 
-                           onClick={() => onToggleVerify(u._id, u.isVerified)}
+                           onClick={() => handleToggleVerification(u._id, u.isVerified)}
                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
                              u.isVerified 
                              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
@@ -127,11 +138,8 @@ const UserView = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                            <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all shadow-lg shadow-black/20">
-                               <ShieldAlert size={16} />
-                            </button>
                             <button 
-                              onClick={() => onDelete(u._id)}
+                              onClick={() => handleDeleteUser(u._id)}
                               className="p-3 bg-rose-500/10 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 rounded-xl text-rose-500 transition-all shadow-lg"
                             >
                                <Trash2 size={16} />
@@ -145,37 +153,12 @@ const UserView = () => {
         </div>
 
         {/* 📟 Pager Subsystem */}
-        <div className="p-8 flex items-center justify-between bg-white/[0.02]">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Showing {currentItems.length} of {filtered.length} Identifiers</p>
-          <div className="flex items-center gap-3">
-             <button 
-               disabled={page === 1}
-               onClick={() => setPage(p => p - 1)}
-               className="p-3 rounded-xl bg-white/5 border border-white/5 text-gray-500 hover:text-white disabled:opacity-30 transition-all"
-             >
-               <ChevronLeft size={18} />
-             </button>
-             <div className="flex gap-2">
-                {[...Array(totalPages)].map((_, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
-                      page === i + 1 ? 'bg-blue-600 text-white shadow-lg' : 'bg-white/5 text-gray-500 hover:text-white'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-             </div>
-             <button 
-               disabled={page === totalPages}
-               onClick={() => setPage(p => p + 1)}
-               className="p-3 rounded-xl bg-white/5 border border-white/5 text-gray-500 hover:text-white disabled:opacity-30 transition-all"
-             >
-               <ChevronRight size={18} />
-             </button>
-          </div>
+        <div className="p-8 border-t border-white/5 px-10">
+          <Pagination 
+             currentPage={pagination.users.current} 
+             totalPages={pagination.users.pages} 
+             onPageChange={handlePageChange} 
+          />
         </div>
       </div>
 

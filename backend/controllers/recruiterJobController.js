@@ -7,6 +7,7 @@ export const getMyJobs = async (req, res) => {
     try {
         const jobs = await Job.find({ recruiterId: req.user._id }).sort({ createdAt: -1 });
 
+        console.log(`🔍 [JOB] Fetching jobs for Recruiter: ${req.user.email} (Count: ${jobs.length})`);
         res.status(200).json({
             success: true,
             count: jobs.length,

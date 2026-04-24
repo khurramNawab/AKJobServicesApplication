@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 export const useAuthStore = create((set) => ({
     user: null,
@@ -9,8 +9,8 @@ export const useAuthStore = create((set) => ({
     // Actions
     setCredentials: async (user, token) => {
         try {
-            await AsyncStorage.setItem('userToken', token);
-            await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+            await SecureStore.setItemAsync('userToken', token);
+            await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
             set({ user, token, isLoading: false });
         } catch (e) {
             console.error('Error saving credentials:', e);
@@ -19,8 +19,8 @@ export const useAuthStore = create((set) => ({
 
     logout: async () => {
         try {
-            await AsyncStorage.removeItem('userToken');
-            await AsyncStorage.removeItem('userInfo');
+            await SecureStore.deleteItemAsync('userToken');
+            await SecureStore.deleteItemAsync('userInfo');
             set({ user: null, token: null, isLoading: false });
         } catch (e) {
             console.error('Error removing credentials:', e);
@@ -29,7 +29,7 @@ export const useAuthStore = create((set) => ({
 
     setUser: async (user) => {
         try {
-            await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+            await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
             set({ user });
         } catch (e) {
             console.error('Error updating userInfo in storage:', e);
@@ -45,8 +45,8 @@ export const useAuthStore = create((set) => ({
                 console.log('[AuthStore] Failsafe timeout reached');
             }, 4000);
 
-            const token = await AsyncStorage.getItem('userToken');
-            const userInfoStr = await AsyncStorage.getItem('userInfo');
+            const token = await SecureStore.getItemAsync('userToken');
+            const userInfoStr = await SecureStore.getItemAsync('userInfo');
             
             clearTimeout(storageTimer);
             

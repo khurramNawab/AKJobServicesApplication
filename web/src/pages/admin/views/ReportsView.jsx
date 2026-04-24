@@ -4,7 +4,7 @@ import {
   TrendingUp, 
   Users, 
   Briefcase, 
-  DollarSign, 
+  IndianRupee, 
   Download, 
   Calendar,
   PieChart,
@@ -16,10 +16,35 @@ import { useOutletContext } from 'react-router-dom';
 
 const ReportsView = () => {
   const { stats } = useOutletContext();
+
+  const handleExport = () => {
+    const reportData = [
+      ['PLATFORM INTELLIGENCE REPORT', new Date().toLocaleString()],
+      ['---------------------------', '---------------------------'],
+      ['METRIC', 'DATA NODE'],
+      ['Total Users', stats?.totalUsers || 0],
+      ['Total Active Jobs', stats?.totalJobs || 0],
+      ['Platform Revenue (INR)', stats?.totalRevenue || 0],
+      ['New Growth (7 Days)', stats?.newUsersLast7Days || 0],
+      ['Active Subscriptions', stats?.activeSubscriptions || 0],
+      ['Pending Reconfigurations', stats?.pendingPayments || 0]
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + reportData.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `intel_report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   const analyticsData = [
     { label: 'Growth Vector', value: stats?.newUsersLast7Days || 0, icon: TrendingUp, color: 'blue' },
     { label: 'Conversion Signal', value: '12.4%', icon: Activity, color: 'emerald' },
-    { label: 'Market Cap (Total)', value: stats?.totalRevenue?.toLocaleString() || 0, icon: DollarSign, color: 'indigo' },
+    { label: 'Market Cap (Total)', value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, icon: IndianRupee, color: 'indigo' },
   ];
 
   return (
@@ -35,7 +60,10 @@ const ReportsView = () => {
            <button className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-lg">
              <Calendar size={14} /> Last 30 Days
            </button>
-           <button className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2">
+           <button 
+             onClick={handleExport}
+             className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
+           >
              <Download size={14} /> Intelligence Export
            </button>
         </div>

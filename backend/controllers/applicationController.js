@@ -2,57 +2,97 @@ import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 import mongoose from 'mongoose';
 import { createNotification } from '../utils/notification.js';
+import PlatformConfig from '../models/PlatformConfig.js';
 
-// @desc    Apply for a job
+// @desc    Apply for a job (Production-Hardened)
 // @route   POST /api/v1/jobs/:jobId/apply
 // @access  Private (Candidate only)
 export const applyForJob = async (req, res) => {
     try {
-        const jobId = req.params.jobId;
-        console.log(`[APPLY] User ${req.user._id} attempting to apply for job ${jobId}`);
+        const { jobId } = req.params;
+        const userId = req.user._id;
 
-        // Check if job exists
+        // 1. Validate Job Existence
         const job = await Job.findById(jobId);
         if (!job) {
-            return res.status(404).json({ success: false, message: 'Job not found' });
+            return res.status(404).json({ 
+                success: false, 
+                message: "Job not found" 
+            });
         }
 
-        // Prepare application data
-        const applicationData = {
-            jobId,
-            candidateId: req.user._id,
-            coverLetter: req.body.coverLetter || '',
+        // 2. Validate User Existence & Profile
+        const Candidate = mongoose.model('Candidate');
+        const candidateProfile = await Candidate.findOne({ userId });
+
+        if (!candidateProfile) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Incomplete Profile. Please complete your candidate profile before applying." 
+            });
+        }
+
+        // 3. Prevent Duplicate Applications
+        const alreadyApplied = await Application.findOne({ 
+            jobId: job._id, 
+            candidateId: userId 
+        });
+
+        if (alreadyApplied) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "You have already applied for this position" 
+            });
+        }
+
+        // 4. Retrieve Resume (Body > Profile)
+        const finalResume = req.body?.resume || candidateProfile.resumeUrl;
+        if (!finalResume) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Resume Required. Please upload a resume to your profile first." 
+            });
+        }
+
+        // 5. Create Application (No transactions for local stability)
+        const application = await Application.create({
+            jobId: job._id,
+            candidateId: userId,
+            recruiterId: job.recruiterId,
+            resume: finalResume,
+            coverLetter: req.body?.coverLetter || '',
+            status: 'APPLIED',
             statusHistory: [{ status: 'APPLIED', timestamp: new Date() }]
-        };
+        });
 
-        // Attempt to create application (will throw error if duplicate due to schema index)
-        const application = await Application.create(applicationData);
-
-        // Update Job applicants count
-        job.applicantsCount = (job.applicantsCount || 0) + 1;
+        // 6. Update Job Metrics
+        job.applicantsCount += 1;
         await job.save();
 
-        // Send notification to recruiter
-        await createNotification(
+        // 7. Notification (Non-blocking)
+        createNotification(
             job.recruiterId,
             'New Application',
-            `A candidate has applied for your job: ${job.title}`,
+            `A new candidate has applied for: ${job.title}`,
             'APPLICATION_STATUS',
             { jobId: job._id, applicationId: application._id }
-        );
+        ).catch(err => console.error('Notification Error:', err));
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
-            message: 'Successfully applied to job!',
+            message: "Application submitted successfully",
             data: application
         });
+
     } catch (error) {
-        if (error.code === 11000) { // MongoDB duplicate key error code
-            return res.status(400).json({ success: false, message: 'You have already applied for this job' });
-        }
-        res.status(500).json({ success: false, message: error.message });
+        console.error('[ApplicationController] Apply Job Error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message || "Internal server error during application process" 
+        });
     }
 };
+
 
 // @desc    Get user's applications
 // @route   GET /api/v1/applications/me
@@ -142,7 +182,6 @@ export const getJobApplicants = async (req, res) => {
                     candidateId: {
                         _id: '$candidateUser._id',
                         name: '$candidateUser.name',
-                        phoneNumber: '$candidateUser.phoneNumber',
                         role: '$candidateUser.role',
                         avatar: '$candidateUser.avatar'
                     },

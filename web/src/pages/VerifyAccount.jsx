@@ -11,7 +11,8 @@ const VerifyAccount = () => {
   const navigate = useNavigate();
   const { verifyAccount, user } = useContext(AuthContext);
   
-  const [phoneNumber, setPhoneNumber] = useState(location.state?.phoneNumber || user?.phoneNumber || '');
+  const queryEmail = new URLSearchParams(location.search).get('email');
+  const [email, setEmail] = useState(location.state?.email || queryEmail || user?.email || '');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,7 +50,7 @@ const VerifyAccount = () => {
     setIsLoading(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password/send-otp', { phoneNumber });
+      await api.post('/auth/resend-otp', { email });
       setSuccess('Verification code resent successfully!');
       setTimer(60);
       setCanResend(false);
@@ -73,10 +74,15 @@ const VerifyAccount = () => {
     setIsLoading(true);
 
     try {
-      await verifyAccount(phoneNumber, otpValue);
+      const res = await verifyAccount(email, otpValue);
       setSuccess('Verification successful! Redirecting...');
       setTimeout(() => {
-        navigate(user?.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
+        if (res && (res.user || res.success)) {
+          const userRole = res?.user?.role || res?.role || user?.role;
+          navigate(userRole === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
+        } else {
+          navigate('/login');
+        }
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid or expired verification code.');
@@ -107,7 +113,7 @@ const VerifyAccount = () => {
               <h1 className="text-3xl font-extrabold tracking-tight">Verify <span className="gradient-text">Account</span></h1>
               <p className="text-slate-400 font-medium">
                 Enter the 6-digit code sent to <br />
-                <span className="text-white font-bold">{phoneNumber}</span>
+                <span className="text-white font-bold">{email}</span>
               </p>
             </div>
           </div>

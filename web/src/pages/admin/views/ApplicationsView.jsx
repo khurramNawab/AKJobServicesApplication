@@ -1,115 +1,137 @@
-import React, { useState } from 'react';
-import { 
-  FileText, 
-  Search, 
-  Filter, 
-  User, 
-  Briefcase, 
-  CheckCircle, 
-  XSquare, 
-  Clock, 
-  MoreVertical,
-  ExternalLink,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, XCircle, Eye, Loader2, FileText, User, Briefcase, ExternalLink, ShieldAlert } from 'lucide-react';
+import api from '../../../services/api';
 
 const ApplicationsView = () => {
-  const [search, setSearch] = useState('');
-  
-  // Mock Data for Applications
-  const applications = [
-    { id: 'APP-001', candidate: 'Rahul Sharma', job: 'Senior React Dev', status: 'SHORTLISTED', date: '2026-04-02' },
-    { id: 'APP-002', candidate: 'Ananya Iyer', job: 'Backend Engineer', status: 'REVIEWING', date: '2026-04-02' },
-    { id: 'APP-003', candidate: 'Vikram Singh', job: 'Product Manager', status: 'HIRED', date: '2026-04-01' },
-    { id: 'APP-004', candidate: 'Sanya Gupta', job: 'UX Designer', status: 'REJECTED', date: '2026-03-31' },
-    { id: 'APP-005', candidate: 'Arjun Mehra', job: 'DevOps Architect', status: 'APPLIED', date: '2026-03-30' },
-  ];
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [actionId, setActionId] = useState(null);
 
-  return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left">
-      
-      {/* 🚀 Tactical Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Application <span className="text-blue-500">Matrix</span>.</h2>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Platform-wide candidate submission ledger.</p>
-        </div>
-        <div className="relative flex-1 md:max-w-md group">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="FILTER BY CANDIDATE OR ROLE..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#1E293B] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase shadow-lg shadow-black/20"
-          />
-        </div>
-      </div>
+    const fetchPendingApps = async () => {
+        try {
+            // Fetching applications with status=PENDING (STRICT mode quarantine)
+            const { data } = await api.get('/admin/applications?status=PENDING');
+            setApplications(data.data || []);
+        } catch (err) {
+            console.error('Failed to fetch pending applications');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      {/* 🧾 Data Grid */}
-      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[900px]">
-             <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
-                   <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Identify Cluster</th>
-                   <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Applied Role</th>
-                   <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Protocol Status</th>
-                   <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Moderation</th>
-                </tr>
-             </thead>
-             <tbody>
-                {applications.map((a, i) => (
-                   <motion.tr 
-                     key={a.id}
-                     initial={{ opacity: 0, x: -10 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: i * 0.05 }}
-                     className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
-                   >
-                      <td className="px-8 py-6">
-                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                               <User size={18} />
-                            </div>
-                            <div className="text-left">
-                               <p className="text-white font-black text-sm tracking-tight">{a.candidate}</p>
-                               <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{a.date}</p>
-                            </div>
-                         </div>
-                      </td>
-                      <td className="px-8 py-6">
-                         <div className="flex items-center gap-3 text-gray-300 font-bold text-xs uppercase cursor-pointer hover:text-blue-400 transition-colors">
-                            <Briefcase size={14} className="text-gray-500" />
-                            {a.job}
-                         </div>
-                      </td>
-                      <td className="px-8 py-6">
-                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
-                           a.status === 'HIRED' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                           a.status === 'APPLIED' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' :
-                           a.status === 'REJECTED' ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' :
-                           'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                         }`}>
-                            {a.status === 'HIRED' ? <CheckCircle size={10} /> : a.status === 'REJECTED' ? <XSquare size={10} /> : <Clock size={10} />}
-                            {a.status}
-                         </div>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                         <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                            <ExternalLink size={16} />
-                         </button>
-                      </td>
-                   </motion.tr>
-                ))}
-             </tbody>
-          </table>
+    useEffect(() => {
+        fetchPendingApps();
+    }, []);
+
+    const handleReview = async (id, status) => {
+        const remarks = window.prompt(`Reason for ${status.toLowerCase()}? (Optional)`);
+        setActionId(id);
+        try {
+            const res = await api.put(`/admin/applications/${id}/review`, { status, remarks });
+            if (res.data.success) {
+                setApplications(prev => prev.filter(app => app._id !== id));
+            }
+        } catch (err) {
+            alert('Review submission failed');
+        } finally {
+            setActionId(null);
+        }
+    };
+
+    if (loading) return null;
+
+    return (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex justify-between items-end">
+                <div className="space-y-1 text-left">
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Vetting <span className="text-blue-500">Quarantine</span>.</h2>
+                    <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Manual verification for STRICT protocol resumes.</p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 px-6 py-3 rounded-2xl flex items-center gap-3">
+                    <ShieldAlert className="text-amber-500" size={18} />
+                    <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest">{applications.length} PENDING REVIEW</span>
+                </div>
+            </div>
+
+            {applications.length === 0 ? (
+                <div className="py-32 flex flex-col items-center justify-center bg-white/[0.02] border border-white/5 rounded-[3rem] space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-gray-600">
+                        <CheckCircle size={32} />
+                    </div>
+                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em]">Operational Area Clear</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <AnimatePresence>
+                        {applications.map((app, idx) => (
+                            <motion.div
+                                key={app._id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] p-8 space-y-8 group hover:border-blue-500/30 transition-all shadow-xl"
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="flex gap-5">
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-xl">
+                                            {app.candidateId?.name?.charAt(0)}
+                                        </div>
+                                        <div className="space-y-1 text-left">
+                                            <h4 className="text-white font-black tracking-tight">{app.candidateId?.name}</h4>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-1.5 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                                                    <Briefcase size={12} /> {app.jobId?.title}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-widest">
+                                        Pending Vetting
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+                                    <div className="flex items-center gap-4 text-gray-400">
+                                        <FileText size={20} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Candidate Resume.pdf</span>
+                                    </div>
+                                    <a 
+                                        href={app.resume} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest"
+                                    >
+                                        <Eye size={14} /> Inspect
+                                    </a>
+                                </div>
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        onClick={() => handleReview(app._id, 'APPROVED')}
+                                        disabled={actionId === app._id}
+                                        className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        {actionId === app._id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                                        Approve & Transmit
+                                    </button>
+                                    <button
+                                        onClick={() => handleReview(app._id, 'REJECTED')}
+                                        disabled={actionId === app._id}
+                                        className="flex-1 py-4 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        {actionId === app._id ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+                                        Reject Access
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+            )}
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ApplicationsView;

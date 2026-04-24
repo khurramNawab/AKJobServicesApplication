@@ -166,9 +166,6 @@ const RecruiterProfile = () => {
                        <div className="flex items-center gap-3 text-sm font-bold text-slate-400">
                           <Mail className="w-4 h-4 text-primary-light" /> {user?.email}
                        </div>
-                       <div className="flex items-center gap-3 text-sm font-bold text-slate-400">
-                          <Phone className="w-4 h-4 text-primary-light" /> {user?.phoneNumber}
-                       </div>
                     </div>
                  </div>
               </div>

@@ -1,6 +1,6 @@
 import express from 'express';
 import { getMyApplications, getJobApplicants, updateApplicationStatus, checkApplicationStatus } from '../controllers/applicationController.js';
-import { protect, authorize } from '../middlewares/authMiddleware.js';
+import { protect, authorizeRoles as authorize } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 

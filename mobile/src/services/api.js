@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '../store/useAuthStore';
 
 /**
@@ -34,6 +34,7 @@ const api = axios.create({
     // and correctly handle 'multipart/form-data' for FormData.
     headers: {
         'Accept': 'application/json',
+        'x-client-type': 'mobile'
     },
     // 60 seconds — needed for multipart file uploads to Cloudinary
     timeout: 60000,
@@ -43,7 +44,7 @@ const api = axios.create({
 api.interceptors.request.use(
     async (config) => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await SecureStore.getItemAsync('userToken');
             if (token) {
                 config.headers['Authorization'] = `Bearer ${token}`;
             }

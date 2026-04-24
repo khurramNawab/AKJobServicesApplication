@@ -6,15 +6,6 @@ const paymentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    subscriptionId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Subscription'
-    },
-    transactionId: {
-        type: String,
-        required: true,
-        unique: true
-    },
     amount: {
         type: Number,
         required: true
@@ -28,14 +19,19 @@ const paymentSchema = new mongoose.Schema({
         enum: ['PENDING', 'SUCCESS', 'FAILED'],
         default: 'PENDING'
     },
-    paymentMethod: {
+    transactionId: {
         type: String,
-        enum: ['STRIPE', 'RAZORPAY', 'PAYPAL', 'MANUAL'],
-        default: 'MANUAL'
+        default: null
+    },
+    orderId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    receipt: {
+        type: String
     }
-}, {
-    timestamps: true
-});
+}, { timestamps: true });
 
 const Payment = mongoose.model('Payment', paymentSchema);
 export default Payment;

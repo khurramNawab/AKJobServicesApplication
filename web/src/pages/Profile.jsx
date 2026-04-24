@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -113,7 +113,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-bg-main py-32 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-bg-main pt-24 pb-10 px-6 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="max-w-4xl mx-auto z-10 space-y-10">
@@ -133,8 +133,8 @@ const Profile = () => {
         </div>
 
         <div className="space-y-2">
-           <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">Master your <span className="gradient-text">Identity</span>.</h1>
-           <p className="text-slate-400 font-medium text-lg">Control how companies see you. Maintain your digital resume and presence.</p>
+           <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">Master your <span className="gradient-text">Identity</span>.</h1>
+           <p className="text-slate-400 font-medium text-base">Control how companies see you. Maintain your digital resume and presence.</p>
         </div>
 
         <AnimatePresence>
@@ -173,11 +173,44 @@ const Profile = () => {
 
                  <div className="space-y-1">
                     <h3 className="text-xl font-black">{user?.name}</h3>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{user?.phoneNumber}</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{user?.email}</p>
                  </div>
 
                  <div className="w-full pt-8 border-t border-white/5 space-y-6">
+                    {/* 💎 Revenue Layer Status */}
                     <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] text-left">Sector Status</h4>
+                       <div className="p-6 bg-blue-600/5 rounded-3xl border border-blue-500/10 space-y-4 text-left">
+                          <div className="flex items-center justify-between">
+                             <CreditCard className="w-6 h-6 text-blue-400" />
+                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                                user?.planType === 'PREMIUM' ? 'bg-amber-500 text-black' : 
+                                user?.planType === 'BASIC' ? 'bg-blue-600 text-white' : 
+                                'bg-white/10 text-gray-500'
+                             }`}>
+                                {user?.planType} TIER
+                             </span>
+                          </div>
+                          <div>
+                             <p className="text-sm font-black text-white mb-1">
+                                {user?.isActive ? 'Active Subscription' : 'Upgrade Required'}
+                             </p>
+                             {user?.subscriptionEnd && (
+                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                                   Expires: {new Date(user.subscriptionEnd).toLocaleDateString()}
+                                </p>
+                             )}
+                          </div>
+                          <Link 
+                             to="/pricing" 
+                             className="block w-full text-center py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-500 transition-all"
+                          >
+                             Upgrade Matrix
+                          </Link>
+                       </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] text-left">Document Hub</h4>
                        <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4 text-left group/resume">
                           <div className="flex items-center justify-between">
@@ -271,9 +304,9 @@ const Profile = () => {
                     <Button 
                       type="submit" 
                       loading={saving} 
-                      className="px-10 py-5 rounded-3xl shadow-2xl shadow-primary/20"
+                      className="px-8 py-4 rounded-xl shadow-md shadow-primary/20 text-sm"
                     >
-                      Commit Changes <Save className="ml-2 w-5 h-5" />
+                      Commit Changes <Save className="ml-2 w-4 h-4" />
                     </Button>
                  </div>
               </form>

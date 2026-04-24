@@ -79,7 +79,7 @@ const JobModerator = () => {
                       </td>
                       <td className="px-8 py-6">
                          <div className="text-left">
-                            <p className="text-gray-400 font-bold text-xs uppercase tracking-tighter">{j.recruiter?.name || 'External Recruiter'}</p>
+                            <p className="text-gray-400 font-bold text-xs uppercase tracking-tighter">{j.recruiterId?.name || 'External Recruiter'}</p>
                             <p className="text-[9px] font-black text-gray-600 uppercase italic mt-1 tracking-widest flex items-center gap-2">
                               <Calendar size={10} /> {new Date(j.createdAt).toLocaleDateString()}
                             </p>
@@ -87,7 +87,8 @@ const JobModerator = () => {
                       </td>
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-2 text-indigo-400 font-black text-[11px] uppercase tracking-tighter">
-                            <DollarSign size={14} /> {j.salaryRange || 'Confidential'}
+                            <DollarSign size={14} /> 
+                            {j.salaryRange?.min ? `${j.salaryRange.min} - ${j.salaryRange.max} ${j.salaryRange.currency}` : 'Confidential'}
                          </div>
                       </td>
                       <td className="px-8 py-6 text-right">

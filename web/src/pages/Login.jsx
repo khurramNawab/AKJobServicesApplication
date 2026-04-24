@@ -1,16 +1,18 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, Users, CheckCircle2 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const location = useLocation();
+  const { login, googleLogin } = useContext(AuthContext);
   
   const [formData, setFormData] = useState({
-    phoneNumber: '',
+    email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,14 +30,14 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const user = await login(formData.phoneNumber, formData.password);
-      if (user.isVerified) {
-        navigate(user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
-      } else {
-        navigate('/verify-account', { state: { phoneNumber: formData.phoneNumber } });
-      }
+      const user = await login(formData.email, formData.password);
+      navigate(user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      if (err.needsVerification) {
+        navigate(`/verify-account?email=${encodeURIComponent(err.email)}`);
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -49,8 +51,7 @@ const Login = () => {
         <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
       </div>
 
-      {/* Grid Pattern with Fade */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
+      {/* Background layer simplified - removed dead noise.svg URL */}
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -63,6 +64,17 @@ const Login = () => {
             <h1 className="text-4xl font-black tracking-tight text-white">Welcome <span className="gradient-text">Back</span></h1>
             <p className="text-text-secondary font-medium opacity-80">Log in to your account to continue</p>
           </div>
+
+          {location.state?.message && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm font-medium"
+            >
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              {location.state.message}
+            </motion.div>
+          )}
 
           {error && (
             <motion.div
@@ -78,15 +90,17 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
                 <div className="relative group">
-                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                   <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-500 group-focus-within:text-primary transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                   </div>
                   <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your phone number"
+                    placeholder="Enter your email address"
                     required
                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
                   />
@@ -132,6 +146,36 @@ const Login = () => {
               Sign In <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </form>
+
+          <div className="flex items-center gap-4 py-1">
+            <div className="flex-1 h-px bg-white/10"></div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">OR</span>
+            <div className="flex-1 h-px bg-white/10"></div>
+          </div>
+          
+          <div className="flex justify-center">
+            <GoogleLogin 
+              onSuccess={async (credentialResponse) => {
+                setError('');
+                setIsLoading(true);
+                try {
+                  const data = await googleLogin(credentialResponse.credential);
+                  const user = data.user || data.data || data;
+                  // Auto-verified for Google users as well
+                  navigate(user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
+                } catch (err) {
+                  setError(err.message || 'Google Login failed');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              onError={() => setError('Google Login Failed')}
+              theme="filled_black"
+              shape="circle"
+              size="large"
+              text="continue_with"
+            />
+          </div>
 
           <div className="text-center pt-2">
             <p className="text-slate-400 font-medium">
