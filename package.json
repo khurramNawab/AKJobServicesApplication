@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node backend/server.js",
-    "postinstall": "npm install --prefix backend && npm run postinstall --prefix backend",
-    "build": "npm run postinstall"
+    "build": "npm install --prefix backend && npm install --prefix web --include=dev --legacy-peer-deps && npm run build --prefix web",
+    "postinstall": "npm run build"
   }
 }

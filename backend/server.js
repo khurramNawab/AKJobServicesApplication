@@ -183,8 +183,8 @@ app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/newsletter", newsletterRoutes);
 
 // 🌐 SERVE FRONTEND (Unified Port — backend serves built React app)
-// Always serve static files — this works for both dev (after build) and production.
 const frontendDist = path.join(__dirname, '..', 'web', 'dist');
+console.log(`📂 [Static] Serving from: ${frontendDist}`);
 app.use(express.static(frontendDist));
 
 // SPA Fallback: All non-API routes serve index.html (React Router handles them)
