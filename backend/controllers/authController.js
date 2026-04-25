@@ -261,17 +261,18 @@ export const sendOTP = async (req, res) => {
             return res.status(200).json({ success: true, message: 'If an account exists, a reset email has been sent.' });
         }
 
-        // Generate a secure password reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const hashedReset = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.otp = hashedReset;  // reusing otp field as reset token store
+        // Generate a secure 6-digit numeric OTP for password reset
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedReset = crypto.createHash('sha256').update(otpCode).digest('hex');
+        
+        user.otp = hashedReset;
         user.otpExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 min
         await user.save();
 
-        // Send password reset email
-        sendPasswordResetEmail(user.email, user.name, resetToken).catch(() => {});
+        // Send password reset email with the numeric OTP
+        sendPasswordResetEmail(user.email, user.name, otpCode).catch(() => {});
 
-        console.log(`[AUTH] Password reset requested for: ${user.email}`);
+        console.log(`[AUTH] Password reset OTP sent to: ${user.email}`);
         res.status(200).json({ success: true, message: 'If an account exists, a reset email has been sent.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

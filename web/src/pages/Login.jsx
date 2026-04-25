@@ -34,7 +34,7 @@ const Login = () => {
       navigate(user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard');
     } catch (err) {
       if (err.needsVerification) {
-        navigate(`/verify-account?email=${encodeURIComponent(err.email)}`);
+        navigate('/check-email', { state: { email: err.email } });
       } else {
         setError(err.message || 'Login failed. Please check your credentials.');
       }

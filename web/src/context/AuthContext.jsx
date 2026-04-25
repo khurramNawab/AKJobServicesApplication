@@ -120,6 +120,11 @@ export const AuthProvider = ({ children }) => {
       fetchUser,
       verifyEmailByToken,
       resendVerificationLink,
+      // Added for compatibility with VerifyAccount.jsx (if used for link re-triggering)
+      verifyAccount: async (email) => {
+          await api.post('/auth/resend-verification', { email });
+          return { success: true };
+      }
     }}>
       {children}
     </AuthContext.Provider>
