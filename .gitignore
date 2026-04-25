@@ -1,23 +1,60 @@
-# node_modules/ is still ignored
+# ── Dependencies ───────────────────────────────────────────────────
 node_modules/
 backend/node_modules/
 web/node_modules/
+mobile/node_modules/
 
-# but we explicitly ALLOW the built dist folder for Hostinger deployment
+# ── Build Artifacts ────────────────────────────────────────────────
+# We explicitly allow the built dist folder for Hostinger deployment
+# because the build happens locally before push.
 !web/dist/
-
 .expo/
 .idea/
+# ── Environment & Secrets ──────────────────────────────────────────
 .env
+.env.*
+!.env.example
 backend/.env
+backend/.env.*
 mobile/.env
+mobile/.env.*
+
+# ── Development Scripts & Utilities ────────────────────────────────
+# Scratch scripts used for admin setup and diagnostics
+*.mjs
+promote*.js
+seed*.js
+setup*.js
+debug*.js
+promote_admin_simple.cjs
+check-admin.mjs
+list-admins.mjs
+seed-admin.mjs
+
+# ── Logs & Temporary Files ────────────────────────────────────────
 *.log
+*.tmp
 *.txt
-output.txt
-status.txt
+out.log
+out_utf8.log
+startup_log.txt
+git_out.txt
+git_status.txt
 env_check.txt
 remote.txt
-!mobile/.gitignore
-.continue/
+status.txt
+output.txt
+
+# ── IDE & System Files ────────────────────────────────────────────
+.idea/
+.vscode/
+.expo/
 .DS_Store
-*.tmp
+Thumbs.db
+.sixth/
+.continue/
+.gemini/
+
+# ── Project Specific ──────────────────────────────────────────────
+backend/scratch/
+!mobile/.gitignore
