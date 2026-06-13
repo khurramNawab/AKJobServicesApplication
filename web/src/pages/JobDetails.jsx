@@ -213,7 +213,6 @@ const JobDetails = () => {
             )}
           </div>
         </div>
-        </div>
       </div>
 
       {/* Lightbox Modal */}
