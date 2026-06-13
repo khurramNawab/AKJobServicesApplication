@@ -1,11 +1,10 @@
 {
-  "name": "job-portal-unified",
+  "name": "ak-job-services-deployment",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "description": "Root package for Hostinger Unified Deployment",
   "scripts": {
-    "start": "node -e \"const fs=require('fs'); if(!fs.existsSync('./web/dist')) { console.log('🚀 Dist missing, building...'); require('child_process').execSync('npm run build', {stdio:'inherit'}); }\" && node backend/server.js",
-    "build": "npm install --prefix backend && npm install --prefix web --include=dev --legacy-peer-deps && npm run build --prefix web",
-    "postinstall": "npm run build"
+    "postinstall": "cd backend && npm install && cd ../web && npm install",
+    "build": "cd web && npm run build",
+    "start": "cd backend && node server.js"
   }
 }
