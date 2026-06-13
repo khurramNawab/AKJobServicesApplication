@@ -7,6 +7,7 @@ import {
 } from "../controllers/candidateController.js";
 import { protect, authorizeRoles as authorize } from "../middlewares/authMiddleware.js";
 import upload from "../config/upload.js";
+import { resumeUploadLimiter } from "../middlewares/rateLimiterMiddleware.js";
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ router
 router.route("/me/resume").post(
   protect,
   authorize("CANDIDATE"),
+  resumeUploadLimiter,
   (req, res, next) => {
     upload.single("resume")(req, res, function (err) {
       if (err) {

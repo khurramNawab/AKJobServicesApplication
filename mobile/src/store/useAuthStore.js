@@ -7,11 +7,14 @@ export const useAuthStore = create((set) => ({
     isLoading: true,
 
     // Actions
-    setCredentials: async (user, token) => {
+    setCredentials: async (user, token, refreshToken) => {
         try {
             await SecureStore.setItemAsync('userToken', token);
+            if (refreshToken) {
+                await SecureStore.setItemAsync('refreshToken', refreshToken);
+            }
             await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
-            set({ user, token, isLoading: false });
+            set({ user, token, refreshToken, isLoading: false });
         } catch (e) {
             console.error('Error saving credentials:', e);
         }
@@ -21,7 +24,8 @@ export const useAuthStore = create((set) => ({
         try {
             await SecureStore.deleteItemAsync('userToken');
             await SecureStore.deleteItemAsync('userInfo');
-            set({ user: null, token: null, isLoading: false });
+            await SecureStore.deleteItemAsync('refreshToken');
+            set({ user: null, token: null, refreshToken: null, isLoading: false });
         } catch (e) {
             console.error('Error removing credentials:', e);
         }
@@ -46,6 +50,7 @@ export const useAuthStore = create((set) => ({
             }, 4000);
 
             const token = await SecureStore.getItemAsync('userToken');
+            const refreshToken = await SecureStore.getItemAsync('refreshToken');
             const userInfoStr = await SecureStore.getItemAsync('userInfo');
             
             clearTimeout(storageTimer);
@@ -53,7 +58,7 @@ export const useAuthStore = create((set) => ({
             if (token && userInfoStr) {
                 try {
                     const user = JSON.parse(userInfoStr);
-                    set({ user, token, isLoading: false });
+                    set({ user, token, refreshToken, isLoading: false });
                 } catch (parseError) {
                     console.error('[AuthStore] Parse error:', parseError);
                     set({ isLoading: false });

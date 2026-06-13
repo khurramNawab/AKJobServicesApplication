@@ -12,11 +12,11 @@ const jobSchema = new mongoose.Schema(
     },
     requirements: {
       type: String,
-      required: [true, "Please add job requirements"],
+      default: '',
     },
     skills: [String],
     salaryRange: {
-      type: String,
+      type: mongoose.Schema.Types.Mixed,
       default: "Competitive",
     },
     location: {

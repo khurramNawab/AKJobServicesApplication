@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Building2, Globe, Users, Briefcase, IndianRupee, Clock, ArrowLeft, ArrowRight, Star, Share2 } from 'lucide-react';
 import api from '../services/api';
@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 
 const CompanyProfile = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [company, setCompany] = useState(null);
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -167,7 +168,7 @@ const CompanyProfile = () => {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: i * 0.1 }}
                                             className="glass-card p-8 rounded-[2.5rem] border-white/5 hover:border-white/10 transition-all group cursor-pointer"
-                                            onClick={() => window.location.href = `/jobs/${job._id}`}
+                                            onClick={() => navigate(`/jobs/${job._id}`)}
                                         >
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                                 <div className="space-y-3">

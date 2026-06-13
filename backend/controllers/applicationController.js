@@ -3,6 +3,8 @@ import Job from '../models/Job.js';
 import mongoose from 'mongoose';
 import { createNotification } from '../utils/notification.js';
 import PlatformConfig from '../models/PlatformConfig.js';
+import { invalidateCache } from '../utils/cache.js';
+import Recruiter from '../models/Recruiter.js';
 
 // @desc    Apply for a job (Production-Hardened)
 // @route   POST /api/v1/jobs/:jobId/apply
@@ -18,6 +20,14 @@ export const applyForJob = async (req, res) => {
             return res.status(404).json({ 
                 success: false, 
                 message: "Job not found" 
+            });
+        }
+
+        // Check if Job is Closed
+        if (job.status === 'CLOSED') {
+            return res.status(400).json({
+                success: false,
+                message: "This job posting has been closed by the recruiter."
             });
         }
 
@@ -66,8 +76,11 @@ export const applyForJob = async (req, res) => {
         });
 
         // 6. Update Job Metrics
-        job.applicantsCount += 1;
-        await job.save();
+        await Job.updateOne({ _id: job._id }, { $inc: { applicantsCount: 1 } });
+        
+        // Invalidate cached job details and list
+        await invalidateCache(`jobs:detail:${job._id}`).catch(err => console.error('Cache Inval Error:', err));
+        await invalidateCache('jobs:list:*').catch(err => console.error('Cache Inval Error:', err));
 
         // 7. Notification (Non-blocking)
         createNotification(
@@ -99,8 +112,40 @@ export const applyForJob = async (req, res) => {
 // @access  Private (Candidate only)
 export const getMyApplications = async (req, res) => {
     try {
-        const applications = await Application.find({ candidateId: req.user._id })
-            .populate('jobId', 'title location type recruiterId');
+        let applications = await Application.find({ candidateId: req.user._id })
+            .populate('jobId', 'title location type recruiterId')
+            .lean();
+
+        // Populate companyName and companyLogo for recruiterId in jobId
+        const recruiterUserIds = applications.map(item => item.jobId?.recruiterId).filter(Boolean);
+        if (recruiterUserIds.length > 0) {
+            const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } }).lean();
+            const recruiterMap = recruiters.reduce((acc, rec) => {
+                acc[rec.userId.toString()] = rec;
+                return acc;
+            }, {});
+
+            applications = applications.map(item => {
+                if (item.jobId && item.jobId.recruiterId) {
+                    const info = recruiterMap[item.jobId.recruiterId.toString()];
+                    if (info) {
+                        item.jobId.recruiterId = {
+                            _id: item.jobId.recruiterId.toString(),
+                            companyName: info.companyName || 'Company Name',
+                            companyLogo: info.companyLogo ? info.companyLogo.replace('http://', 'https://') : ''
+                        };
+                    } else {
+                        item.jobId.recruiterId = {
+                            _id: item.jobId.recruiterId.toString(),
+                            companyName: 'Company Name',
+                            companyLogo: ''
+                        };
+                    }
+                }
+                return item;
+            });
+        }
+
         res.status(200).json({
             success: true,
             count: applications.length,

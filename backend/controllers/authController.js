@@ -435,7 +435,7 @@ export const getMe = async (req, res) => {
 // @route   POST /api/v1/auth/logout
 // @access  Private
 export const logoutUser = async (req, res) => {
-    await clearTokens(req.user._id, res);
+    await clearTokens(req.user._id, res, req);
     res.status(200).json({ success: true, message: 'Logged out' });
 };
 

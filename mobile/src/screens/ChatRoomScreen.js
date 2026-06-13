@@ -121,7 +121,8 @@ const ChatRoomScreen = ({ route, navigation }) => {
             }
         } catch (error) {
             console.error('Send error:', error);
-            Alert.alert('Error', 'Message failed to send.');
+            const errMsg = error.response?.data?.message || 'Message failed to send.';
+            Alert.alert('Error', errMsg);
         } finally {
             setSending(false);
         }

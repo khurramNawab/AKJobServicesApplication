@@ -15,15 +15,20 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
+import Pagination from '../../../components/ui/Pagination';
 
 const JobModerator = () => {
-  const { jobs, handleDeleteJob: onDelete } = useOutletContext();
+  const { jobs, pagination, fetchAdminData, handleDeleteJob: onDelete } = useOutletContext();
   const [search, setSearch] = useState('');
   
   const filtered = jobs.filter(j => 
     j.title?.toLowerCase().includes(search.toLowerCase()) || 
     j.companyName?.toLowerCase().includes(search.toLowerCase())
   );
+  
+  const handlePageChange = (newPage) => {
+    fetchAdminData(pagination.users.current, newPage);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left">
@@ -108,6 +113,15 @@ const JobModerator = () => {
                 ))}
              </tbody>
           </table>
+        </div>
+        
+        {/* 📟 Pager Subsystem */}
+        <div className="p-8 border-t border-white/5 px-10">
+          <Pagination 
+             currentPage={pagination.jobs.current} 
+             totalPages={pagination.jobs.pages} 
+             onPageChange={handlePageChange} 
+          />
         </div>
       </div>
     </div>

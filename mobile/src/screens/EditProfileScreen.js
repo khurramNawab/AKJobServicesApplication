@@ -13,7 +13,6 @@ import {
   Image,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from "../constants/theme";
@@ -46,6 +45,11 @@ const EditProfileScreen = ({ navigation }) => {
   });
 
   useEffect(() => {
+    if (user?.role !== 'CANDIDATE') {
+      Alert.alert("Access Denied", "This profile screen is for candidates only.");
+      navigation.goBack();
+      return;
+    }
     fetchProfile();
   }, []);
 

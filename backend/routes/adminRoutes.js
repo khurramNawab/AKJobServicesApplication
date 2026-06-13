@@ -13,17 +13,22 @@ import {
     getPlatformConfig,
     updatePlatformConfig,
     getAuditLogs,
+    verifyAuditLedger,
     reviewApplicationAdmin,
     getApplicationsAdmin,
+    getSubscriptionsAdmin,
+    getPaymentsAdmin,
 } from '../controllers/adminController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { requireReauth } from '../middlewares/reauthMiddleware.js';
+import { adminLimiter } from '../middlewares/rateLimiterMiddleware.js';
 
 const router = express.Router();
 
 // Apply protection to ALL admin routes
 router.use(protect);
 router.use(authorizeRoles('ADMIN', 'SUPER_ADMIN'));
+router.use(adminLimiter);
 
 // Dashboard
 router.get('/stats', getStats);
@@ -47,6 +52,7 @@ router.post('/broadcast', broadcastNotification);
 
 // Audit logs
 router.get('/audit-logs', getAuditLogs);
+router.post('/audit-logs/verify', requireReauth, verifyAuditLedger);
 
 // Platform config (Global Settings)
 router.get('/platform-config', getPlatformConfig);
@@ -55,5 +61,9 @@ router.put('/platform-config', updatePlatformConfig);
 // Platform plan (Monetization/Pricing)
 router.get('/platform-plan', getPlatformPlanAdmin);
 router.put('/platform-plan', updatePlatformPlanAdmin);
+
+// Subscriptions & Payments Ledger
+router.get('/subscriptions', getSubscriptionsAdmin);
+router.get('/payments', getPaymentsAdmin);
 
 export default router;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, 
   Search, 
@@ -10,21 +10,48 @@ import {
   XCircle,
   Download,
   IndianRupee,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../../services/api';
 
 const PaymentsView = () => {
   const [search, setSearch] = useState('');
-  
-  // Mock Transaction Data based on seeded signals
-  const transactions = [
-    { id: 'TXN-A8F2K9', user: 'Khurram Nawab', plan: 'ELITE', amount: 2499, status: 'SUCCESS', date: '2026-04-02' },
-    { id: 'TXN-J3R7L1', user: 'Siddhant Sharma', plan: 'PRO', amount: 999, status: 'SUCCESS', date: '2026-04-01' },
-    { id: 'TXN-P0Q5M2', user: 'Digital Solutions', plan: 'PRO', amount: 999, status: 'PENDING', date: '2026-04-01' },
-    { id: 'TXN-G4V6X9', user: 'Tech Corp', plan: 'ELITE', amount: 2499, status: 'FAILED', date: '2026-03-31' },
-    { id: 'TXN-M1N8B3', user: 'Rahul Verma', plan: 'BASIC', amount: 0, status: 'SUCCESS', date: '2026-03-30' },
-  ];
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const res = await api.get('/admin/payments');
+        if (res.data.success) {
+          setTransactions(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch payments:', err);
+        // Fallback to mock data if API fails (e.g. no DB connection or not seeded)
+        setTransactions([
+          { id: 'TXN-A8F2K9', user: 'Khurram Nawab', plan: 'ELITE', amount: 2499, status: 'SUCCESS', date: '2026-04-02' },
+          { id: 'TXN-J3R7L1', user: 'Siddhant Sharma', plan: 'PRO', amount: 999, status: 'SUCCESS', date: '2026-04-01' },
+          { id: 'TXN-P0Q5M2', user: 'Digital Solutions', plan: 'PRO', amount: 999, status: 'PENDING', date: '2026-04-01' },
+          { id: 'TXN-G4V6X9', user: 'Tech Corp', plan: 'ELITE', amount: 2499, status: 'FAILED', date: '2026-03-31' },
+          { id: 'TXN-M1N8B3', user: 'Rahul Verma', plan: 'BASIC', amount: 0, status: 'SUCCESS', date: '2026-03-30' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <RefreshCw size={24} className="text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left">

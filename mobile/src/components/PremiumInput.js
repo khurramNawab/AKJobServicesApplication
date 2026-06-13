@@ -49,13 +49,13 @@ const PremiumInput = ({
                     : interpolateColor(
                         focusAnim.value,
                         [0, 1],
-                        [COLORS.border, COLORS.primary]
+                        [isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)', COLORS.primary]
                     )
             ),
             backgroundColor: withTiming(
                 focusAnim.value > 0.5 
-                    ? COLORS.surface 
-                    : COLORS.surfaceSecondary
+                    ? (isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.9)')
+                    : (isDarkMode ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.5)')
             ),
             transform: [{ scale: withSpring(focusAnim.value > 0.5 ? 1.01 : 1) }],
             borderWidth: withTiming(focusAnim.value > 0.5 ? 1.5 : 1),

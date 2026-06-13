@@ -70,10 +70,25 @@ const PremiumButton = ({
             case 'primary':
             default:
                 return { 
-                    colors: (disabled || loading) ? [COLORS.border, COLORS.border] : COLORS.gradientPrimary, 
+                    colors: COLORS.gradientPrimary, 
                     text: '#FFF', 
                     border: null 
                 };
+        }
+    };
+
+    const getBackgroundColor = () => {
+        switch (variant) {
+            case 'outline':
+            case 'ghost':
+                return 'transparent';
+            case 'secondary':
+                return COLORS.gradientSecondary ? COLORS.gradientSecondary[0] : COLORS.primaryLight;
+            case 'danger':
+                return COLORS.danger;
+            case 'primary':
+            default:
+                return COLORS.primary;
         }
     };
 
@@ -81,16 +96,17 @@ const PremiumButton = ({
 
     return (
         <AnimatedTouchable
-            activeOpacity={1}
+            activeOpacity={0.8}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
             onPress={onPress}
             disabled={disabled || loading}
             style={[
                 styles.button,
-                { width: fullWidth ? '100%' : 'auto' },
+                { width: fullWidth ? '100%' : 'auto', backgroundColor: getBackgroundColor() },
                 animatedStyle,
                 variant === 'outline' && { borderWidth: 1.5, borderColor: border },
+                (disabled || loading) && { opacity: 0.6 },
                 SHADOWS.medium,
                 style
             ]}

@@ -34,6 +34,14 @@ const auditLogSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    beforeState: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
+    afterState: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
     ipAddress: {
         type: String,
         default: '',
@@ -42,6 +50,14 @@ const auditLogSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    hash: {
+        type: String,
+        default: '',
+    },
+    previousEntryHash: {
+        type: String,
+        default: '',
+    }
 }, {
     timestamps: true,
 });

@@ -25,20 +25,22 @@ import EliteGradient from '../components/EliteGradient';
 
 const { width } = Dimensions.get('window');
 
-const CreateJobScreen = ({ navigation }) => {
+const CreateJobScreen = ({ route, navigation }) => {
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
+    const jobToEdit = route?.params?.job;
+
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        requirements: '',
-        skills: '', 
-        location: '',
-        type: 'Full-time',
-        minSalary: '',
-        maxSalary: ''
+        title: jobToEdit?.title || '',
+        description: jobToEdit?.description || '',
+        requirements: jobToEdit?.requirements || '',
+        skills: jobToEdit?.skills?.join(', ') || '', 
+        location: jobToEdit?.location || '',
+        type: jobToEdit?.type || 'Full-time',
+        minSalary: jobToEdit?.salaryRange?.min ? String(jobToEdit.salaryRange.min) : '',
+        maxSalary: jobToEdit?.salaryRange?.max ? String(jobToEdit.salaryRange.max) : ''
     });
 
     const handleInputChange = (name, value) => {
@@ -67,16 +69,25 @@ const CreateJobScreen = ({ navigation }) => {
                     min: Number(formData.minSalary),
                     max: Number(formData.maxSalary)
                 }
+            } else {
+                payload.salaryRange = 'Competitive';
             }
 
-            const res = await api.post('/jobs', payload);
+            let res;
+            if (jobToEdit) {
+                res = await api.put(`/jobs/${jobToEdit._id}`, payload);
+            } else {
+                res = await api.post('/jobs', payload);
+            }
+
             if (res.data.success) {
-                Alert.alert('Success!', 'Your job posting is now live and visible to candidates.');
+                Alert.alert('Success!', jobToEdit ? 'Your job posting has been updated.' : 'Your job posting is now live and visible to candidates.');
                 navigation.goBack();
             }
         } catch (error) {
             console.error('Post job error:', error);
-            Alert.alert('Post Failed', 'Something went wrong while publishing your job.');
+            const msg = error?.response?.data?.message || 'Something went wrong while publishing your job.';
+            Alert.alert('Post Failed', msg);
         } finally {
             setLoading(false);
         }
@@ -92,8 +103,8 @@ const CreateJobScreen = ({ navigation }) => {
                     <Ionicons name="close" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleArea}>
-                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Post a Job</Text>
-                    <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>Find your next elite hire</Text>
+                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>{jobToEdit ? 'Edit Job Posting' : 'Post a Job'}</Text>
+                    <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>{jobToEdit ? 'Modify your active listing' : 'Find your next elite hire'}</Text>
                 </View>
                 <View style={{ width: 48 }} />
             </View>
@@ -157,7 +168,7 @@ const CreateJobScreen = ({ navigation }) => {
                         <View style={styles.row}>
                             <View style={{ flex: 1 }}>
                                 <PremiumInput 
-                                    label="Min Salary ($)" 
+                                    label="Min Salary (₹)" 
                                     placeholder="80,000"
                                     keyboardType="numeric"
                                     value={formData.minSalary}
@@ -167,7 +178,7 @@ const CreateJobScreen = ({ navigation }) => {
                             <View style={{ width: 16 }} />
                             <View style={{ flex: 1 }}>
                                 <PremiumInput 
-                                    label="Max Salary ($)" 
+                                    label="Max Salary (₹)" 
                                     placeholder="150,000"
                                     keyboardType="numeric"
                                     value={formData.maxSalary}
@@ -216,7 +227,7 @@ const CreateJobScreen = ({ navigation }) => {
                     </Animated.View>
 
                     <PremiumButton 
-                        title="Publish Job Posting"
+                        title={jobToEdit ? "Save Changes" : "Publish Job Posting"}
                         onPress={handleSubmit}
                         loading={loading}
                         style={styles.publishBtn}

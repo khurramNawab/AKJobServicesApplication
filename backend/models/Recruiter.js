@@ -27,6 +27,17 @@ const recruiterSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    companyPhotos: {
+        type: [{
+            url: { type: String, required: true },
+            size: { type: Number, required: true }
+        }],
+        default: []
+    },
+    designation: {
+        type: String,
+        default: ''
+    },
     description: {
         type: String,
         default: ''

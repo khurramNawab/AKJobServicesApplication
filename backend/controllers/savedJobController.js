@@ -1,5 +1,6 @@
 import SavedJob from '../models/SavedJob.js';
 import Job from '../models/Job.js';
+import Recruiter from '../models/Recruiter.js';
 
 // @desc    Toggle save job
 // @route   POST /api/v1/saved-jobs/toggle/:jobId
@@ -41,15 +42,50 @@ export const toggleSavedJob = async (req, res) => {
 // @access  Private (Candidate only)
 export const getMySavedJobs = async (req, res) => {
     try {
-        const savedJobs = await SavedJob.find({ userId: req.user._id })
+        let savedJobs = await SavedJob.find({ userId: req.user._id })
             .populate({
                 path: 'jobId',
                 populate: {
                     path: 'recruiterId',
-                    select: 'companyName companyLogo name'
+                    select: 'name email'
                 }
             })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Populate companyName and companyLogo for recruiterId in jobId
+        const recruiterUserIds = savedJobs.map(item => item.jobId?.recruiterId?._id).filter(Boolean);
+        if (recruiterUserIds.length > 0) {
+            const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } }).lean();
+            const recruiterMap = recruiters.reduce((acc, rec) => {
+                acc[rec.userId.toString()] = rec;
+                return acc;
+            }, {});
+
+            savedJobs = savedJobs.map(item => {
+                if (item.jobId && item.jobId.recruiterId) {
+                    const info = recruiterMap[item.jobId.recruiterId._id.toString()];
+                    if (info) {
+                        item.jobId.recruiterId = {
+                            _id: item.jobId.recruiterId._id.toString(),
+                            name: item.jobId.recruiterId.name,
+                            email: item.jobId.recruiterId.email,
+                            companyName: info.companyName || 'Company Name',
+                            companyLogo: info.companyLogo ? info.companyLogo.replace('http://', 'https://') : ''
+                        };
+                    } else {
+                        item.jobId.recruiterId = {
+                            _id: item.jobId.recruiterId._id.toString(),
+                            name: item.jobId.recruiterId.name,
+                            email: item.jobId.recruiterId.email,
+                            companyName: 'Company Name',
+                            companyLogo: ''
+                        };
+                    }
+                }
+                return item;
+            });
+        }
 
         res.status(200).json({
             success: true,

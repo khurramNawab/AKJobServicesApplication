@@ -136,12 +136,24 @@ export const sendMessage = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Content required' });
         }
 
-        // Atomic Find or Create Conversation
-        let conversation = await Conversation.findOneAndUpdate(
-            { participants: { $all: [req.user._id, receiverId] } },
-            { $setOnInsert: { participants: [req.user._id, receiverId] } },
-            { upsert: true, new: true }
-        );
+        // Validate that receiverId is a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(receiverId)) {
+            return res.status(400).json({ success: false, message: 'Invalid receiver ID' });
+        }
+
+        const senderObjectId = new mongoose.Types.ObjectId(req.user._id);
+        const receiverObjectId = new mongoose.Types.ObjectId(receiverId);
+
+        // Find or Create Conversation
+        let conversation = await Conversation.findOne({
+            participants: { $all: [senderObjectId, receiverObjectId] }
+        });
+
+        if (!conversation) {
+            conversation = await Conversation.create({
+                participants: [senderObjectId, receiverObjectId]
+            });
+        }
 
         const message = await Message.create({
             conversationId: conversation._id,
@@ -164,6 +176,7 @@ export const sendMessage = async (req, res) => {
 
         res.status(201).json({ success: true, data: message });
     } catch (error) {
+        console.error('Error in sendMessage controller:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

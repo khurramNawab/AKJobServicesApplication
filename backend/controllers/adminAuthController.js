@@ -80,6 +80,6 @@ export const loginAdmin = async (req, res) => {
 // @access  Private
 export const logoutAdmin = async (req, res) => {
     logAdminAction(req, 'ADMIN_LOGOUT', { details: `Admin ${req.user.name} logged out` });
-    await clearTokens(req.user._id, res);
+    await clearTokens(req.user._id, res, req);
     res.status(200).json({ success: true, message: 'Logged out successfully' });
 };

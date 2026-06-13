@@ -31,41 +31,41 @@ const createTransporter = () => {
     return transporter;
 };
 
-// ── Core send function with retry ───────────────────────────────────
-const sendEmailWithRetry = async (mailOptions, retries = 3) => {
-    const transporter = createTransporter();
-    
-    // Create initial tracking log
-    const logEntry = await EmailLog.create({
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-        status: 'PENDING'
-    });
+import { emailQueue } from '../config/queue.js';
 
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        logEntry.attempts = attempt;
-        try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log(`[EMAIL] Sent to ${mailOptions.to} (attempt ${attempt}) — ID: ${info.messageId}`);
-            
-            // Mark success
-            logEntry.status = 'SUCCESS';
-            logEntry.error = null;
-            await logEntry.save();
-            return true;
-        } catch (error) {
-            console.error(`[EMAIL] Attempt ${attempt}/${retries} failed for ${mailOptions.to}:`, error);
-            
-            if (attempt === retries) {
-                console.error(`[EMAIL] All ${retries} attempts exhausted. Email NOT delivered.`);
-                logEntry.status = 'FAILED';
-                logEntry.error = error.message;
-                await logEntry.save();
-                return false;
+// ── Core send function using BullMQ offload ──────────────────────────
+const sendEmailWithRetry = async (mailOptions) => {
+    try {
+        // 1. Create initial tracking log
+        const logEntry = await EmailLog.create({
+            to: mailOptions.to,
+            subject: mailOptions.subject,
+            status: 'PENDING',
+        });
+
+        // 2. Queue in BullMQ
+        await emailQueue.add(
+            'sendEmail',
+            {
+                to: mailOptions.to,
+                subject: mailOptions.subject,
+                html: mailOptions.html,
+                logId: logEntry._id,
+            },
+            {
+                attempts: 3, // Manage retries in BullMQ
+                backoff: {
+                    type: 'exponential',
+                    delay: 2000, // 2s -> 4s -> 8s
+                },
             }
-            // Exponential backoff: 1s, 2s, 4s
-            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
-        }
+        );
+
+        console.log(`[EMAIL QUEUED] Email to ${mailOptions.to} pushed to queue.`);
+        return true;
+    } catch (error) {
+        console.error(`[EMAIL QUEUE ERROR] Failed to push email to queue for ${mailOptions.to}:`, error);
+        return false;
     }
 };
 

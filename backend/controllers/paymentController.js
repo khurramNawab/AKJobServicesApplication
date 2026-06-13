@@ -17,8 +17,10 @@ const razorpay = new Razorpay({
 export const createOrder = async (req, res) => {
     try {
         const { planType, duration } = req.body; // duration: 'monthly' | 'yearly'
-        const config = await PlatformConfig.findOne();
-        if (!config) return res.status(500).json({ success: false, message: 'Platform configuration missing' });
+        let config = await PlatformConfig.findOne();
+        if (!config) {
+            config = await PlatformConfig.create({});
+        }
 
         let amount = 0;
         if (planType === 'BASIC') {

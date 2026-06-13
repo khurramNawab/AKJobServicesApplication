@@ -13,7 +13,9 @@ const messageSchema = new mongoose.Schema({
     },
     text: {
         type: String,
-        required: true
+        required: function() {
+            return !this.attachments || this.attachments.length === 0;
+        }
     },
     attachments: [{
         url: { type: String, required: true },

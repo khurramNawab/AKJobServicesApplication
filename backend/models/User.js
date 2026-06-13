@@ -78,6 +78,8 @@ const userSchema = new mongoose.Schema({
     // ── Security: Active sessions ───────────────────────────────
     sessions: {
         type: [{
+            jti: String,
+            hashedToken: String,
             deviceInfo: String,    // parsed UA string
             ipAddress: String,
             lastActive: { type: Date, default: Date.now }

@@ -19,6 +19,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
+import "./config/queue.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -26,7 +27,8 @@ import {
   generateCsrfToken,
   csrfProtection,
 } from "./middlewares/csrfMiddleware.js";
-import { requestTimer } from "./utils/logger.js";
+import { requestTimer, correlationIdMiddleware } from "./utils/logger.js";
+import { inputHardening } from "./middlewares/inputHardeningMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const backendDir = path.dirname(__filename);
@@ -58,10 +60,33 @@ if (overlayEnvPath && fs.existsSync(overlayEnvPath)) {
   dotenv.config({ path: overlayEnvPath, override: true });
 }
 
+// ─── Critical Environment Variables Fast-Fail Check ────────────────────────
+const CRITICAL_ENV = [
+  "MONGO_URI",
+  "JWT_SECRET",
+  "JWT_REFRESH_SECRET",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+];
+
+const missingEnv = CRITICAL_ENV.filter((key) => !process.env[key]);
+if (missingEnv.length > 0) {
+  console.error(
+    "\n========================================================================\n" +
+    "💥 FATAL STARTUP ERROR: Missing Critical Environment Variables!\n" +
+    `   Missing fields: ${missingEnv.join(", ")}\n` +
+    "   The server cannot start without these. Please check your .env configuration.\n" +
+    "========================================================================\n"
+  );
+  process.exit(1);
+}
+
 // Connect to database
 connectDB();
 
 const app = express();
+app.use(correlationIdMiddleware);
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -73,18 +98,35 @@ if (isProd) {
 
 // On unified server: same origin — no CORS issues for same-port requests.
 // Keep CORS open for Postman/mobile in dev, strict in production.
+// ── CORS origin list ────────────────────────────────────────────────────────
+// Mobile apps (Expo / React Native) send requests from 10.0.2.2 (Android
+// emulator) or a physical device on the LAN.  They also set the custom header
+// `x-client-type: mobile`, which we use as an additional signal.
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL || "http://localhost:5001",
+  "http://localhost:5001",
+  "http://127.0.0.1:5001",
+  "http://localhost:5173",   // Vite dev server
+  "http://127.0.0.1:5173",
+  "http://10.0.2.2:5001",    // Android Emulator → host machine
+  "http://10.0.2.2",
+];
+
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_URL || "http://localhost:5001",
-      "http://localhost:5001",
-      "http://127.0.0.1:5001",
-      "http://localhost:5173", // Vite dev server (localhost)
-      "http://127.0.0.1:5173", // Vite dev server (IPv4 literal)
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, Postman, mobile apps, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow any origin that's in the whitelist
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      // Allow any 192.168.x.x or 10.x.x.x LAN origin (physical devices)
+      if (/^http:\/\/(192\.168\.|10\.)/.test(origin)) return callback(null, true);
+      // Block everything else
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-XSRF-TOKEN", "Accept"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-XSRF-TOKEN", "Accept", "x-client-type"],
     optionsSuccessStatus: 200,
   }),
 );
@@ -180,10 +222,32 @@ app.use("/api/", limiter);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
+app.use(inputHardening);
+
+// 🛡️ SECURITY: Recursive NoSQL Query Injection Protection
+const sanitizeNoSql = (obj) => {
+  if (obj && typeof obj === "object") {
+    for (const key in obj) {
+      if (key.startsWith("$")) {
+        delete obj[key];
+      } else if (typeof obj[key] === "object") {
+        sanitizeNoSql(obj[key]);
+      }
+    }
+  }
+};
+
+app.use((req, res, next) => {
+  sanitizeNoSql(req.body);
+  sanitizeNoSql(req.query);
+  sanitizeNoSql(req.params);
+  next();
+});
 
 // Monitoring & CSRF
 app.use(requestTimer);
 app.use(generateCsrfToken);
+app.use(csrfProtection);
 
 // 🧪 DEBUG: Log cookies for session troubleshooting
 app.use((req, res, next) => {
@@ -197,9 +261,12 @@ app.use((req, res, next) => {
 });
 
 // 🛡️ SECURITY: Force HTTPS in production only
+// Guard: only redirect when truly deployed (PORT env matches a cloud-set value
+// or X-Forwarded-Proto is present), not during local "NODE_ENV=production" runs.
 app.use((req, res, next) => {
-  if (isProd && !req.secure) {
-    return res.redirect("https://" + req.get("Host") + req.originalUrl);
+  const isReallyProd = isProd && req.get("X-Forwarded-Proto") !== undefined;
+  if (isReallyProd && !req.secure && req.get("X-Forwarded-Proto") !== "https") {
+    return res.redirect(301, "https://" + req.get("Host") + req.originalUrl);
   }
   next();
 });
@@ -209,10 +276,17 @@ app.use(morgan("dev"));
 
 // 🛤️ ROUTES
 app.use((req, res, next) => {
+  // Gracefully allow authenticated/direct mobile requests bypassing origin checks
+  if (req.headers["x-client-type"] === "mobile") {
+    return next();
+  }
+
   if (req.path.includes("/api/v1/auth")) {
     const origin = req.headers.origin || req.headers.referer || "";
     const allowedDomains = ["akjobservices.com", "localhost", "127.0.0.1"];
-    const isAllowed = allowedDomains.some((domain) => origin.includes(domain));
+    const isAllowed = allowedDomains.some((domain) => origin.includes(domain)) ||
+                      /192\.168\.\d+\.\d+/.test(origin) ||
+                      /10\.\d+\.\d+\.\d+/.test(origin);
 
     if (origin && !isAllowed) {
       console.warn(`[SECURITY] Blocked Origin: ${origin}`);

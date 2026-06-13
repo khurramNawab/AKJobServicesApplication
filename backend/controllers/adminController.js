@@ -7,7 +7,8 @@ import Payment from '../models/Payment.js';
 import PlatformPlan from '../models/PlatformPlan.js';
 import AuditLog from '../models/AuditLog.js';
 import { buildPagination } from '../utils/pagination.js';
-import { logAdminAction } from '../utils/auditLogger.js';
+import { logAdminAction, verifyLedgerIntegrity } from '../utils/auditLogger.js';
+import { notificationQueue } from '../config/queue.js';
 
 // ═══════════════════════════════════════════════════════════════════
 //  DASHBOARD STATS
@@ -67,6 +68,15 @@ export const getAllUsers = async (req, res) => {
         // Allow filtering by role
         if (req.query.role) {
             query.filter.role = req.query.role;
+        }
+
+        // Custom search to allow searching both name and email
+        if (req.query.search) {
+            delete query.filter[req.query.searchField]; // delete single-field filter if set by helper
+            query.filter.$or = [
+                { name: { $regex: req.query.search, $options: 'i' } },
+                { email: { $regex: req.query.search, $options: 'i' } }
+            ];
         }
 
         const totalDocs = await User.countDocuments(query.filter);
@@ -220,33 +230,18 @@ export const broadcastNotification = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Title and message required' });
         }
 
-        // Batch insert — 500 at a time to avoid memory spikes
-        const BATCH_SIZE = 500;
-        let skip = 0;
-        let totalSent = 0;
-
-        while (true) {
-            const users = await User.find().select('_id').skip(skip).limit(BATCH_SIZE).lean();
-            if (users.length === 0) break;
-
-            const notifications = users.map(u => ({
-                userId: u._id,
-                title,
-                message,
-                type: 'SYSTEM',
-            }));
-
-            await Notification.insertMany(notifications);
-            totalSent += users.length;
-            skip += BATCH_SIZE;
-        }
-
-        logAdminAction(req, 'BROADCAST_SENT', {
-            targetType: 'System',
-            details: `Broadcast "${title}" sent to ${totalSent} users`,
+        // Offload dynamic mass broadcast delivery safely to notificationQueue in BullMQ
+        await notificationQueue.add('broadcastNotification', {
+            title,
+            message,
+            adminId: req.user._id,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress
         });
 
-        res.status(200).json({ success: true, message: `Broadcast sent to ${totalSent} users` });
+        res.status(202).json({
+            success: true,
+            message: 'Broadcast notification successfully queued for dynamic background delivery.',
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -298,6 +293,21 @@ export const getAuditLogs = async (req, res) => {
             count: logs.length,
             ...pagination(totalDocs),
             data: logs,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Verify cryptographic ledger integrity for admin activities
+// @route   POST /api/v1/admin/audit-logs/verify
+// @access  Private/Admin
+export const verifyAuditLedger = async (req, res) => {
+    try {
+        const result = await verifyLedgerIntegrity();
+        res.status(200).json({
+            success: true,
+            data: result
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -467,6 +477,66 @@ export const updatePlatformConfig = async (req, res) => {
         });
 
         res.status(200).json({ success: true, data: config });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all subscriptions
+// @route   GET /api/v1/admin/subscriptions
+// @access  Private/Admin
+export const getSubscriptionsAdmin = async (req, res) => {
+    try {
+        const subscriptions = await Subscription.find()
+            .populate('userId', 'name email')
+            .sort({ createdAt: -1 });
+
+        const formatted = subscriptions.map(sub => ({
+            _id: sub._id,
+            user: {
+                name: sub.userId?.name || 'Unknown User',
+                email: sub.userId?.email || ''
+            },
+            plan: sub.planType,
+            status: sub.status,
+            startDate: sub.startDate,
+            endDate: sub.endDate,
+            amount: sub.planType === 'PRO' ? 999 : sub.planType === 'ELITE' ? 2499 : 0
+        }));
+
+        res.status(200).json({
+            success: true,
+            count: formatted.length,
+            data: formatted
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all payments
+// @route   GET /api/v1/admin/payments
+// @access  Private/Admin
+export const getPaymentsAdmin = async (req, res) => {
+    try {
+        const payments = await Payment.find()
+            .populate('userId', 'name email planType')
+            .sort({ createdAt: -1 });
+
+        const formatted = payments.map(pay => ({
+            id: pay.transactionId || pay.orderId,
+            user: pay.userId?.name || 'Unknown User',
+            plan: pay.userId?.planType || (pay.amount === 999 ? 'PRO' : pay.amount === 2499 ? 'ELITE' : 'BASIC'),
+            amount: pay.amount,
+            status: pay.status,
+            date: pay.createdAt.toISOString().split('T')[0]
+        }));
+
+        res.status(200).json({
+            success: true,
+            count: formatted.length,
+            data: formatted
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

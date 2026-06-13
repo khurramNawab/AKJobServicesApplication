@@ -15,7 +15,8 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
     FadeInDown, 
     FadeInRight, 
@@ -117,7 +118,7 @@ const ProfileScreen = ({ navigation }) => {
             });
 
             // 2. Get Token manually for Fetch
-            const token = await AsyncStorage.getItem('userToken');
+            const token = await SecureStore.getItemAsync('userToken');
 
             // 3. Perform Native Upload (bypass Axios entirely for stability)
             const response = await fetch(`${api.defaults.baseURL}${endpoint}`, {
@@ -126,7 +127,6 @@ const ProfileScreen = ({ navigation }) => {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                    // ⚠️  DO NOT set Content-Type: fetch handles it automatically for FormData
                 },
             });
 
@@ -161,37 +161,99 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
-    const renderStat = (label, value, icon) => (
-        <View style={styles.statItem}>
-            <View style={[styles.statIcon, { backgroundColor: COLORS.primary + '10' }]}>
+    const renderStatCard = (label, value, icon, gradientColors) => (
+        <View style={[styles.statCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, SHADOWS.low]}>
+            <LinearGradient
+                colors={gradientColors || (isDarkMode ? [COLORS.primaryDark + '15', COLORS.primary + '08'] : [COLORS.primaryLight + '20', COLORS.primary + '05'])}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={StyleSheet.absoluteFillObject}
+            />
+            <View style={[styles.statIcon, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }]}>
                 <Ionicons name={icon} size={18} color={COLORS.primary} />
             </View>
-            <View>
+            <View style={styles.statContent}>
                 <Text style={[styles.statValue, { color: COLORS.textPrimary }]}>{value}</Text>
-                <Text style={[styles.statLabel, { color: COLORS.textTertiary }]}>{label}</Text>
+                <Text style={[styles.statLabel, { color: COLORS.textSecondary }]}>{label}</Text>
             </View>
         </View>
     );
 
-    const renderMenuButton = (icon, title, subtitle, onPress, isDanger = false) => (
-        <TouchableOpacity 
-            style={[
-                styles.menuBtn, 
-                { backgroundColor: COLORS.surface, borderColor: COLORS.border },
-                isDanger && { borderColor: COLORS.danger + '20' }
-            ]}
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
-            <View style={[styles.menuIconContainer, { backgroundColor: isDanger ? COLORS.danger + '10' : COLORS.backgroundSecondary }]}>
-                <Ionicons name={icon} size={22} color={isDanger ? COLORS.danger : COLORS.primary} />
-            </View>
-            <View style={styles.menuTextContainer}>
-                <Text style={[styles.menuTitle, { color: isDanger ? COLORS.danger : COLORS.textPrimary }]}>{title}</Text>
-                {subtitle && <Text style={[styles.menuSubtitle, { color: COLORS.textTertiary }]}>{subtitle}</Text>}
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.border} />
-        </TouchableOpacity>
+    const getMenuIconStyles = (iconName, isDanger) => {
+        if (isDanger) {
+            return {
+                bg: COLORS.danger + '12',
+                icon: COLORS.danger
+            };
+        }
+        
+        let bg = COLORS.primary + '12';
+        let iconColor = COLORS.primary;
+        
+        switch (iconName) {
+            case 'business-outline':
+                bg = isDarkMode ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)';
+                iconColor = '#6366F1';
+                break;
+            case 'person-outline':
+                bg = isDarkMode ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)';
+                iconColor = '#3B82F6';
+                break;
+            case 'heart-outline':
+                bg = isDarkMode ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)';
+                iconColor = '#EC4899';
+                break;
+            case 'document-text-outline':
+                bg = isDarkMode ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)';
+                iconColor = '#10B981';
+                break;
+            case 'sunny-outline':
+            case 'moon':
+                bg = isDarkMode ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.1)';
+                iconColor = '#F59E0B';
+                break;
+            case 'notifications-outline':
+                bg = isDarkMode ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)';
+                iconColor = '#8B5CF6';
+                break;
+            case 'shield-checkmark-outline':
+                bg = isDarkMode ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)';
+                iconColor = '#06B6D4';
+                break;
+        }
+        
+        return { bg, icon: iconColor };
+    };
+
+    const renderMenuButton = (icon, title, subtitle, onPress, isDanger = false) => {
+        const iconStyles = getMenuIconStyles(icon, isDanger);
+        return (
+            <TouchableOpacity 
+                style={[
+                    styles.menuBtn, 
+                    { backgroundColor: COLORS.surface, borderColor: COLORS.border },
+                    isDanger && { borderColor: COLORS.danger + '15' }
+                ]}
+                onPress={onPress}
+                activeOpacity={0.7}
+            >
+                <View style={[styles.menuIconContainer, { backgroundColor: iconStyles.bg }]}>
+                    <Ionicons name={icon} size={22} color={iconStyles.icon} />
+                </View>
+                <View style={styles.menuTextContainer}>
+                    <Text style={[styles.menuTitle, { color: isDanger ? COLORS.danger : COLORS.textPrimary }]}>{title}</Text>
+                    {subtitle && <Text style={[styles.menuSubtitle, { color: COLORS.textTertiary }]}>{subtitle}</Text>}
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+        );
+    };
+
+    const renderSectionHeader = (title) => (
+        <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIndicator, { backgroundColor: COLORS.primary }]} />
+            <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>{title}</Text>
+        </View>
     );
 
     if (loading && !profile) {
@@ -211,19 +273,35 @@ const ProfileScreen = ({ navigation }) => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header Section */}
                 <View style={styles.headerContainer}>
-                    <EliteGradient style={styles.headerGradient} />
+                    <EliteGradient style={styles.headerGradient}>
+                        {/* Decorative floating shapes in background */}
+                        <View style={styles.floatingCircleLeft} />
+                        <View style={styles.floatingCircleRight} />
+                    </EliteGradient>
                     <View style={styles.profileCardWrapper}>
-                        <Animated.View entering={FadeInDown.duration(800)} style={[styles.profileCard, { backgroundColor: COLORS.surface, ...SHADOWS.glass }]}>
-                            <View style={[styles.avatarWrapper, { borderColor: COLORS.surface }]}>
-                                {profileImage ? (
-                                    <Image source={{ uri: profileImage }} style={styles.avatar} />
-                                ) : (
-                                    <View style={[styles.avatarPlaceholder, { backgroundColor: COLORS.primary + '20' }]}>
-                                        <Text style={[styles.avatarInitial, { color: COLORS.primary }]}>
-                                            {user?.name?.charAt(0).toUpperCase()}
-                                        </Text>
+                        <Animated.View entering={FadeInDown.duration(800)} style={[styles.profileCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, SHADOWS.medium]}>
+                            <View style={styles.avatarContainer}>
+                                <LinearGradient
+                                    colors={['#6366F1', '#3B82F6', '#EC4899']}
+                                    start={{x: 0, y: 0}}
+                                    end={{x: 1, y: 1}}
+                                    style={styles.avatarGradientRing}
+                                >
+                                    <View style={[styles.avatarInner, { backgroundColor: COLORS.surface }]}>
+                                        {profileImage ? (
+                                            <Image source={{ uri: profileImage }} style={styles.avatar} />
+                                        ) : (
+                                            <LinearGradient
+                                                colors={isDarkMode ? ['#312E81', '#1E1B4B'] : ['#EEF2FF', '#E0E7FF']}
+                                                style={styles.avatarPlaceholder}
+                                            >
+                                                <Text style={[styles.avatarInitial, { color: isDarkMode ? '#A5B4FC' : '#4F46E5' }]}>
+                                                    {user?.name?.charAt(0).toUpperCase()}
+                                                </Text>
+                                            </LinearGradient>
+                                        )}
                                     </View>
-                                )}
+                                </LinearGradient>
 
                                 {photoUploading && (
                                     <View style={[styles.avatarOverlay, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
@@ -239,30 +317,43 @@ const ProfileScreen = ({ navigation }) => {
                                     {photoUploading ? (
                                         <ActivityIndicator size="small" color="#FFF" />
                                     ) : (
-                                        <Ionicons name="camera" size={16} color="#FFF" />
+                                        <Ionicons name="camera" size={14} color="#FFF" />
                                     )}
                                 </TouchableOpacity>
                             </View>
 
                             <Text style={[styles.userName, { color: COLORS.textPrimary }]}>{user?.name}</Text>
                             <Text style={[styles.userRole, { color: COLORS.textSecondary }]}>
-                                {profile?.headline || (user?.role === 'RECRUITER' ? 'Hiring Manager' : 'Job Seeker')}
+                                {user?.role === 'RECRUITER' 
+                                    ? (profile?.companyName ? `${profile.companyName} • Hiring Manager` : 'Hiring Manager') 
+                                    : (profile?.headline || 'Job Seeker')}
                             </Text>
 
-                            <View style={[styles.roleBadge, { backgroundColor: COLORS.primary + '10' }]}>
-                                <Text style={[styles.roleBadgeText, { color: COLORS.primary }]}>{user?.role}</Text>
+                            <View style={[styles.roleBadge, { 
+                                backgroundColor: user?.role === 'RECRUITER' ? 'rgba(99, 102, 241, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                borderColor: user?.role === 'RECRUITER' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(16, 185, 129, 0.2)'
+                            }]}>
+                                <Ionicons 
+                                    name={user?.role === 'RECRUITER' ? 'briefcase' : 'sparkles'} 
+                                    size={12} 
+                                    color={user?.role === 'RECRUITER' ? '#4F46E5' : '#10B981'} 
+                                    style={{ marginRight: 6 }} 
+                                />
+                                <Text style={[styles.roleBadgeText, { color: user?.role === 'RECRUITER' ? '#4F46E5' : '#10B981' }]}>
+                                    {user?.role}
+                                </Text>
                             </View>
 
                             <View style={styles.statsContainer}>
                                 {user?.role === 'RECRUITER' ? (
                                     <>
-                                        {renderStat('Jobs', stats?.jobs || 0, 'briefcase')}
-                                        {renderStat('Candidates', stats?.applicants || 0, 'people')}
+                                        {renderStatCard('Jobs', stats?.jobs || 0, 'briefcase', ['rgba(99, 102, 241, 0.08)', 'rgba(59, 130, 246, 0.03)'])}
+                                        {renderStatCard('Candidates', stats?.applicants || 0, 'people', ['rgba(139, 92, 246, 0.08)', 'rgba(168, 85, 247, 0.03)'])}
                                     </>
                                 ) : (
                                     <>
-                                        {renderStat('Applied', stats?.applied || 0, 'send')}
-                                        {renderStat('Interviews', stats?.interviews || 0, 'videocam')}
+                                        {renderStatCard('Applied', stats?.applied || 0, 'send', ['rgba(16, 185, 129, 0.08)', 'rgba(5, 150, 105, 0.03)'])}
+                                        {renderStatCard('Interviews', stats?.interviews || 0, 'videocam', ['rgba(59, 130, 246, 0.08)', 'rgba(37, 99, 235, 0.03)'])}
                                     </>
                                 )}
                             </View>
@@ -272,7 +363,7 @@ const ProfileScreen = ({ navigation }) => {
 
                 {/* Account Settings */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Professional</Text>
+                    {renderSectionHeader('Professional')}
                     {user?.role === 'CANDIDATE' ? (
                         <>
                             {renderMenuButton('person-outline', 'Edit Profile', 'Personal info, bio, and social links', () => navigation.navigate('EditProfile'))}
@@ -292,7 +383,7 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Settings</Text>
+                    {renderSectionHeader('Settings')}
                     {renderMenuButton(
                         isDarkMode ? 'moon' : 'sunny-outline', 
                         'Appearance', 
@@ -304,7 +395,7 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 <View style={[styles.section, { marginBottom: 120 }]}>
-                    <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>System</Text>
+                    {renderSectionHeader('System')}
                     {renderMenuButton('log-out-outline', 'Sign Out', 'Safely log out of your session', handleLogout, true)}
                 </View>
             </ScrollView>
@@ -328,36 +419,67 @@ const styles = StyleSheet.create({
     headerGradient: {
         height: 200,
         width: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    floatingCircleLeft: {
+        position: 'absolute',
+        top: -40,
+        left: -30,
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    floatingCircleRight: {
+        position: 'absolute',
+        bottom: -20,
+        right: -40,
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
     profileCardWrapper: {
         paddingHorizontal: SIZES.lg,
-        marginTop: -100,
+        marginTop: -90,
     },
     profileCard: {
-        borderRadius: 32,
+        borderRadius: 24,
         padding: SIZES.xl,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
     },
-    avatarWrapper: {
-        width: 110,
-        height: 110,
-        borderRadius: 38,
-        borderWidth: 5,
+    avatarContainer: {
+        width: 116,
+        height: 116,
         marginBottom: 16,
         position: 'relative',
-        ...SHADOWS.medium,
+    },
+    avatarGradientRing: {
+        width: 116,
+        height: 116,
+        borderRadius: 58,
+        padding: 3,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarInner: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 55,
+        overflow: 'hidden',
+        padding: 2,
     },
     avatar: {
         width: '100%',
         height: '100%',
-        borderRadius: 34,
+        borderRadius: 50,
     },
     avatarOverlay: {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        borderRadius: 34,
+        borderRadius: 58,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 5,
@@ -365,28 +487,34 @@ const styles = StyleSheet.create({
     avatarPlaceholder: {
         width: '100%',
         height: '100%',
-        borderRadius: 34,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
     },
     avatarInitial: {
-        fontSize: 40,
+        fontSize: 38,
         fontWeight: '800',
     },
     editBtn: {
         position: 'absolute',
-        bottom: -2,
-        right: -2,
-        width: 34,
-        height: 34,
-        borderRadius: 12,
+        bottom: 0,
+        right: 0,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
         borderColor: '#FFF',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        zIndex: 10,
     },
     userName: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '800',
         letterSpacing: -0.5,
     },
@@ -396,13 +524,16 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     roleBadge: {
-        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: 12,
         marginTop: 12,
+        borderWidth: 1,
     },
     roleBadgeText: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -410,63 +541,87 @@ const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: 'row',
         width: '100%',
-        justifyContent: 'space-around',
-        marginTop: 24,
-        paddingTop: 24,
+        justifyContent: 'space-between',
+        marginTop: 20,
+        paddingTop: 20,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
-    },
-    statItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        borderTopColor: 'rgba(0,0,0,0.06)',
         gap: 12,
     },
+    statCard: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        gap: 12,
+        overflow: 'hidden',
+        position: 'relative',
+    },
     statIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 14,
+        width: 38,
+        height: 38,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 2,
+    },
+    statContent: {
+        flex: 1,
+        zIndex: 2,
     },
     statValue: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '800',
     },
     statLabel: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '600',
+        marginTop: 1,
     },
     section: {
         paddingHorizontal: SIZES.lg,
         marginTop: 24,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '800',
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 16,
         marginLeft: 4,
+    },
+    sectionIndicator: {
+        width: 4,
+        height: 16,
+        borderRadius: 2,
+        marginRight: 8,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '800',
     },
     menuBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 20,
+        padding: 14,
+        borderRadius: 18,
         marginBottom: 12,
         borderWidth: 1,
     },
     menuIconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 16,
+        width: 42,
+        height: 42,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 14,
     },
     menuTextContainer: {
         flex: 1,
     },
     menuTitle: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '700',
     },
     menuSubtitle: {

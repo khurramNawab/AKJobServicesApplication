@@ -19,6 +19,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { LIGHT_COLORS, DARK_COLORS, SIZES, TYPOGRAPHY, SHADOWS } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAuthStore } from '../store/useAuthStore';
 import ScreenWrapper from '../components/ScreenWrapper';
 import PremiumButton from '../components/PremiumButton';
 import api from '../services/api';
@@ -43,15 +44,22 @@ const INTEREST_CATEGORIES = [
 const InterestSelectionScreen = ({ navigation, route }) => {
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
+    const user = useAuthStore((state) => state.user);
     
     const [selectedInterests, setSelectedInterests] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
 
     const filteredCategories = useMemo(() => {
-        return INTEREST_CATEGORIES.filter(cat => 
-            cat.label.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const query = searchQuery.toLowerCase().trim();
+        return INTEREST_CATEGORIES.filter(cat => {
+            const matchesLabel = cat.label.toLowerCase().includes(query);
+            // If user searches for developer or dev, display the Technology card
+            if (cat.id === 'tech' && (query === 'developer' || query === 'dev' || 'developer'.includes(query) || 'dev'.includes(query))) {
+                return true;
+            }
+            return matchesLabel;
+        });
     }, [searchQuery]);
 
     const toggleInterest = (id) => {
@@ -65,6 +73,16 @@ const InterestSelectionScreen = ({ navigation, route }) => {
 
     const handleContinue = async () => {
         if (selectedInterests.length < 3) return;
+
+        if (user?.role !== 'CANDIDATE') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            if (route.params?.fromOnboarding) {
+                navigation.replace('MainTabs');
+            } else {
+                navigation.goBack();
+            }
+            return;
+        }
         
         try {
             setLoading(true);

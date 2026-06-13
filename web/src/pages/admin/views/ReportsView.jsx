@@ -30,16 +30,47 @@ const ReportsView = () => {
       ['Pending Reconfigurations', stats?.pendingPayments || 0]
     ];
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + reportData.map(e => e.join(",")).join("\n");
+    // Sanitize cell contents to prevent Excel Formula Injection (CSV Injection)
+    const sanitizeCSVCell = (val) => {
+      if (val === null || val === undefined) return '';
+      let str = String(val);
+      
+      // Escape execution/formula initiation characters
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`; // Prefix with a single quote to block formula evaluation
+      }
+      
+      // Escape double quotes inside the string by doubling them
+      if (str.includes('"')) {
+        str = str.replace(/"/g, '""');
+      }
+      
+      // Wrap cell in double quotes if it contains separator, quote, or newline
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        str = `"${str}"`;
+      }
+      
+      return str;
+    };
 
-    const encodedUri = encodeURI(csvContent);
+    // Format all cells and build rows
+    const csvContent = reportData
+      .map(row => row.map(cell => sanitizeCSVCell(cell)).join(','))
+      .join('\n');
+
+    // High performance Blob generation with UTF-8 Byte Order Mark (BOM) for Excel compatibility
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
+    
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `intel_report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Free up browser memory
   };
   const analyticsData = [
     { label: 'Growth Vector', value: stats?.newUsersLast7Days || 0, icon: TrendingUp, color: 'blue' },

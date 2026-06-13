@@ -4,12 +4,13 @@ import Application from '../models/Application.js';
 import SavedJob from '../models/SavedJob.js';
 import { buildPagination } from '../utils/pagination.js';
 import { z } from 'zod';
+import { getCachedData, setCachedData, invalidateCache, getOrFetchSWR } from '../utils/cache.js';
 
 // ── Validation Schemas ─────────────────────────────────────────────
 const jobSchema = z.object({
     title: z.string().min(3).max(100),
     description: z.string().min(10),
-    requirements: z.union([z.string(), z.array(z.string())]),
+    requirements: z.union([z.string(), z.array(z.string())]).optional().default(''),
     skills: z.array(z.string()).optional(),
     salaryRange: z.union([
         z.string(),
@@ -23,7 +24,8 @@ const jobSchema = z.object({
     type: z.string().optional(),
     jobType: z.string().optional(), // Match frontend field name
     category: z.string().optional(),
-    experienceLevel: z.string().optional()
+    experienceLevel: z.string().optional(),
+    status: z.enum(["OPEN", "CLOSED", "DRAFT"]).optional()
 });
 
 const updateJobSchema = jobSchema.partial();
@@ -33,59 +35,69 @@ const updateJobSchema = jobSchema.partial();
 // @access  Public
 export const getJobs = async (req, res) => {
     try {
-        const { query, pagination } = buildPagination(req.query);
+        const cacheKey = `jobs:list:${JSON.stringify(req.query)}`;
+        const responseData = await getOrFetchSWR(cacheKey, async () => {
+            const { query, pagination } = buildPagination(req.query);
 
-        // Build smart filter from query params
-        if (req.query.search) {
-            query.filter.title = { $regex: req.query.search, $options: 'i' };
-        }
-        if (req.query.location) {
-            query.filter.location = { $regex: req.query.location, $options: 'i' };
-        }
-        if (req.query.type) {
-            query.filter.type = req.query.type;
-        }
-        if (req.query.status) {
-            query.filter.status = req.query.status;
-        } else {
-            query.filter.status = 'OPEN';  // default: only open jobs
-        }
+            // Build smart filter from query params
+            if (req.query.search) {
+                query.filter.title = { $regex: req.query.search, $options: 'i' };
+            }
+            if (req.query.location) {
+                query.filter.location = { $regex: req.query.location, $options: 'i' };
+            }
+            if (req.query.type) {
+                query.filter.type = req.query.type;
+            }
+            if (req.query.status) {
+                query.filter.status = req.query.status;
+            } else {
+                query.filter.status = 'OPEN';  // default: only open jobs
+            }
 
-        const totalDocs = await Job.countDocuments(query.filter);
-        let jobs = await Job.find(query.filter)
-            .populate('recruiterId', 'name email')
-            .sort(query.sort)
-            .skip(query.skip)
-            .limit(query.limit)
-            .lean();
+            const totalDocs = await Job.countDocuments(query.filter);
+            let jobs = await Job.find(query.filter)
+                .populate('recruiterId', 'name email')
+                .sort(query.sort)
+                .skip(query.skip)
+                .limit(query.limit)
+                .lean();
 
-        // Attach recruiter company info in a single batch query
-        const recruiterUserIds = jobs.map(job => job.recruiterId?._id).filter(Boolean);
-        if (recruiterUserIds.length > 0) {
-            const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } }).lean();
-            const recruiterMap = recruiters.reduce((acc, rec) => {
-                acc[rec.userId.toString()] = rec;
-                return acc;
-            }, {});
+            // Attach recruiter company info in a single batch query
+            const recruiterUserIds = jobs.map(job => job.recruiterId?._id).filter(Boolean);
+            if (recruiterUserIds.length > 0) {
+                const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } }).lean();
+                const recruiterMap = recruiters.reduce((acc, rec) => {
+                    acc[rec.userId.toString()] = rec;
+                    return acc;
+                }, {});
 
-            jobs = jobs.map(job => {
-                if (job.recruiterId) {
-                    const info = recruiterMap[job.recruiterId._id.toString()];
-                    if (info) {
-                        job.recruiterId.companyName = info.companyName;
-                        job.recruiterId.companyLogo = info.companyLogo?.replace('http://', 'https://');
+                jobs = jobs.map(job => {
+                    if (job.recruiterId) {
+                        const info = recruiterMap[job.recruiterId._id.toString()];
+                        if (info) {
+                            if (info.privacy?.companyVisibility === false) {
+                                job.recruiterId.companyName = 'Confidential';
+                                job.recruiterId.companyLogo = '';
+                            } else {
+                                job.recruiterId.companyName = info.companyName;
+                                job.recruiterId.companyLogo = info.companyLogo?.replace('http://', 'https://');
+                            }
+                        }
                     }
-                }
-                return job;
-            });
-        }
+                    return job;
+                });
+            }
 
-        res.status(200).json({
-            success: true,
-            count: jobs.length,
-            ...pagination(totalDocs),
-            data: jobs,
-        });
+            return {
+                success: true,
+                count: jobs.length,
+                ...pagination(totalDocs),
+                data: jobs,
+            };
+        }, 120, 30); // Hard TTL 120s, Soft TTL 30s for ultra-fast candidate feeds
+
+        res.status(200).json(responseData);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -96,22 +108,50 @@ export const getJobs = async (req, res) => {
 // @access  Public
 export const getJob = async (req, res) => {
     try {
-        let job = await Job.findById(req.params.id).populate('recruiterId', 'name email').lean();
+        const cacheKey = `jobs:detail:${req.params.id}`;
+        const job = await getOrFetchSWR(cacheKey, async () => {
+            let fetchedJob = await Job.findById(req.params.id).populate('recruiterId', 'name email').lean();
 
-        if (!job) {
-            return res.status(404).json({ success: false, message: 'Job not found' });
-        }
-
-        if (job.recruiterId) {
-            const recruiterInfo = await Recruiter.findOne({ userId: job.recruiterId._id });
-            if (recruiterInfo) {
-                job.recruiterId.companyName = recruiterInfo.companyName;
-                job.recruiterId.companyLogo = recruiterInfo.companyLogo;
+            if (!fetchedJob) {
+                throw new Error('Job not found');
             }
-        }
+
+            if (fetchedJob.recruiterId) {
+                const recruiterInfo = await Recruiter.findOne({ userId: fetchedJob.recruiterId._id });
+                if (recruiterInfo) {
+                    if (recruiterInfo.privacy?.companyVisibility === false) {
+                        fetchedJob.recruiterId.companyName = 'Confidential';
+                        fetchedJob.recruiterId.companyLogo = '';
+                        fetchedJob.recruiterId.companyPhotos = [];
+                        fetchedJob.recruiterId.designation = '';
+                        fetchedJob.recruiterId.website = '';
+                        fetchedJob.recruiterId.companyDescription = '';
+                    } else {
+                        fetchedJob.recruiterId.companyName = recruiterInfo.companyName;
+                        fetchedJob.recruiterId.companyLogo = recruiterInfo.companyLogo;
+                        fetchedJob.recruiterId.companyPhotos = recruiterInfo.companyPhotos || [];
+                        fetchedJob.recruiterId.designation = recruiterInfo.designation;
+                        fetchedJob.recruiterId.website = recruiterInfo.website;
+                        fetchedJob.recruiterId.companyDescription = recruiterInfo.description;
+                    }
+                }
+            }
+
+            // Dynamically calculate applicants count to guarantee sync and heal any data corruption
+            const count = await Application.countDocuments({ jobId: fetchedJob._id });
+            if (fetchedJob.applicantsCount !== count) {
+                await Job.updateOne({ _id: fetchedJob._id }, { applicantsCount: count });
+                fetchedJob.applicantsCount = count;
+            }
+
+            return fetchedJob;
+        }, 600, 120); // Hard TTL 10 minutes, Soft TTL 2 minutes
 
         res.status(200).json({ success: true, data: job });
     } catch (error) {
+        if (error.message === 'Job not found') {
+            return res.status(404).json({ success: false, message: 'Job not found' });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -143,21 +183,42 @@ export const createJob = async (req, res) => {
         let job = await jobDoc.populate('recruiterId', 'name email');
         job = job.toObject();
 
-        const recruiterInfo = await Recruiter.findOne({ userId: req.user._id });
-        if (recruiterInfo) {
-            job.recruiterId.companyName = recruiterInfo.companyName;
-            job.recruiterId.companyLogo = recruiterInfo.companyLogo;
+        // Guard: only set company info if recruiterId was successfully populated
+        if (job.recruiterId) {
+            const recruiterInfo = await Recruiter.findOne({ userId: req.user._id });
+            if (recruiterInfo) {
+                job.recruiterId.companyName = recruiterInfo.companyName;
+                job.recruiterId.companyLogo = recruiterInfo.companyLogo;
+            }
         }
+
+        // Invalidate cached job lists as a new job has been successfully created
+        await invalidateCache('jobs:list:*');
 
         console.log(`✅ [JOB] Created: "${job.title}" by Recruiter: ${req.user.email} (ID: ${req.user._id})`);
         res.status(201).json({ success: true, data: job });
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
+            const detail = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            console.error('❌ [JOB] Zod validation failed:', detail);
+            return res.status(400).json({ success: false, message: `Validation failed: ${detail}`, errors: error.errors });
         }
-        res.status(400).json({ success: false, message: error.message });
+        // Mongoose ValidationError — .errors is an object, not an array
+        if (error.name === 'ValidationError') {
+            const detail = Object.values(error.errors).map(e => e.message).join(', ');
+            console.error('❌ [JOB] Mongoose validation failed:', detail);
+            return res.status(400).json({ success: false, message: `Validation failed: ${detail}` });
+        }
+        // Full diagnostic dump for unexpected errors
+        console.error('❌ [JOB] Create error —', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+        });
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 };
+
 
 // @desc    Update job
 // @route   PUT /api/v1/jobs/:id
@@ -180,6 +241,10 @@ export const updateJob = async (req, res) => {
             new: true,
             runValidators: true
         });
+
+        // Invalidate cached instances
+        await invalidateCache(`jobs:detail:${req.params.id}`);
+        await invalidateCache('jobs:list:*');
 
         res.status(200).json({ success: true, data: job });
     } catch (error) {
@@ -211,6 +276,10 @@ export const deleteJob = async (req, res) => {
         await SavedJob.deleteMany({ jobId: req.params.id });
         
         await job.deleteOne();
+
+        // Invalidate cached instances
+        await invalidateCache(`jobs:detail:${req.params.id}`);
+        await invalidateCache('jobs:list:*');
 
         res.status(200).json({ success: true, data: {}, message: 'Job and related applications purged' });
     } catch (error) {

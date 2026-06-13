@@ -46,6 +46,11 @@ const ModernButton = ({
         </View>
     );
 
+    const getBgColor = () => {
+        if (isSuccess) return '#10B981';
+        return COLORS.primary;
+    };
+
     if (isPrimary || isSuccess) {
         return (
             <TouchableOpacity 
@@ -55,6 +60,7 @@ const ModernButton = ({
                 style={[
                     styles.container, 
                     SHADOWS.medium, 
+                    { backgroundColor: getBgColor() },
                     style,
                     (disabled || loading) && { opacity: 0.6, shadowOpacity: 0 }
                 ]}

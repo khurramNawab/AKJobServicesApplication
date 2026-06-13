@@ -8,50 +8,79 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    Dimensions
+    Dimensions,
+    Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import api from '../services/api';
-import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
-import { useAuthStore } from '../store/useAuthStore';
+import { LIGHT_COLORS, DARK_COLORS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 
 // Premium Components
-import ScreenWrapper from '../components/ScreenWrapper';
 import PremiumButton from '../components/PremiumButton';
 import PremiumInput from '../components/PremiumInput';
-import EliteGradient from '../components/EliteGradient';
+import ScreenWrapper from '../components/ScreenWrapper';
 
 const { width } = Dimensions.get('window');
 
 const RegisterScreen = ({ navigation }) => {
     const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('CANDIDATE'); 
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [step, setStep] = useState(1); // 1: Registration info, 2: OTP verification
-    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState(1); // 1: Registration form, 2: Check Email screen
 
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
+    const validateEmail = (input) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(input.trim());
+    };
+
     const handleRegister = async () => {
-        if (!name || !phoneNumber || !password) {
+        if (loading) return;
+
+        const trimmedName = name.trim();
+        const trimmedEmail = email.trim().toLowerCase();
+        
+        if (!trimmedName || !trimmedEmail || !password) {
             Alert.alert('Missing Info', 'Please fill in all fields to create your account.');
+            return;
+        }
+
+        if (trimmedName.length < 2) {
+            Alert.alert('Invalid Name', 'Name must be at least 2 characters.');
+            return;
+        }
+
+        if (!validateEmail(trimmedEmail)) {
+            Alert.alert('Invalid Email', 'Please enter a valid email address.');
+            return;
+        }
+
+        if (password.length < 6) {
+            Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
             return;
         }
 
         try {
             setLoading(true);
-            const cleanPhone = phoneNumber.replace(/[()\-\s]/g, '');
-            const res = await api.post('/auth/register', { name, phoneNumber: cleanPhone, password, role });
+            const res = await api.post('/auth/register', { 
+                name: trimmedName, 
+                email: trimmedEmail, 
+                password, 
+                role 
+            });
 
             if (res.data.success) {
                 setStep(2);
-                Alert.alert('Verify Phone', 'A verification code has been sent to your phone number.');
+                setName('');
+                setPassword('');
+                setRole('CANDIDATE');
             }
         } catch (error) {
             console.error('Register Error:', error.response?.data?.message || error.message);
@@ -61,32 +90,24 @@ const RegisterScreen = ({ navigation }) => {
         }
     };
 
-    const handleVerify = async () => {
-        if (!otp || otp.length < 6) {
-            Alert.alert('Invalid OTP', 'Please enter the 6-digit verification code.');
-            return;
-        }
-
+    const handleResendVerification = async () => {
+        if (loading) return;
+        const trimmedEmail = email.trim().toLowerCase();
         try {
             setLoading(true);
-            const res = await api.post('/auth/forgot-password/verify', { phoneNumber, otp });
-
+            const res = await api.post('/auth/resend-verification', { email: trimmedEmail });
             if (res.data.success) {
-                Alert.alert('Verified!', 'Your account is now verified. Please log in to your professional workspace.');
-                navigation.navigate('Login');
+                Alert.alert('Email Sent', 'A fresh verification link has been sent to your email.');
             }
         } catch (error) {
-            console.error('Verify Error:', error.response?.data?.message || error.message);
-            Alert.alert('Verification Failed', 'Invalid or expired OTP.');
+            Alert.alert('Resend Failed', error.response?.data?.message || 'Failed to resend email. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <ScreenWrapper top={false} bottom={false}>
-            <EliteGradient style={StyleSheet.absoluteFill} />
-            
+        <ScreenWrapper top={true} bottom={true} backgroundColor={isDarkMode ? COLORS.background : '#FFFFFF'}>
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -95,113 +116,130 @@ const RegisterScreen = ({ navigation }) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
+                    {/* Header Section */}
                     <View style={styles.header}>
-                        <Animated.View entering={FadeInDown.duration(800)} style={styles.logoBadge}>
-                            <Ionicons name="person-add" size={40} color={COLORS.primary} />
+                        <Animated.View entering={FadeInDown.duration(600).springify()}>
+                            <Image 
+                                source={require('../../assets/images/AK_Job_services_logo.png')} 
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
                         </Animated.View>
-                        <Animated.Text entering={FadeInDown.delay(200)} style={styles.title}>Join Job Portal</Animated.Text>
-                        <Animated.Text entering={FadeInDown.delay(400)} style={styles.subtitle}>Create your professional identity today.</Animated.Text>
+                        <Animated.Text entering={FadeInDown.delay(100).duration(600)} style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#111827' }]}>
+                            Create Account
+                        </Animated.Text>
+                        <Animated.Text entering={FadeInDown.delay(200).duration(600)} style={[styles.subtitle, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+                            Join Job Portal and discover new opportunities today.
+                        </Animated.Text>
                     </View>
 
-                    <Animated.View 
-                        layout={Layout.springify()}
-                        entering={FadeInUp.delay(600)} 
-                        style={[styles.formCard, { backgroundColor: COLORS.surface }]}
-                    >
+                    {/* Form Section */}
+                    <View style={styles.formContainer}>
                         {step === 1 ? (
                             <>
-                                <View style={[styles.rolePicker, { backgroundColor: COLORS.backgroundSecondary }]}>
+                                <Animated.View entering={FadeInUp.delay(300).duration(600)} style={[styles.rolePicker, { backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)' }]}>
                                     <TouchableOpacity
                                         style={[styles.roleTab, role === 'CANDIDATE' && { backgroundColor: COLORS.primary }]}
                                         onPress={() => setRole('CANDIDATE')}
                                     >
-                                        <Text style={[styles.roleTxt, { color: role === 'CANDIDATE' ? '#FFF' : COLORS.textSecondary }]}>Candidate</Text>
+                                        <Text style={[styles.roleTxt, { color: role === 'CANDIDATE' ? '#FFF' : (isDarkMode ? '#FFF' : COLORS.textSecondary) }]}>Candidate</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.roleTab, role === 'RECRUITER' && { backgroundColor: COLORS.primary }]}
                                         onPress={() => setRole('RECRUITER')}
                                     >
-                                        <Text style={[styles.roleTxt, { color: role === 'RECRUITER' ? '#FFF' : COLORS.textSecondary }]}>Recruiter</Text>
+                                        <Text style={[styles.roleTxt, { color: role === 'RECRUITER' ? '#FFF' : (isDarkMode ? '#FFF' : COLORS.textSecondary) }]}>Recruiter</Text>
                                     </TouchableOpacity>
-                                </View>
+                                </Animated.View>
 
-                                <PremiumInput
-                                    label="Full Name"
-                                    placeholder="Enter your name"
-                                    value={name}
-                                    onChangeText={setName}
-                                    iconLeft={<Ionicons name="person-outline" size={20} color={COLORS.textTertiary} />}
-                                />
+                                <Animated.View entering={FadeInUp.delay(400).duration(600)}>
+                                    <PremiumInput
+                                        label="Full Name"
+                                        placeholder="Enter your name"
+                                        value={name}
+                                        onChangeText={setName}
+                                        iconLeft={<Ionicons name="person-outline" size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />}
+                                    />
+                                </Animated.View>
 
-                                <PremiumInput
-                                    label="Phone Number"
-                                    placeholder="e.g. 9876543210"
-                                    value={phoneNumber}
-                                    onChangeText={(val) => setPhoneNumber(val.replace(/[()\-\s]/g, ''))}
-                                    keyboardType="phone-pad"
-                                    iconLeft={<Ionicons name="call-outline" size={20} color={COLORS.textTertiary} />}
-                                />
+                                <Animated.View entering={FadeInUp.delay(500).duration(600)}>
+                                    <PremiumInput
+                                        label="Email"
+                                        placeholder="name@company.com"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        iconLeft={<Ionicons name="mail-outline" size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />}
+                                    />
+                                </Animated.View>
 
-                                <PremiumInput
-                                    label="Password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry={!showPassword}
-                                    iconLeft={<Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} />}
-                                    iconRight={
-                                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                            <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.textTertiary} />
-                                        </TouchableOpacity>
-                                    }
-                                />
+                                <Animated.View entering={FadeInUp.delay(600).duration(600)}>
+                                    <PremiumInput
+                                        label="Password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        secureTextEntry={!showPassword}
+                                        iconLeft={<Ionicons name="lock-closed-outline" size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />}
+                                        iconRight={
+                                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />
+                                            </TouchableOpacity>
+                                        }
+                                    />
+                                </Animated.View>
 
-                                <PremiumButton
-                                    title="Create Account"
-                                    onPress={handleRegister}
-                                    loading={loading}
-                                    style={styles.registerBtn}
-                                />
+                                <Animated.View entering={FadeInUp.delay(700).duration(600)}>
+                                    <PremiumButton
+                                        title="Sign Up"
+                                        onPress={handleRegister}
+                                        loading={loading}
+                                        style={styles.registerBtn}
+                                    />
+                                </Animated.View>
                             </>
                         ) : (
-                            <>
+                            <Animated.View entering={ZoomIn.duration(400)}>
                                 <View style={styles.otpHeader}>
-                                    <Text style={[styles.otpTitle, { color: COLORS.textPrimary }]}>Verify Number</Text>
-                                    <Text style={[styles.otpSub, { color: COLORS.textSecondary }]}>Enter the 6-digit code sent to {phoneNumber}</Text>
+                                    <Ionicons name="mail-unread-outline" size={60} color={COLORS.primary} style={{ marginBottom: 16 }} />
+                                    <Text style={[styles.otpTitle, { color: isDarkMode ? '#FFF' : '#111827' }]}>Verify Your Email</Text>
+                                    <Text style={[styles.otpSub, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+                                        We sent a secure verification link to{"\n"}
+                                        <Text style={{ fontWeight: '800', color: isDarkMode ? '#FFF' : '#111827' }}>{email.trim().toLowerCase()}</Text>.{"\n"}
+                                        Please click the link in your email to verify your account, and then log in.
+                                    </Text>
                                 </View>
 
-                                <PremiumInput
-                                    label="OTP Code"
-                                    placeholder="0 0 0 0 0 0"
-                                    value={otp}
-                                    onChangeText={setOtp}
-                                    keyboardType="number-pad"
-                                    maxLength={6}
-                                    iconLeft={<Ionicons name="shield-checkmark-outline" size={20} color={COLORS.textTertiary} />}
-                                />
-
                                 <PremiumButton
-                                    title="Verify & Continue"
-                                    onPress={handleVerify}
-                                    loading={loading}
+                                    title="Go to Login"
+                                    onPress={() => {
+                                        setEmail('');
+                                        setStep(1);
+                                        navigation.navigate('Login');
+                                    }}
                                     style={styles.registerBtn}
                                 />
                                 
                                 <TouchableOpacity 
                                     style={styles.backToReg} 
-                                    onPress={() => setStep(1)}
+                                    onPress={handleResendVerification}
+                                    disabled={loading}
                                 >
-                                    <Text style={[styles.backTxt, { color: COLORS.primary }]}>Back to Registration</Text>
+                                    <Text style={[styles.backTxt, { color: COLORS.primary }]}>
+                                        {loading ? 'Sending...' : 'Resend Verification Email'}
+                                    </Text>
                                 </TouchableOpacity>
-                            </>
+                            </Animated.View>
                         )}
+                    </View>
 
-                        <View style={styles.footer}>
-                            <Text style={[styles.footerTxt, { color: COLORS.textSecondary }]}>Already have an account? </Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                                <Text style={[styles.linkTxt, { color: COLORS.primary }]}>Log In</Text>
-                            </TouchableOpacity>
-                        </View>
+                    <Animated.View entering={FadeInUp.delay(800).duration(600)} style={styles.footer}>
+                        <Text style={[styles.footerTxt, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={[styles.linkTxt, { color: COLORS.primary }]}>Log In</Text>
+                        </TouchableOpacity>
                     </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -212,85 +250,77 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
-        justifyContent: 'center',
-        paddingHorizontal: SIZES.lg,
+        paddingHorizontal: SIZES.xl,
         paddingTop: 60,
         paddingBottom: 40,
     },
     header: {
+        marginBottom: 40,
         alignItems: 'center',
-        marginBottom: 32,
     },
-    logoBadge: {
-        width: 80,
+    logo: {
+        width: 140,
         height: 80,
-        borderRadius: 24,
-        backgroundColor: '#FFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        ...SHADOWS.medium,
+        marginBottom: 24,
     },
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#FFF',
         letterSpacing: -1,
+        marginBottom: 10,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
-        color: 'rgba(255,255,255,0.8)',
+        fontWeight: '400',
+        lineHeight: 24,
         textAlign: 'center',
-        marginTop: 8,
-        fontWeight: '500',
     },
-    formCard: {
-        borderRadius: 32,
-        padding: SIZES.xl,
-        ...SHADOWS.glass,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+    formContainer: {
+        flex: 1,
     },
     rolePicker: {
         flexDirection: 'row',
-        borderRadius: 16,
+        borderRadius: 12,
         padding: 4,
         marginBottom: 24,
     },
     roleTab: {
         flex: 1,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 10,
         alignItems: 'center',
     },
     roleTxt: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '600',
     },
     registerBtn: {
-        height: 60,
+        height: 56,
+        borderRadius: 12,
         marginTop: 10,
     },
     otpHeader: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 32,
     },
     otpTitle: {
         fontSize: 22,
         fontWeight: '800',
     },
     otpSub: {
-        fontSize: 14,
+        fontSize: 15,
         textAlign: 'center',
-        marginTop: 4,
-        fontWeight: '500',
+        marginTop: 8,
+        lineHeight: 24,
     },
     backToReg: {
         alignSelf: 'center',
-        marginTop: 16,
+        marginTop: 20,
     },
     backTxt: {
-        fontWeight: '700',
+        fontWeight: '600',
+        fontSize: 15,
     },
     footer: {
         flexDirection: 'row',
@@ -299,11 +329,11 @@ const styles = StyleSheet.create({
     },
     footerTxt: {
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: '400',
     },
     linkTxt: {
         fontSize: 15,
-        fontWeight: '800',
+        fontWeight: '700',
     }
 });
 

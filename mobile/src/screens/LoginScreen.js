@@ -9,25 +9,25 @@ import {
     Platform,
     ScrollView,
     TouchableOpacity,
-    Dimensions
+    Dimensions,
+    Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import api from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
+import { LIGHT_COLORS, DARK_COLORS, SIZES } from '../constants/theme';
 
 // Premium Components
-import ScreenWrapper from '../components/ScreenWrapper';
 import PremiumButton from '../components/PremiumButton';
 import PremiumInput from '../components/PremiumInput';
-import EliteGradient from '../components/EliteGradient';
+import ScreenWrapper from '../components/ScreenWrapper';
 
-const { height } = Dimensions.get('window');
+const { height, width } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -36,37 +36,72 @@ const LoginScreen = ({ navigation }) => {
     const { isDarkMode } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
+    const validateEmail = (input) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(input.trim());
+    };
+
     const handleLogin = async () => {
-        if (!phoneNumber || !password) {
-            Alert.alert('Incomplete Info', 'Please enter both your phone number and password to log in.');
+        if (loading) return; 
+
+        const trimmedEmail = email.trim().toLowerCase();
+        if (!trimmedEmail || !password) {
+            Alert.alert('Incomplete Info', 'Please enter both your email address and password to log in.');
+            return;
+        }
+
+        if (!validateEmail(trimmedEmail)) {
+            Alert.alert('Invalid Email', 'Please enter a valid email address.');
             return;
         }
 
         try {
             setLoading(true);
-            const res = await api.post('/auth/login', { phoneNumber, password });
+            const res = await api.post('/auth/login', { email: trimmedEmail, password });
 
             if (res.data.success) {
                 const user = {
-                    _id: res.data._id,
-                    name: res.data.name,
-                    phoneNumber: res.data.phoneNumber,
-                    role: res.data.role
+                    _id: res.data.user?._id || res.data._id,
+                    name: res.data.user?.name || res.data.name,
+                    email: res.data.user?.email || res.data.email,
+                    role: res.data.user?.role || res.data.role
                 };
-                await setCredentials(user, res.data.token);
+                const token = res.data.accessToken || res.data.token;
+                const refreshToken = res.data.refreshToken;
+                await setCredentials(user, token, refreshToken);
             }
         } catch (error) {
-            console.error('Login Error:', error.response?.data?.message || error.message);
-            Alert.alert('Login Failed', error.response?.data?.message || 'Check your internet connection and try again.');
+            const errorMsg = error.response?.data?.message || 'Check your internet connection and try again.';
+            
+            if (error.response?.status === 403 && error.response?.data?.needsVerification) {
+                Alert.alert(
+                    'Verification Required',
+                    'Your email address has not been verified yet. Would you like us to resend the verification link?',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                            text: 'Resend Email', 
+                            onPress: async () => {
+                                try {
+                                    await api.post('/auth/resend-verification', { email: trimmedEmail });
+                                    Alert.alert('Email Sent', 'Verification link has been sent to your email.');
+                                } catch (resendError) {
+                                    Alert.alert('Error', resendError.response?.data?.message || 'Failed to resend. Please try again later.');
+                                }
+                            } 
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert('Login Failed', errorMsg);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <ScreenWrapper top={false} bottom={false}>
-            <EliteGradient style={StyleSheet.absoluteFill} />
-            
+        <ScreenWrapper top={true} bottom={true} backgroundColor={isDarkMode ? COLORS.background : '#FFFFFF'}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -75,60 +110,78 @@ const LoginScreen = ({ navigation }) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
+                    {/* Header Section */}
                     <View style={styles.header}>
-                        <Animated.View entering={FadeInDown.duration(800)} style={styles.logoContainer}>
-                            <View style={[styles.logoIcon, { backgroundColor: '#FFF' }]}>
-                                <Ionicons name="briefcase" size={40} color={COLORS.primary} />
-                            </View>
+                        <Animated.View entering={FadeInDown.duration(600).springify()}>
+                            <Image 
+                                source={require('../../assets/images/AK_Job_services_logo.png')} 
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
                         </Animated.View>
-                        <Animated.Text entering={FadeInDown.delay(200)} style={styles.welcomeTxt}>Welcome Back</Animated.Text>
-                        <Animated.Text entering={FadeInDown.delay(400)} style={styles.subTxt}>Log in to access your professional opportunities.</Animated.Text>
+                        <Animated.Text entering={FadeInDown.delay(100).duration(600)} style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#111827' }]}>
+                            Welcome back
+                        </Animated.Text>
+                        <Animated.Text entering={FadeInDown.delay(200).duration(600)} style={[styles.subtitle, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+                            Log in to access your professional opportunities.
+                        </Animated.Text>
                     </View>
 
-                    <Animated.View entering={FadeInUp.delay(600)} style={[styles.formCard, { backgroundColor: COLORS.surface }]}>
-                        <PremiumInput
-                            label="Phone Number"
-                            placeholder="e.g. 9876543210"
-                            value={phoneNumber}
-                            onChangeText={setPhoneNumber}
-                            keyboardType="phone-pad"
-                            iconLeft={<Ionicons name="call-outline" size={20} color={COLORS.textTertiary} />}
-                        />
+                    {/* Form Section */}
+                    <View style={styles.formContainer}>
+                        <Animated.View entering={FadeInUp.delay(300).duration(600)}>
+                            <PremiumInput
+                                label="Email"
+                                placeholder="name@company.com"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                iconLeft={<Ionicons name="mail-outline" size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />}
+                            />
+                        </Animated.View>
 
-                        <PremiumInput
-                            label="Password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={!showPassword}
-                            iconLeft={<Ionicons name="lock-closed-outline" size={20} color={COLORS.textTertiary} />}
-                            iconRight={
-                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.textTertiary} />
-                                </TouchableOpacity>
-                            }
-                        />
+                        <Animated.View entering={FadeInUp.delay(400).duration(600)}>
+                            <PremiumInput
+                                label="Password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                                iconLeft={<Ionicons name="lock-closed-outline" size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />}
+                                iconRight={
+                                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                        <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />
+                                    </TouchableOpacity>
+                                }
+                            />
+                        </Animated.View>
 
-                        <TouchableOpacity 
-                            style={styles.forgotBtn}
-                            onPress={() => navigation.navigate('ForgotPassword')}
-                        >
-                            <Text style={[styles.forgotTxt, { color: COLORS.primary }]}>Forgot Password?</Text>
-                        </TouchableOpacity>
-
-                        <PremiumButton
-                            title="Log In"
-                            onPress={handleLogin}
-                            loading={loading}
-                            style={styles.loginBtn}
-                        />
-
-                        <View style={styles.footer}>
-                            <Text style={[styles.footerTxt, { color: COLORS.textSecondary }]}>Don't have an account? </Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                                <Text style={[styles.linkTxt, { color: COLORS.primary }]}>Register</Text>
+                        <Animated.View entering={FadeInUp.delay(500).duration(600)}>
+                            <TouchableOpacity 
+                                style={styles.forgotBtn}
+                                onPress={() => navigation.navigate('ForgotPassword')}
+                            >
+                                <Text style={[styles.forgotTxt, { color: COLORS.primary }]}>Forgot password?</Text>
                             </TouchableOpacity>
-                        </View>
+                        </Animated.View>
+
+                        <Animated.View entering={FadeInUp.delay(600).duration(600)}>
+                            <PremiumButton
+                                title="Log In"
+                                onPress={handleLogin}
+                                loading={loading}
+                                style={styles.loginBtn}
+                            />
+                        </Animated.View>
+                    </View>
+
+                    <Animated.View entering={FadeInUp.delay(700).duration(600)} style={styles.footer}>
+                        <Text style={[styles.footerTxt, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>Don't have an account? </Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                            <Text style={[styles.linkTxt, { color: COLORS.primary }]}>Sign up</Text>
+                        </TouchableOpacity>
                     </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -139,70 +192,60 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
-        justifyContent: 'center',
-        paddingHorizontal: SIZES.lg,
-        paddingTop: 80,
+        paddingHorizontal: SIZES.xl,
+        paddingTop: 60,
         paddingBottom: 40,
     },
     header: {
-        alignItems: 'center',
         marginBottom: 40,
+        alignItems: 'center',
     },
-    logoContainer: {
+    logo: {
+        width: 140,
+        height: 80,
         marginBottom: 24,
     },
-    logoIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.medium,
-    },
-    welcomeTxt: {
+    title: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#FFF',
         letterSpacing: -1,
-    },
-    subTxt: {
-        fontSize: 16,
-        color: 'rgba(255,255,255,0.8)',
+        marginBottom: 10,
         textAlign: 'center',
-        marginTop: 8,
-        fontWeight: '500',
-        paddingHorizontal: 20,
     },
-    formCard: {
-        borderRadius: 32,
-        padding: SIZES.xl,
-        ...SHADOWS.glass,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+    subtitle: {
+        fontSize: 16,
+        fontWeight: '400',
+        lineHeight: 24,
+        textAlign: 'center',
+    },
+    formContainer: {
+        flex: 1,
     },
     forgotBtn: {
         alignSelf: 'flex-end',
-        marginBottom: 24,
+        marginBottom: 32,
+        marginTop: -4,
     },
     forgotTxt: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '600',
     },
     loginBtn: {
-        height: 60,
+        height: 56,
+        borderRadius: 12, // slightly less rounded for enterprise feel
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 24,
+        marginTop: 32,
     },
     footerTxt: {
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: '400',
     },
     linkTxt: {
         fontSize: 15,
-        fontWeight: '800',
+        fontWeight: '700',
     }
 });
 

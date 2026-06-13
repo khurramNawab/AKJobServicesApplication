@@ -163,30 +163,6 @@ const PrivacySecurityScreen = ({ navigation }) => {
                         isLast 
                     />
                 </Section>
-
-                <Section title="Security">
-                    <SettingItem 
-                        icon="lock-closed-outline" 
-                        title="Two-Factor Authentication" 
-                        value={false} 
-                        onToggle={() => Alert.alert("Coming Soon", "2FA will be available in the next security update.")}
-                    />
-                    <SettingItem 
-                        icon="finger-print-outline" 
-                        title="Biometric Login" 
-                        value={true} 
-                        onToggle={() => {}} 
-                        isLast 
-                    />
-                </Section>
-
-                <TouchableOpacity 
-                    style={[styles.actionCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, SHADOWS.soft]}
-                    onPress={() => Alert.alert("Delete Account", "This action is permanent and will remove all your data. Please contact support to proceed.")}
-                >
-                    <Ionicons name="trash-outline" size={22} color={COLORS.danger} />
-                    <Text style={[styles.actionText, { color: COLORS.danger }]}>Delete Account</Text>
-                </TouchableOpacity>
                 
                 <View style={{ height: 40 }} />
             </ScrollView>

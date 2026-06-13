@@ -54,8 +54,11 @@ const HomeScreen = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
     const [candidate, setCandidate] = useState(null);
-
+    const [recruiter, setRecruiter] = useState(null);
     const [hasUnreadNotifs, setHasUnreadNotifs] = useState(false);
+
+    const avatarUri = user?.role === 'RECRUITER' ? recruiter?.companyLogo : candidate?.profilePhoto;
+    const finalAvatarUri = avatarUri ? avatarUri.replace('http://', 'https://') : null;
 
     const filters = ['All', 'Full-time', 'Part-time', 'Remote', 'Internship'];
 
@@ -123,7 +126,7 @@ const HomeScreen = ({ navigation }) => {
             } else if (isRecruiter && results[2]) {
                 const recruiterResult = results[2];
                 if (recruiterResult.status === 'fulfilled' && recruiterResult.value.data.success) {
-                    // Recruiter data available if needed
+                    setRecruiter(recruiterResult.value.data.data);
                 } else if (recruiterResult.status === 'rejected') {
                     console.error('Recruiter Profile Fetch Error:', recruiterResult.reason);
                 }
@@ -181,10 +184,43 @@ const HomeScreen = ({ navigation }) => {
         }
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(j =>
-                j.title.toLowerCase().includes(query) ||
-                j.recruiterId?.companyName?.toLowerCase().includes(query)
-            );
+            result = result.filter(j => {
+                const titleLower = j.title.toLowerCase();
+                const companyLower = j.recruiterId?.companyName?.toLowerCase() || '';
+                const categoryLower = j.category?.toLowerCase() || '';
+                const skillsLower = (j.skills || []).map(s => s.toLowerCase());
+
+                if (query === 'tech' || query === 'technology') {
+                    // Tech category interest should match traditional tech terms, software, developer, dev, programming
+                    return titleLower.includes('tech') || 
+                           titleLower.includes('developer') || 
+                           titleLower.includes('dev') ||
+                           titleLower.includes('software') ||
+                           titleLower.includes('programming') ||
+                           companyLower.includes('tech') ||
+                           categoryLower.includes('tech') ||
+                           categoryLower.includes('developer') ||
+                           categoryLower.includes('dev') ||
+                           categoryLower.includes('software') ||
+                           skillsLower.some(s => s.includes('tech') || s.includes('dev') || s.includes('software'));
+                }
+
+                // If they search specifically for developer/dev, it's also a tech query
+                if (query === 'developer' || query === 'dev') {
+                    return titleLower.includes('developer') || 
+                           titleLower.includes('dev') || 
+                           titleLower.includes('tech') ||
+                           titleLower.includes('software') ||
+                           categoryLower.includes('tech') ||
+                           categoryLower.includes('developer') ||
+                           categoryLower.includes('dev') ||
+                           companyLower.includes('tech');
+                }
+
+                return titleLower.includes(query) || 
+                       companyLower.includes(query) || 
+                       categoryLower.includes(query);
+            });
         }
         return result;
     }, [jobs, searchQuery, activeFilter]);
@@ -196,9 +232,9 @@ const HomeScreen = ({ navigation }) => {
                 <View style={styles.userInfo}>
                     <View style={[styles.avatarFrame, { borderColor: COLORS.primary + '30' }]}>
                         <View style={[styles.avatar, { backgroundColor: COLORS.primary + '30' }]}>
-                            {(user?.profilePhoto || user?.companyLogo) ? (
+                            {finalAvatarUri ? (
                                 <Image
-                                    source={{ uri: (user.profilePhoto || user.companyLogo).replace('http://', 'https://') }}
+                                    source={{ uri: finalAvatarUri }}
                                     style={styles.avatarImage}
                                 />
                             ) : (
@@ -227,7 +263,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
 
             {/* Interest Prompt */}
-            {candidate && (!candidate.interests || candidate.interests.length === 0) && (
+            {user?.role === 'CANDIDATE' && candidate && (!candidate.interests || candidate.interests.length === 0) && (
                 <Animated.View entering={FadeInDown.delay(300)} style={styles.interestCard}>
                     <TouchableOpacity
                         style={[styles.interestInner, { backgroundColor: COLORS.primary }]}
@@ -260,36 +296,43 @@ const HomeScreen = ({ navigation }) => {
             </Animated.View>
 
             {/* Categories */}
-            <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Choose Interest</Text>
-                <TouchableOpacity><Text style={[styles.seeAll, { color: COLORS.primary }]}>See All</Text></TouchableOpacity>
-            </View>
-
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryScroll}
-            >
-                {CATEGORIES.map((cat, index) => (
-                    <Animated.View
-                        key={cat.id}
-                        entering={FadeInRight.delay(index * 100)}
-                    >
-                        <TouchableOpacity
-                            style={[styles.categoryCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                setSearchQuery(cat.title);
-                            }}
-                        >
-                            <View style={[styles.categoryIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                                <Ionicons name={cat.icon} size={24} color={COLORS.primary} />
-                            </View>
-                            <Text style={[styles.categoryText, { color: COLORS.textSecondary }]}>{cat.title}</Text>
+            {user?.role === 'CANDIDATE' && (
+                <>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Choose Interest</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('InterestSelection', { fromOnboarding: false })}>
+                            <Text style={[styles.seeAll, { color: COLORS.primary }]}>See All</Text>
                         </TouchableOpacity>
-                    </Animated.View>
-                ))}
-            </ScrollView>
+                    </View>
+
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.categoryScroll}
+                        style={{ marginBottom: 20 }}
+                    >
+                        {CATEGORIES.map((cat, index) => (
+                            <Animated.View
+                                key={cat.id}
+                                entering={FadeInRight.delay(index * 100)}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.categoryCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setSearchQuery(cat.title);
+                                    }}
+                                >
+                                    <View style={[styles.categoryIcon, { backgroundColor: COLORS.primary + '20' }]}>
+                                        <Ionicons name={cat.icon} size={24} color={COLORS.primary} />
+                                    </View>
+                                    <Text style={[styles.categoryText, { color: COLORS.textSecondary }]}>{cat.title}</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        ))}
+                    </ScrollView>
+                </>
+            )}
 
             {/* Featured Job (Asymmetry) */}
             {!loading && jobs.length > 0 && !searchQuery && activeFilter === 'All' && (
@@ -328,7 +371,7 @@ const HomeScreen = ({ navigation }) => {
                             </View>
                             <View style={styles.featuredPrice}>
                                 <Text style={styles.featuredPriceText}>
-                                    ${jobs[0].salaryRange?.max}/yr
+                                    ₹{jobs[0].salaryRange?.max ? Number(jobs[0].salaryRange.max).toLocaleString() : 'Competitive'}/yr
                                 </Text>
                             </View>
                         </View>
@@ -366,7 +409,7 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={[styles.sectionTitle, { color: COLORS.textPrimary }]}>Recent Opportunities</Text>
             </View>
         </View>
-    ), [user, COLORS, searchQuery, activeFilter, navigation, candidate]);
+    ), [user, COLORS, searchQuery, activeFilter, navigation, candidate, recruiter, finalAvatarUri]);
 
     const renderEmpty = useCallback(() => (
         <View style={styles.emptyContainer}>

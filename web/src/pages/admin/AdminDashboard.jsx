@@ -24,12 +24,20 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
-    const fetchAdminData = async (userPage = 1, jobPage = 1) => {
+    const fetchAdminData = async (userPage = 1, jobPage = 1, userRole = 'ALL', userSearch = '') => {
         setLoading(true);
         try {
+            let userUrl = `/admin/users?page=${userPage}&limit=10`;
+            if (userRole && userRole !== 'ALL') {
+                userUrl += `&role=${userRole}`;
+            }
+            if (userSearch) {
+                userUrl += `&search=${encodeURIComponent(userSearch)}&searchField=name`;
+            }
+
             const [statsRes, usersRes, jobsRes, activityRes] = await Promise.all([
                 api.get('/admin/stats'),
-                api.get(`/admin/users?page=${userPage}&limit=10`),
+                api.get(userUrl),
                 api.get(`/admin/jobs?page=${jobPage}&limit=10`),
                 api.get('/admin/activity')
             ]);

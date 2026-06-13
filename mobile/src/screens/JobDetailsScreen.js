@@ -10,8 +10,11 @@ import {
     Alert,
     Share,
     Dimensions,
-    Platform
+    Platform,
+    Modal,
+    Linking
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { 
@@ -33,6 +36,16 @@ import EliteGradient from '../components/EliteGradient';
 
 const { width } = Dimensions.get('window');
 
+const formatSalaryShort = (val) => {
+    if (!val) return '';
+    const num = Number(val);
+    if (isNaN(num)) return val;
+    if (num >= 10000000) return `${(num / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+    if (num >= 100000) return `${(num / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+    return num.toString();
+};
+
 const JobDetailsScreen = ({ route, navigation }) => {
     const { jobId } = route.params;
     const { user } = useAuthStore();
@@ -43,6 +56,18 @@ const JobDetailsScreen = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const [hasApplied, setHasApplied] = useState(false);
     const [applying, setApplying] = useState(false);
+    const [viewerVisible, setViewerVisible] = useState(false);
+    const [viewerImage, setViewerImage] = useState('');
+    const [modalConfig, setModalConfig] = useState({
+        visible: false,
+        title: '',
+        value: '',
+        icon: 'location',
+        iconColor: '#6366F1',
+        type: 'text',      // 'text' | 'salary'
+        salaryMin: null,
+        salaryMax: null,
+    });
 
     useEffect(() => {
         fetchJobDetails();
@@ -50,6 +75,13 @@ const JobDetailsScreen = ({ route, navigation }) => {
             checkIfApplied();
         }
     }, [jobId, user]);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchJobDetails();
+        });
+        return unsubscribe;
+    }, [navigation, jobId]);
 
     const fetchJobDetails = async () => {
         try {
@@ -122,6 +154,46 @@ const JobDetailsScreen = ({ route, navigation }) => {
         }
     };
 
+    const handleToggleStatus = async () => {
+        const newStatus = job.status === 'CLOSED' ? 'OPEN' : 'CLOSED';
+        try {
+            const res = await api.put(`/jobs/${job._id}`, { status: newStatus });
+            if (res.data.success) {
+                setJob({ ...job, status: newStatus });
+                Alert.alert('Status Updated', `Job posting is now ${newStatus.toLowerCase()}.`);
+            }
+        } catch (error) {
+            console.error('Toggle status error:', error);
+            Alert.alert('Error', 'Failed to update job status.');
+        }
+    };
+
+    const handleDeleteJob = () => {
+        Alert.alert(
+            'Delete Job Posting',
+            'Are you sure you want to permanently delete this job posting? This action cannot be undone and will delete all applicants.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                    text: 'Delete', 
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const res = await api.delete(`/jobs/${job._id}`);
+                            if (res.data.success) {
+                                Alert.alert('Deleted', 'Job posting has been successfully deleted.');
+                                navigation.goBack();
+                            }
+                        } catch (error) {
+                            console.error('Delete job error:', error);
+                            Alert.alert('Error', 'Failed to delete job posting.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     if (loading) {
         return (
             <ScreenWrapper>
@@ -145,6 +217,7 @@ const JobDetailsScreen = ({ route, navigation }) => {
     const companyName = job.recruiterId?.companyName || job.recruiterId?.name || 'Company Name';
 
     return (
+        <>
         <ScreenWrapper bottom={false}>
             {/* Transparent Header */}
             <View style={styles.header}>
@@ -178,32 +251,102 @@ const JobDetailsScreen = ({ route, navigation }) => {
                     </View>
                     
                     <Text style={[styles.title, { color: COLORS.textPrimary }]}>{job.title}</Text>
-                    <Text style={[styles.company, { color: COLORS.textSecondary }]}>{companyName}</Text>
+                    <Text style={[styles.company, { color: COLORS.textSecondary }]}>
+                        {companyName}
+                        {job.recruiterId?.designation ? ` • ${job.recruiterId.designation}` : ''}
+                    </Text>
+                    {job.recruiterId?.name && companyName !== 'Confidential' ? (
+                        <Text style={[styles.recruiterName, { color: COLORS.textTertiary, fontSize: 13, marginTop: 4, fontWeight: '600' }]}>
+                            Hiring Contact: {job.recruiterId.name}
+                        </Text>
+                    ) : null}
                 </Animated.View>
 
                 <View style={styles.quickInfoRow}>
-                    <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: COLORS.primary + '10' }]}>
+                    <TouchableOpacity 
+                        style={[styles.infoCard, { backgroundColor: COLORS.surface }]}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                            setModalConfig({
+                                visible: true,
+                                title: 'Job Location',
+                                value: job.location,
+                                icon: 'location',
+                                iconColor: COLORS.primary,
+                                type: 'text',
+                                salaryMin: null,
+                                salaryMax: null,
+                            });
+                        }}
+                    >
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.primary + '18' }]}>
                             <Ionicons name="location" size={18} color={COLORS.primary} />
                         </View>
                         <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Location</Text>
-                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>{job.location}</Text>
-                    </View>
-                    <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: COLORS.success + '10' }]}>
+                        <Text 
+                            style={[styles.infoValue, { color: COLORS.textPrimary, textAlign: 'center' }]}
+                            numberOfLines={2}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                        >
+                            {job.location}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.infoCard, { backgroundColor: COLORS.surface }]}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                            const salaryText = typeof job.salaryRange === 'string'
+                                ? job.salaryRange
+                                : ((job.salaryRange?.min && job.salaryRange?.max)
+                                    ? `₹${Number(job.salaryRange.min).toLocaleString()} - ₹${Number(job.salaryRange.max).toLocaleString()}`
+                                    : (job.salaryRange?.max ? `₹${Number(job.salaryRange.max).toLocaleString()}` : 'Competitive'));
+                            setModalConfig({
+                                visible: true,
+                                title: 'Salary Package',
+                                value: salaryText,
+                                icon: 'wallet',
+                                iconColor: COLORS.success,
+                                type: typeof job.salaryRange === 'object' && (job.salaryRange?.max || job.salaryRange?.min) ? 'salary' : 'text',
+                                salaryMin: job.salaryRange?.min || null,
+                                salaryMax: job.salaryRange?.max || null,
+                            });
+                        }}
+                    >
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.success + '18' }]}>
                             <Ionicons name="wallet" size={18} color={COLORS.success} />
                         </View>
                         <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Salary</Text>
-                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>
-                            {job.salaryRange?.min} - {job.salaryRange?.max}
+                        <Text 
+                            style={[styles.infoValue, { color: COLORS.textPrimary, textAlign: 'center' }]}
+                            numberOfLines={2}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                        >
+                            {typeof job.salaryRange === 'string'
+                                ? job.salaryRange
+                                : (job.salaryRange ? 
+                                    (job.salaryRange.min && job.salaryRange.max ? 
+                                        `₹${formatSalaryShort(job.salaryRange.min)} - ₹${formatSalaryShort(job.salaryRange.max)}` : 
+                                        (job.salaryRange.max ? `₹${formatSalaryShort(job.salaryRange.max)}` : 'Competitive')) 
+                                    : 'Competitive')}
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                     <View style={[styles.infoCard, { backgroundColor: COLORS.surface }]}>
-                        <View style={[styles.iconCircle, { backgroundColor: COLORS.warning + '10' }]}>
+                        <View style={[styles.iconCircle, { backgroundColor: COLORS.warning + '18' }]}>
                             <Ionicons name="time" size={18} color={COLORS.warning} />
                         </View>
                         <Text style={[styles.infoTitle, { color: COLORS.textTertiary }]}>Type</Text>
-                        <Text style={[styles.infoValue, { color: COLORS.textPrimary }]} numberOfLines={1}>{job.type}</Text>
+                        <Text 
+                            style={[styles.infoValue, { color: COLORS.textPrimary, textAlign: 'center' }]}
+                            numberOfLines={2}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                        >
+                            {job.type}
+                        </Text>
                     </View>
                 </View>
 
@@ -222,9 +365,60 @@ const JobDetailsScreen = ({ route, navigation }) => {
                             </View>
                         ))}
                     </View>
+
+                    {/* About the Company Section */}
+                    {job.recruiterId?.companyName && job.recruiterId.companyName !== 'Confidential' ? (
+                        <View style={{ marginTop: 30 }}>
+                            <Text style={[styles.sectionHeading, { color: COLORS.textPrimary, marginTop: 0 }]}>About the Company</Text>
+                            
+                            {job.recruiterId.companyPhotos && job.recruiterId.companyPhotos.length > 0 ? (
+                                <View style={styles.workspacePhotosContainer}>
+                                    {job.recruiterId.companyPhotos.map((photo, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            activeOpacity={0.8}
+                                            onPress={() => {
+                                                setViewerImage(photo.url);
+                                                setViewerVisible(true);
+                                            }}
+                                            style={[styles.workspacePhotoThumbWrapper, { borderColor: COLORS.border }]}
+                                        >
+                                            <Image 
+                                                source={{ uri: photo.url }} 
+                                                style={styles.workspacePhotoThumb} 
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            ) : null}
+
+                            <Text style={[styles.para, { color: COLORS.textSecondary, marginTop: 10 }]}>
+                                {job.recruiterId.companyDescription || 'No company description provided.'}
+                            </Text>
+
+                            {job.recruiterId.website ? (
+                                <TouchableOpacity 
+                                    style={[styles.websiteBtn, { borderColor: COLORS.primary }]}
+                                    activeOpacity={0.7}
+                                    onPress={async () => {
+                                        const url = job.recruiterId.website.startsWith('http') 
+                                            ? job.recruiterId.website 
+                                            : `https://${job.recruiterId.website}`;
+                                        Linking.openURL(url).catch(err => {
+                                            console.error("Failed to open URL:", err);
+                                            Alert.alert('Error', 'Could not open the company website link.');
+                                        });
+                                    }}
+                                >
+                                    <Ionicons name="earth-outline" size={18} color={COLORS.primary} />
+                                    <Text style={[styles.websiteBtnText, { color: COLORS.primary }]}>Visit Website</Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+                    ) : null}
                 </Animated.View>
 
-                <View style={{ height: 120 }} />
+                <View style={{ height: 180 }} />
             </ScrollView>
 
             {/* Sticky Footer */}
@@ -235,10 +429,44 @@ const JobDetailsScreen = ({ route, navigation }) => {
             >
                 {user?.role === 'RECRUITER' ? (
                     (job.recruiterId?._id === user._id || job.recruiterId === user._id) ? (
-                        <PremiumButton 
-                            title="Manage Applicants" 
-                            onPress={() => navigation.navigate('JobApplicants', { jobId: job._id, jobTitle: job.title })}
-                        />
+                        <View style={styles.recruiterActionsContainer}>
+                            <PremiumButton 
+                                title={`Manage Applicants (${job.applicantsCount || 0})`} 
+                                onPress={() => navigation.navigate('JobApplicants', { jobId: job._id, jobTitle: job.title })}
+                                style={{ marginBottom: 10 }}
+                            />
+                            <View style={styles.secondaryActionsRow}>
+                                <TouchableOpacity 
+                                    style={[styles.recruiterActionBtn, { borderColor: COLORS.primary }]}
+                                    onPress={() => navigation.navigate('CreateJob', { job })}
+                                >
+                                    <Ionicons name="create-outline" size={18} color={COLORS.primary} />
+                                    <Text style={[styles.recruiterActionBtnText, { color: COLORS.primary }]}>Edit</Text>
+                                </TouchableOpacity>
+                                
+                                <TouchableOpacity 
+                                    style={[styles.recruiterActionBtn, { borderColor: job.status === 'CLOSED' ? COLORS.success : COLORS.warning }]}
+                                    onPress={handleToggleStatus}
+                                >
+                                    <Ionicons 
+                                        name={job.status === 'CLOSED' ? "checkmark-circle-outline" : "ban-outline"} 
+                                        size={18} 
+                                        color={job.status === 'CLOSED' ? COLORS.success : COLORS.warning} 
+                                    />
+                                    <Text style={[styles.recruiterActionBtnText, { color: job.status === 'CLOSED' ? COLORS.success : COLORS.warning }]}>
+                                        {job.status === 'CLOSED' ? 'Reopen' : 'Close'}
+                                    </Text>
+                                </TouchableOpacity>
+                                
+                                <TouchableOpacity 
+                                    style={[styles.recruiterActionBtn, { borderColor: COLORS.danger }]}
+                                    onPress={handleDeleteJob}
+                                >
+                                    <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                                    <Text style={[styles.recruiterActionBtnText, { color: COLORS.danger }]}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     ) : (
                         <View style={styles.recruiterNotice}>
                             <Ionicons name="information-circle-outline" size={20} color={COLORS.textTertiary} />
@@ -247,15 +475,169 @@ const JobDetailsScreen = ({ route, navigation }) => {
                     )
                 ) : (
                     <PremiumButton 
-                        title={hasApplied ? 'Application Sent' : (applying ? 'Processing...' : 'Apply Now')} 
-                        variant={hasApplied ? 'secondary' : 'primary'}
-                        disabled={hasApplied || applying}
+                        title={job.status === 'CLOSED' ? 'Job Closed' : (hasApplied ? 'Application Sent' : (applying ? 'Processing...' : 'Apply Now'))} 
+                        variant={job.status === 'CLOSED' || hasApplied ? 'secondary' : 'primary'}
+                        disabled={job.status === 'CLOSED' || hasApplied || applying}
                         onPress={handleApply}
                         iconRight={hasApplied ? <Ionicons name="checkmark-circle" size={22} color="#FFF" /> : null}
                     />
                 )}
             </BlurView>
         </ScreenWrapper>
+
+        {/* ── Premium Detail Modal ── */}
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalConfig.visible}
+            statusBarTranslucent={true}
+            onRequestClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+        >
+            <View style={styles.modalOverlay}>
+                {/* Dimmed backdrop — tap to close */}
+                <TouchableOpacity 
+                    style={StyleSheet.absoluteFill}
+                    activeOpacity={1} 
+                    onPress={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                />
+
+                {/* Bottom sheet card */}
+                <View style={[styles.modalSheet, { backgroundColor: COLORS.surface }]}>
+
+                    {/* ── Gradient hero banner ── */}
+                    <View style={[styles.modalHeroBanner, { backgroundColor: modalConfig.iconColor + '18' }]}>
+                        {/* Drag pill */}
+                        <View style={[styles.modalDragPill, { backgroundColor: modalConfig.iconColor + '50' }]} />
+
+                        {/* Large hero icon with coloured ring */}
+                        <View style={[styles.modalHeroRing, {
+                            borderColor: modalConfig.iconColor + '30',
+                            backgroundColor: modalConfig.iconColor + '15'
+                        }]}>
+                            <View style={[styles.modalHeroIconInner, { backgroundColor: modalConfig.iconColor }]}>
+                                <Ionicons name={modalConfig.icon} size={28} color="#FFF" />
+                            </View>
+                        </View>
+
+                        {/* Title */}
+                        <Text style={[styles.modalHeroTitle, { color: modalConfig.iconColor }]}>
+                            {modalConfig.title}
+                        </Text>
+                    </View>
+
+                    {/* ── Content area ── */}
+                    <View style={styles.modalBody}>
+
+                        {/* LOCATION — full scrollable text in a styled card */}
+                        {modalConfig.type !== 'salary' && (
+                            <View style={[styles.locationCard, {
+                                backgroundColor: COLORS.background,
+                                borderColor: COLORS.primary + '25'
+                            }]}>
+                                <Ionicons
+                                    name="navigate-circle"
+                                    size={20}
+                                    color={COLORS.primary}
+                                    style={{ marginTop: 2 }}
+                                />
+                                <Text style={[styles.locationCardText, { color: COLORS.textPrimary }]}>
+                                    {modalConfig.value}
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* SALARY — two beautiful chips */}
+                        {modalConfig.type === 'salary' && (
+                            <View style={styles.salaryChipsRow}>
+                                {modalConfig.salaryMin ? (
+                                    <View style={[styles.salaryChip, {
+                                        backgroundColor: COLORS.success + '10',
+                                        borderColor: COLORS.success + '35'
+                                    }]}>
+                                        <View style={[styles.salaryChipIcon, { backgroundColor: COLORS.success + '20' }]}>
+                                            <Ionicons name="arrow-down-outline" size={16} color={COLORS.success} />
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.salaryChipLabel, { color: COLORS.textTertiary }]}>Minimum</Text>
+                                            <Text style={[styles.salaryChipValue, { color: COLORS.success }]}>
+                                                ₹{Number(modalConfig.salaryMin).toLocaleString()}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                ) : null}
+                                {modalConfig.salaryMax ? (
+                                    <View style={[styles.salaryChip, {
+                                        backgroundColor: COLORS.primary + '10',
+                                        borderColor: COLORS.primary + '35'
+                                    }]}>
+                                        <View style={[styles.salaryChipIcon, { backgroundColor: COLORS.primary + '20' }]}>
+                                            <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.salaryChipLabel, { color: COLORS.textTertiary }]}>Maximum</Text>
+                                            <Text style={[styles.salaryChipValue, { color: COLORS.primary }]}>
+                                                ₹{Number(modalConfig.salaryMax).toLocaleString()}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                ) : null}
+                                {/* Fallback for string salaries like "Competitive" */}
+                                {!modalConfig.salaryMin && !modalConfig.salaryMax && (
+                                    <View style={[styles.salaryChip, {
+                                        flex: 1,
+                                        backgroundColor: COLORS.warning + '10',
+                                        borderColor: COLORS.warning + '35'
+                                    }]}>
+                                        <View style={[styles.salaryChipIcon, { backgroundColor: COLORS.warning + '20' }]}>
+                                            <Ionicons name="cash-outline" size={16} color={COLORS.warning} />
+                                        </View>
+                                        <Text style={[styles.salaryChipValue, { color: COLORS.warning, fontSize: 18 }]}>
+                                            {modalConfig.value}
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+
+                        {/* Got it button */}
+                        <TouchableOpacity
+                            style={[styles.modalGotItBtn, { backgroundColor: modalConfig.iconColor }]}
+                            onPress={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.modalGotItText}>Got it</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+
+        {/* Full Screen Image Viewer Modal */}
+        <Modal
+            visible={viewerVisible}
+            transparent={true}
+            onRequestClose={() => setViewerVisible(false)}
+            animationType="fade"
+            statusBarTranslucent={true}
+        >
+            <View style={styles.viewerContainer}>
+                <TouchableOpacity 
+                    style={styles.viewerCloseBtn} 
+                    onPress={() => setViewerVisible(false)}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="close" size={28} color="#FFF" />
+                </TouchableOpacity>
+                {viewerImage ? (
+                    <Image 
+                        source={{ uri: viewerImage }} 
+                        style={styles.viewerImage} 
+                        resizeMode="contain"
+                    />
+                ) : null}
+            </View>
+        </Modal>
+        </>
     );
 };
 
@@ -280,7 +662,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        ...SHADOWS.soft,
+        ...SHADOWS.low,
     },
     scrollContent: {
         paddingTop: SIZES.md,
@@ -411,7 +793,249 @@ const styles = StyleSheet.create({
     noticeText: {
         fontWeight: '700',
         fontSize: 14,
-    }
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.55)',
+    },
+    modalContentCard: {
+        width: '100%',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: 1.5,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 28,
+        paddingHorizontal: 24,
+        paddingTop: 0,
+        alignItems: 'center',
+        overflow: 'hidden',
+        ...SHADOWS.high,
+    },
+    modalAccentBar: {
+        width: '100%',
+        height: 5,
+        borderRadius: 3,
+        marginBottom: 20,
+        marginTop: 0,
+    },
+    modalIconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    modalTitleText: {
+        fontSize: 22,
+        fontWeight: '800',
+        marginBottom: 6,
+        letterSpacing: -0.5,
+        textAlign: 'center',
+    },
+    modalDivider: {
+        width: '100%',
+        height: 1,
+        marginVertical: 14,
+        borderRadius: 1,
+        opacity: 0.6,
+    },
+    /* ── Modal styles ── */
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+    },
+    modalSheet: {
+        width: '100%',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        overflow: 'hidden',
+        ...SHADOWS.high,
+    },
+    modalHeroBanner: {
+        alignItems: 'center',
+        paddingTop: 12,
+        paddingBottom: 24,
+        paddingHorizontal: 24,
+    },
+    modalDragPill: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        marginBottom: 20,
+    },
+    modalHeroRing: {
+        width: 84,
+        height: 84,
+        borderRadius: 42,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    modalHeroIconInner: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalHeroTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+        textAlign: 'center',
+    },
+    modalBody: {
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: Platform.OS === 'ios' ? 44 : 28,
+    },
+    /* Location card */
+    locationCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 12,
+        borderWidth: 1.5,
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 20,
+    },
+    locationCardText: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '600',
+        lineHeight: 24,
+    },
+    /* Salary chips */
+    salaryChipsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 20,
+        flexWrap: 'wrap',
+    },
+    salaryChip: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        minWidth: 130,
+    },
+    salaryChipIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    salaryChipLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 3,
+    },
+    salaryChipValue: {
+        fontSize: 22,
+        fontWeight: '900',
+        letterSpacing: -0.5,
+    },
+    /* Got it button */
+    modalGotItBtn: {
+        width: '100%',
+        height: 54,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...SHADOWS.medium,
+    },
+    modalGotItText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+    },
+    recruiterActionsContainer: {
+        width: '100%',
+    },
+    secondaryActionsRow: {
+        flexDirection: 'row',
+        gap: 8,
+        width: '100%',
+    },
+    recruiterActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 44,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        gap: 6,
+    },
+    recruiterActionBtnText: {
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    workspacePhotosContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        marginTop: 12,
+        marginBottom: 8,
+    },
+    workspacePhotoThumbWrapper: {
+        width: (width - 48 - 24) / 3, // Fits exactly 3 items on a row with 12px gaps
+        aspectRatio: 1,
+        borderRadius: 14,
+        borderWidth: 1.5,
+        overflow: 'hidden',
+    },
+    workspacePhotoThumb: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    viewerContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    viewerCloseBtn: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 60 : 40,
+        right: 20,
+        zIndex: 10,
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    viewerImage: {
+        width: '100%',
+        height: '80%',
+    },
+    websiteBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 48,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        gap: 8,
+        marginTop: 16,
+        width: '100%',
+    },
+    websiteBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
 });
 
 export default JobDetailsScreen;

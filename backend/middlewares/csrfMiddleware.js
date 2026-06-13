@@ -23,6 +23,11 @@ export const generateCsrfToken = (req, res, next) => {
 };
 
 export const csrfProtection = (req, res, next) => {
+    // Mobile apps bypass CSRF protection as they do not use cookie-based storage in a web context
+    if (req.headers['x-client-type'] === 'mobile') {
+        return next();
+    }
+
     // Safe HTTP methods that don't modify state
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
         return next();

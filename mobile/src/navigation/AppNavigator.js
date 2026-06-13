@@ -27,7 +27,6 @@ import ChatRoomScreen from '../screens/ChatRoomScreen';
 import ResumeViewerScreen from '../screens/ResumeViewerScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
-import CustomSplashScreen from '../screens/SplashScreen';
 import SavedJobsScreen from '../screens/SavedJobsScreen';
 import InterestSelectionScreen from '../screens/InterestSelectionScreen';
 
@@ -104,10 +103,6 @@ const AppNavigator = () => {
     const user = useAuthStore(state => state.user);
     const isLoading = useAuthStore(state => state.isLoading);
     const loadCredentials = useAuthStore(state => state.loadCredentials);
-    
-    // We want the SVG animation to play for at least 3.5s 
-    const [isSplashAnimationDone, setIsSplashAnimationDone] = React.useState(false);
-
     const { isDarkMode, setRole } = useThemeStore();
     const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
 
@@ -118,39 +113,25 @@ const AppNavigator = () => {
         }
     }, [user?.role, setRole]);
 
-
     // 1. Initial Load
     useEffect(() => {
         console.log('[AppNavigator] Initializing...');
         loadCredentials();
-        
-        // Let the SVG animation breathe
-        const brandTimer = setTimeout(() => {
-            setIsSplashAnimationDone(true);
-        }, 3500);
-
-        // Failsafe timer: hide native splash regardless after 7 seconds
-        const timer = setTimeout(() => {
-            console.log('[AppNavigator] Failsafe: Hiding native splash screen');
-            SplashScreen.hideAsync().catch(() => {});
-        }, 7000);
-        
-        return () => {
-            clearTimeout(timer);
-            clearTimeout(brandTimer);
-        };
     }, []);
 
-    // 2. Hide Expo Splash Screen early to show our custom HTML completely
+    // 2. Hide Expo Splash Screen when loading is complete
     useEffect(() => {
-        SplashScreen.hideAsync().catch(() => {});
-    }, []);
+        if (!isLoading) {
+            console.log('[AppNavigator] Loading complete, hiding splash screen');
+            SplashScreen.hideAsync().catch(() => {});
+        }
+    }, [isLoading]);
 
-    if (isLoading || !isSplashAnimationDone) {
+    if (isLoading) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#f1f5f9' }}>
-                <StatusBar barStyle="dark-content" />
-                <CustomSplashScreen />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
+                <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
     }

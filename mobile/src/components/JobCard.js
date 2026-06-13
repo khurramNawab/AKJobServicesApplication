@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
@@ -45,16 +45,39 @@ const JobCard = ({ job, onPress }) => {
 
             <View style={styles.footer}>
                 <View style={styles.infoRow}>
-                    <View style={styles.infoItem}>
+                    <TouchableOpacity 
+                        style={styles.infoItem}
+                        activeOpacity={0.7}
+                        onPress={() => Alert.alert('Job Location', job.location)}
+                    >
                         <Ionicons name="location-outline" size={16} color={COLORS.textTertiary} />
                         <Text style={[styles.infoText, { color: COLORS.textSecondary }]}>{job.location}</Text>
-                    </View>
-                    <View style={styles.infoItem}>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.infoItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            const salaryText = typeof job.salaryRange === 'string'
+                                ? job.salaryRange
+                                : (job.salaryRange ? 
+                                    (job.salaryRange.min && job.salaryRange.max ? 
+                                        `₹${Number(job.salaryRange.min).toLocaleString()} - ₹${Number(job.salaryRange.max).toLocaleString()}` : 
+                                        (job.salaryRange.max ? `₹${Number(job.salaryRange.max).toLocaleString()}` : 'Competitive')) 
+                                    : 'Competitive');
+                            Alert.alert('Salary Package', salaryText);
+                        }}
+                    >
                         <Ionicons name="cash-outline" size={16} color={COLORS.primary} />
                         <Text style={[styles.infoText, { color: COLORS.primary, fontWeight: '700' }]}>
-                            {job.salaryRange?.min} - {job.salaryRange?.max}
+                            {typeof job.salaryRange === 'string'
+                                ? job.salaryRange
+                                : (job.salaryRange ? 
+                                    (job.salaryRange.min && job.salaryRange.max ? 
+                                        `₹${Number(job.salaryRange.min).toLocaleString()} - ₹${Number(job.salaryRange.max).toLocaleString()}` : 
+                                        (job.salaryRange.max ? `₹${Number(job.salaryRange.max).toLocaleString()}` : 'Competitive')) 
+                                    : 'Competitive')}
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.skillsContainer}>

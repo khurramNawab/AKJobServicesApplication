@@ -5,6 +5,7 @@ import { applyForJob } from '../controllers/applicationController.js';
 import { seedJobs } from '../controllers/seedController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { checkSubscription } from '../middlewares/subscriptionMiddleware.js';
+import { jobPostLimiter } from '../middlewares/rateLimiterMiddleware.js';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/me', protect, authorizeRoles('RECRUITER', 'ADMIN'), getMyJobs);
 
 router.route('/')
     .get(getJobs)
-    .post(protect, authorizeRoles('RECRUITER', 'ADMIN'), checkSubscription, createJob);
+    .post(protect, authorizeRoles('RECRUITER', 'ADMIN'), checkSubscription, jobPostLimiter, createJob);
 
 router.route('/:id')
     .get(getJob)

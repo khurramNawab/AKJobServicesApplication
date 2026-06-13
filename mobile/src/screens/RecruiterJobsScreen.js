@@ -9,7 +9,7 @@ import {
     Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, Layout, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, Layout, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import api from '../services/api';
 import { LIGHT_COLORS, DARK_COLORS, SHADOWS, SIZES } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
@@ -37,8 +37,14 @@ const RecruiterJobItem = React.memo(({ item, index, navigation, COLORS }) => (
                 <View style={styles.titleArea}>
                     <Text style={[styles.jobTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>{item.title}</Text>
                     <View style={styles.metaRow}>
-                        <Ionicons name="location-outline" size={14} color={COLORS.textTertiary} />
-                        <Text style={[styles.metaText, { color: COLORS.textTertiary }]}>{item.location}</Text>
+                        <TouchableOpacity 
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                            activeOpacity={0.7}
+                            onPress={() => Alert.alert('Job Location', item.location)}
+                        >
+                            <Ionicons name="location-outline" size={14} color={COLORS.textTertiary} />
+                            <Text style={[styles.metaText, { color: COLORS.textTertiary }]}>{item.location}</Text>
+                        </TouchableOpacity>
                         <View style={[styles.dot, { backgroundColor: COLORS.border }]} />
                         <Text style={[styles.metaText, { color: COLORS.textTertiary }]}>{item.type}</Text>
                     </View>
@@ -74,10 +80,11 @@ const RecruiterJobsScreen = ({ navigation }) => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-    const fetchMyJobs = async () => {
+    const fetchMyJobs = async (isSilent = false) => {
         try {
-            if (!refreshing) setLoading(true);
+            if (!isSilent && !hasLoadedOnce) setLoading(true);
             const res = await api.get('/jobs/me');
             if (res.data.success) {
                 setJobs(res.data.data);
@@ -88,15 +95,16 @@ const RecruiterJobsScreen = ({ navigation }) => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setHasLoadedOnce(true);
         }
     };
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            fetchMyJobs();
+            fetchMyJobs(hasLoadedOnce);
         });
         return unsubscribe;
-    }, [navigation]);
+    }, [navigation, hasLoadedOnce]);
 
     const renderItem = useCallback(({ item, index }) => {
         if (loading) {
@@ -176,17 +184,23 @@ const RecruiterJobsScreen = ({ navigation }) => {
                 }
             />
 
-            <Animated.View entering={ZoomIn.delay(500)} style={styles.fabWrapper}>
-                <TouchableOpacity 
-                    style={[styles.fab, SHADOWS.medium]} 
-                    onPress={() => navigation.navigate('CreateJob')}
-                    activeOpacity={0.9}
+            {!loading && jobs.length > 0 && (
+                <Animated.View 
+                    entering={ZoomIn.duration(300)} 
+                    exiting={ZoomOut.duration(300)} 
+                    style={styles.fabWrapper}
                 >
-                    <EliteGradient style={styles.fabGradient}>
-                        <Ionicons name="add" size={32} color="#FFF" />
-                    </EliteGradient>
-                </TouchableOpacity>
-            </Animated.View>
+                    <TouchableOpacity 
+                        style={[styles.fab, SHADOWS.medium]} 
+                        onPress={() => navigation.navigate('CreateJob')}
+                        activeOpacity={0.9}
+                    >
+                        <EliteGradient style={styles.fabGradient}>
+                            <Ionicons name="add" size={32} color="#FFF" />
+                        </EliteGradient>
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
         </ScreenWrapper>
     );
 };

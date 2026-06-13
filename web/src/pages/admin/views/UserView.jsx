@@ -24,22 +24,20 @@ const UserView = () => {
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
 
-  // ⚡ Performance/UX Fix: Only fetch from backend when the sector (role) changes
-  // Local search (useMemo below) handles real-time filtering without flooding the API
+  // Server-side debounced search & role filtering
   React.useEffect(() => {
-    fetchAdminData(1, pagination.jobs.current);
-  }, [filterRole]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchAdminData(1, pagination.jobs.current, filterRole, search);
+    }, 400);
 
-  // Local filtering (optional if backend is also filtering, but good for instant UI feel on current page)
-  const filteredItems = useMemo(() => {
-    return users.filter(u => 
-        (filterRole === 'ALL' || u.role === filterRole) &&
-        (u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [users, search, filterRole]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, filterRole]);
+
+  // Use the fetched users directly (server-side pagination and filter)
+  const filteredItems = users;
 
   const handlePageChange = (newPage) => {
-    fetchAdminData(newPage, pagination.jobs.current);
+    fetchAdminData(newPage, pagination.jobs.current, filterRole, search);
   };
 
   return (

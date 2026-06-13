@@ -20,58 +20,33 @@ import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// ── Rate Limiters ──────────────────────────────────────────────────
-const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 10,
-  message: { success: false, message: "Too many attempts. Please slow down." },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const verifyLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
-  message: {
-    success: false,
-    message: "Too many verification attempts. Try again later.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const resetLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 5,
-  message: {
-    success: false,
-    message: "Too many password reset requests. Try again in 10 minutes.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+import {
+  loginLimiter,
+  registerLimiter,
+  otpLimiter
+} from "../middlewares/rateLimiterMiddleware.js";
 
 // ═══ User Auth ═════════════════════════════════════════════════════
-router.post("/register", authLimiter, registerUser);
-router.post("/login", authLimiter, loginUser);
-router.post("/google-login", authLimiter, googleLogin);
+router.post("/register", registerLimiter, registerUser);
+router.post("/login", loginLimiter, loginUser);
+router.post("/google-login", loginLimiter, googleLogin);
 router.post("/logout", protect, logoutUser);
 router.post("/logout-all", protect, logoutAllDevices);
 router.get("/me", protect, getMe);
 router.get("/sessions", protect, getActiveSessions);
 router.delete("/sessions/:sessionId", protect, revokeSession);
-router.post("/refresh-token", authLimiter, rotateRefreshToken);
+router.post("/refresh-token", loginLimiter, rotateRefreshToken);
 
 // ═══ Email Verification (Link-based only) ═════════════════════════
-router.get("/verify-email/:token", verifyLimiter, verifyEmail);
-router.post("/resend-verification", verifyLimiter, resendVerification);
+router.get("/verify-email/:token", otpLimiter, verifyEmail);
+router.post("/resend-verification", otpLimiter, resendVerification);
 
 // ═══ Admin Auth (Isolated) ════════════════════════════════════════
-router.post("/admin/login", authLimiter, loginAdmin);
+router.post("/admin/login", loginLimiter, loginAdmin);
 router.post("/admin/logout", protect, logoutAdmin);
 
 // ═══ Password Reset ════════════════════════════════════════════════
-router.post("/forgot-password/send-otp", resetLimiter, sendOTP);
-router.post("/forgot-password/verify", resetLimiter, verifyOTP);
+router.post("/forgot-password/send-otp", otpLimiter, sendOTP);
+router.post("/forgot-password/verify", otpLimiter, verifyOTP);
 
 export default router;
