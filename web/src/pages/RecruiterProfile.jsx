@@ -16,6 +16,9 @@ const RecruiterProfile = () => {
     location: '',
     companyWebsite: '',
     companyLogo: '',
+    designation: '',
+    description: '',
+    companyPhotos: [],
   });
 
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,9 @@ const RecruiterProfile = () => {
               location: res.data.data.location || '',
               companyWebsite: res.data.data.companyWebsite || '',
               companyLogo: res.data.data.companyLogo || '',
+              designation: res.data.data.designation || '',
+              description: res.data.data.description || '',
+              companyPhotos: res.data.data.companyPhotos || [],
            });
         }
       } catch (err) {
@@ -87,6 +93,61 @@ const RecruiterProfile = () => {
       setError('Upload failed. Check file type and size.');
     } finally {
       setFileLoading(false);
+    }
+  };
+
+  const handleWorkspacePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (profile.companyPhotos.length >= 3) {
+      setError('Maximum 3 workspace photos allowed.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo size must be less than 5MB.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    setFileLoading(true);
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    try {
+      const res = await api.post('/recruiters/me/photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setProfile(prev => ({
+         ...prev,
+         companyPhotos: [...prev.companyPhotos, res.data.data.url]
+      }));
+      setSuccess('Workspace photo uploaded successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to upload workspace photo.');
+    } finally {
+      setFileLoading(false);
+    }
+  };
+
+  const handleWorkspacePhotoDelete = async (photoUrl) => {
+    try {
+       const res = await api.delete('/recruiters/me/photo', {
+         data: { urls: [photoUrl] }
+       });
+       if (res.data.success) {
+          setProfile(prev => ({
+             ...prev,
+             companyPhotos: prev.companyPhotos.filter(p => p !== photoUrl)
+          }));
+          setSuccess('Workspace photo removed!');
+          setTimeout(() => setSuccess(''), 3000);
+       }
+    } catch (err) {
+       setError(err.response?.data?.message || 'Failed to delete photo.');
     }
   };
 
@@ -231,6 +292,77 @@ const RecruiterProfile = () => {
                             placeholder="https://www.yourcompany.com" 
                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
                           />
+                       </div>
+
+                       <div className="space-y-3">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                             <ShieldCheck className="w-3.5 h-3.5" /> Your Designation
+                          </label>
+                          <select 
+                            name="designation"
+                            value={profile.designation}
+                            onChange={handleChange}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium appearance-none"
+                          >
+                            <option value="" className="bg-slate-800 text-slate-400">Select Designation...</option>
+                            <option value="HR" className="bg-slate-800 text-white">HR</option>
+                            <option value="Company Owner" className="bg-slate-800 text-white">Company Owner</option>
+                            <option value="CEO" className="bg-slate-800 text-white">CEO</option>
+                            <option value="Other" className="bg-slate-800 text-white">Other</option>
+                          </select>
+                       </div>
+
+                       <div className="space-y-3">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                             <Building2 className="w-3.5 h-3.5" /> Company Description
+                          </label>
+                          <textarea 
+                            name="description"
+                            value={profile.description}
+                            onChange={handleChange}
+                            placeholder="Tell candidates about your company's mission and culture..." 
+                            rows={4}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium resize-none"
+                          />
+                       </div>
+
+                       <div className="space-y-6 pt-6 border-t border-white/5">
+                          <div>
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Camera className="w-3.5 h-3.5" /> Workspace Photos
+                             </label>
+                             <p className="text-sm text-slate-500 mt-1 ml-1">Upload up to 3 photos of your office, team, or events. Max 5MB per photo.</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                             {profile.companyPhotos.map((photo, index) => (
+                                <div key={index} className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group/photo bg-white/5">
+                                   <img src={photo} alt={`Workspace ${index + 1}`} className="w-full h-full object-cover" />
+                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/photo:opacity-100 transition-all flex items-center justify-center">
+                                      <button 
+                                        type="button"
+                                        onClick={() => handleWorkspacePhotoDelete(photo)}
+                                        className="p-3 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                      >
+                                        <Trash2 className="w-5 h-5" />
+                                      </button>
+                                   </div>
+                                </div>
+                             ))}
+
+                             {profile.companyPhotos.length < 3 && (
+                                <label className="aspect-video rounded-2xl border-2 border-dashed border-white/10 hover:border-primary/50 bg-white/5 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden group/upload">
+                                   <Upload className="w-6 h-6 text-slate-500 group-hover/upload:text-primary transition-colors" />
+                                   <span className="text-xs font-bold text-slate-500 group-hover/upload:text-primary transition-colors">Add Photo</span>
+                                   <input type="file" accept="image/*" className="hidden" onChange={handleWorkspacePhotoUpload} disabled={fileLoading} />
+                                   {fileLoading && (
+                                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                                        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                     </div>
+                                   )}
+                                </label>
+                             )}
+                          </div>
                        </div>
                     </div>
                  </div>

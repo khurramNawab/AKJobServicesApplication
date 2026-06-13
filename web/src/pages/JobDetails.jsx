@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Briefcase, IndianRupee, Clock, ChevronLeft, ArrowRight, Share2, Globe, Building2, CheckCircle2, AlertCircle, Info, Calendar, UserCheck, Bookmark, Zap } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { AuthContext } from '../context/AuthContext';
@@ -17,6 +17,7 @@ const JobDetails = () => {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -192,9 +193,51 @@ const JobDetails = () => {
                   <button onClick={() => navigate(`/companies/${job.recruiterId?._id}`)} className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] hover:text-white transition-all">View Corporate Profile</button>
                </div>
             </div>
+            
+            {job.recruiterId?.companyPhotos && job.recruiterId.companyPhotos.length > 0 && (
+                <div className="glass-card p-6 rounded-2xl border-white/5 space-y-4 shadow-xl">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-text-muted">Workspace Gallery</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                        {job.recruiterId.companyPhotos.map((photo, i) => (
+                            <div 
+                                key={i} 
+                                onClick={() => setLightboxImage(photo)}
+                                className={`aspect-square rounded-xl overflow-hidden border border-white/5 cursor-pointer group relative ${i === 2 && job.recruiterId.companyPhotos.length === 3 ? 'col-span-2 aspect-[2/1]' : ''}`}
+                            >
+                                <img src={photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
           </div>
         </div>
+        </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+          {lightboxImage && (
+              <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl"
+                  onClick={() => setLightboxImage(null)}
+              >
+                  <motion.img 
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.9, opacity: 0 }}
+                      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                      src={lightboxImage} 
+                      className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl border border-white/10"
+                      alt="Workspace Fullscreen"
+                  />
+              </motion.div>
+          )}
+      </AnimatePresence>
     </div>
   );
 };

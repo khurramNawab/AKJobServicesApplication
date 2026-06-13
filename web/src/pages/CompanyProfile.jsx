@@ -12,6 +12,7 @@ const CompanyProfile = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [lightboxImage, setLightboxImage] = useState(null);
 
     useEffect(() => {
         const fetchCompanyData = async () => {
@@ -88,7 +89,7 @@ const CompanyProfile = () => {
                             </div>
 
                             <p className="text-slate-400 text-lg max-w-2xl font-medium leading-relaxed italic">
-                                "Pioneering the future of {company.industry?.toLowerCase() || 'innovation'} through dedication and absolute hardware-software synergy."
+                                "{company.description || `Pioneering the future of ${company.industry?.toLowerCase() || 'innovation'} through dedication and absolute hardware-software synergy.`}"
                             </p>
 
                             <div className="flex flex-wrap justify-center lg:justify-start gap-8 pt-4">
@@ -120,6 +121,25 @@ const CompanyProfile = () => {
                     </div>
                 </div>
 
+                {/* Workspace Photos */}
+                {company.companyPhotos && company.companyPhotos.length > 0 && (
+                    <div className="space-y-6">
+                        <h3 className="text-2xl font-black text-white px-2">Inside the <span className="gradient-text">Workspace</span></h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {company.companyPhotos.map((photo, i) => (
+                                <div 
+                                  key={i} 
+                                  onClick={() => setLightboxImage(photo)}
+                                  className="aspect-video rounded-[2rem] overflow-hidden border border-white/5 cursor-pointer group relative shadow-xl"
+                                >
+                                    <img src={photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Sub Content Area */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     
@@ -128,8 +148,8 @@ const CompanyProfile = () => {
                         <div className="glass-card p-10 rounded-[3rem] border-white/5 space-y-8">
                             <h3 className="text-2xl font-black">About <span className="text-primary-light">Mission</span></h3>
                             <div className="space-y-6">
-                                <p className="text-slate-400 font-medium leading-relaxed">
-                                    A global leader in high-performance computing and sustainable energy management, dedicated to enabling a better world through sophisticated engineering and human-centric design.
+                                <p className="text-slate-400 font-medium leading-relaxed whitespace-pre-wrap">
+                                    {company.description || "A global leader in high-performance computing and sustainable energy management, dedicated to enabling a better world through sophisticated engineering and human-centric design."}
                                 </p>
                                 <div className="space-y-4 pt-4">
                                     <div className="flex justify-between items-center text-sm">
@@ -203,6 +223,29 @@ const CompanyProfile = () => {
                 </div>
 
             </div>
+
+            {/* Lightbox Modal */}
+            <AnimatePresence>
+                {lightboxImage && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <motion.img 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            src={lightboxImage} 
+                            className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl border border-white/10"
+                            alt="Workspace Fullscreen"
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
