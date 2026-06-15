@@ -177,14 +177,14 @@ const EditJob = () => {
 
                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</label>
-                    <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-[#0F172A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none">
+                    <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-bg-main border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none">
                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
 
                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Job Type</label>
-                    <select name="jobType" value={formData.jobType} onChange={handleChange} className="w-full bg-[#0F172A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none">
+                    <select name="jobType" value={formData.jobType} onChange={handleChange} className="w-full bg-bg-main border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none">
                         {jobTypes.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
@@ -208,3 +208,4 @@ const EditJob = () => {
 };
 
 export default EditJob;
+

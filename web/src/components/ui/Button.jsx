@@ -1,21 +1,39 @@
 import React from 'react';
 
 const Button = ({ children, variant = 'primary', size = 'md', className = '', loading = false, ...props }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark';
-  
+  const baseStyles =
+    'inline-flex items-center justify-center font-semibold rounded-[10px] transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050B18]';
+
   const variants = {
-    primary: 'bg-[#2563EB] text-white hover:bg-[#1d4ed8] shadow-[0_4px_20px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_8px_30px_-5px_rgba(37,99,235,0.5)] focus:ring-[#2563EB]',
-    secondary: 'bg-white/5 text-white hover:bg-white/10 border border-white/10 backdrop-blur-md focus:ring-white/20',
-    cta: 'bg-gradient-to-r from-[#2563EB] to-[#EF4444] text-white hover:scale-[1.03] shadow-lg shadow-[#2563EB]/20 focus:ring-[#2563EB] font-black uppercase tracking-widest text-[12px]',
-    ghost: 'bg-transparent text-slate-400 hover:text-white hover:bg-white/5 focus:ring-white/10',
-    danger: 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444] hover:text-white border border-[#EF4444]/20 focus:ring-[#EF4444]',
-    outline: 'bg-transparent text-white border border-white/20 hover:border-white/40 hover:bg-white/5 focus:ring-white/20',
+    // Solid electric-blue primary
+    primary:
+      'bg-[#4F8EF7] text-white hover:bg-[#6BA3FF] shadow-[0_4px_16px_rgba(79,142,247,0.2)] hover:shadow-[0_0_20px_rgba(79,142,247,0.35)] hover:scale-[1.02] focus-visible:ring-[#4F8EF7]',
+
+    // Ghost — barely there
+    secondary:
+      'bg-transparent text-text-secondary border border-[rgba(255,255,255,0.12)] hover:border-[rgba(79,142,247,0.4)] hover:text-text-primary hover:bg-white/[0.03] focus-visible:ring-white/20',
+
+    // CTA — still uses gradient but cleaner
+    cta:
+      'bg-[#4F8EF7] text-white font-bold hover:bg-[#6BA3FF] shadow-[0_4px_20px_rgba(79,142,247,0.25)] hover:shadow-[0_0_24px_rgba(79,142,247,0.4)] hover:scale-[1.02] focus-visible:ring-[#4F8EF7]',
+
+    // Ghost text
+    ghost:
+      'bg-transparent text-text-muted hover:text-text-primary hover:bg-white/[0.04] focus-visible:ring-white/10',
+
+    // Destructive — rose-red
+    danger:
+      'bg-[#F05674]/10 text-[#F05674] hover:bg-[#F05674] hover:text-white border border-[#F05674]/25 hover:border-[#F05674] focus-visible:ring-[#F05674] transition-colors',
+
+    // Outline
+    outline:
+      'bg-transparent text-text-primary border border-[rgba(255,255,255,0.12)] hover:border-[rgba(79,142,247,0.4)] hover:bg-white/[0.03] focus-visible:ring-white/20',
   };
 
   const sizes = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-[15px]',
-    lg: 'px-8 py-4 text-base w-full',
+    sm:   'px-4 py-2 text-sm',
+    md:   'px-5 py-2.5 text-[14px]',
+    lg:   'px-6 py-3 text-[15px] w-full',
     icon: 'p-2.5',
   };
 

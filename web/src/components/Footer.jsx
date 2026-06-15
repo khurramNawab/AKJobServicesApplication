@@ -1,7 +1,7 @@
 import React from 'react';
-import { Briefcase, Mail, Globe, Layout, Share2, Compass } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import Logo from '../assets/brand-logo.png';
 
 const Footer = () => {
   const location = useLocation();
@@ -27,9 +27,9 @@ const Footer = () => {
         setStatus({ type: 'success', message: res.data.message });
         setEmail('');
     } catch (err) {
-        setStatus({ 
-            type: 'error', 
-            message: err.response?.data?.message || 'Failed to join. Try again later.' 
+        setStatus({
+            type: 'error',
+            message: err.response?.data?.message || 'Failed to join. Try again later.'
         });
     } finally {
         setLoading(false);
@@ -37,74 +37,85 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-bg-main mt-10 border-t border-border-subtle pt-10 pb-10">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
-          <div className="lg:col-span-1 space-y-6">
+    <footer className="bg-bg-main mt-10 border-t border-[rgba(255,255,255,0.06)] pt-12 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+
+          {/* Brand */}
+          <div className="lg:col-span-1 space-y-4">
             <Link to="/" className="group inline-block">
-              <img src="/logo.png" alt="AK Job Services" className="w-20 h-20 object-contain group-hover:scale-110 transition-transform" />
+              <img src={Logo} alt="AK Job Services" className="w-16 h-16 object-contain group-hover:scale-105 transition-transform duration-200" />
             </Link>
-            <p className="text-text-secondary text-sm font-medium leading-relaxed max-w-xs">
-              The world's first premium job board for the next generation of builders. We connect pioneers of progress.
+            <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
+              The premium job board connecting India's top talent with the world's most innovative companies.
             </p>
           </div>
 
+          {/* Navigation */}
           <div>
-            <h3 className="text-text-primary text-xs font-black uppercase tracking-[0.2em] mb-8">Navigation</h3>
-            <ul className="space-y-4 text-sm font-bold text-text-secondary">
-              <li><Link to="/jobs" className="hover:text-primary-light transition-colors">Browse Jobs</Link></li>
-              <li><Link to="/companies" className="hover:text-primary-light transition-colors">Companies</Link></li>
-              <li><Link to="/salaries" className="hover:text-primary-light transition-colors">Salaries</Link></li>
-              <li><Link to="/dashboard" className="hover:text-primary-light transition-colors">Dashboard</Link></li>
+            <h3 className="label-caps mb-6">Navigation</h3>
+            <ul className="space-y-3 text-sm text-text-secondary">
+              <li><Link to="/jobs" className="hover:text-[#4F8EF7] transition-colors">Browse Jobs</Link></li>
+              <li><Link to="/companies" className="hover:text-[#4F8EF7] transition-colors">Companies</Link></li>
+              <li><Link to="/salaries" className="hover:text-[#4F8EF7] transition-colors">Salaries</Link></li>
+              <li><Link to="/dashboard" className="hover:text-[#4F8EF7] transition-colors">Dashboard</Link></li>
             </ul>
           </div>
 
+          {/* Corporate */}
           <div>
-            <h3 className="text-text-primary text-xs font-black uppercase tracking-[0.2em] mb-8">Corporate</h3>
-            <ul className="space-y-4 text-sm font-bold text-text-secondary">
-              <li><Link to="/about" className="hover:text-primary-light transition-colors">About Us</Link></li>
-              <li><Link to="/jobs" className="hover:text-primary-light transition-colors">Careers</Link></li>
-              <li><Link to="/about" className="hover:text-primary-light transition-colors">Press</Link></li>
-              <li><Link to="/privacy" className="hover:text-primary-light transition-colors">Privacy Hub</Link></li>
+            <h3 className="label-caps mb-6">Company</h3>
+            <ul className="space-y-3 text-sm text-text-secondary">
+              <li><Link to="/about" className="hover:text-[#4F8EF7] transition-colors">About Us</Link></li>
+              <li><Link to="/jobs" className="hover:text-[#4F8EF7] transition-colors">Careers</Link></li>
+              <li><Link to="/about" className="hover:text-[#4F8EF7] transition-colors">Press</Link></li>
+              <li><Link to="/privacy" className="hover:text-[#4F8EF7] transition-colors">Privacy</Link></li>
             </ul>
           </div>
 
-          <div className="glass shadow-2xl p-6 rounded-2xl border-border-subtle space-y-4 bg-white/5">
-            <h3 className="text-text-primary text-sm font-black">Join our newsletter</h3>
-            <p className="text-text-secondary text-xs font-medium">Get hand-picked jobs in your inbox every morning.</p>
+          {/* Newsletter */}
+          <div
+            className="rounded-2xl p-5 space-y-4"
+            style={{ background: 'rgba(13,21,38,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <h3 className="text-sm font-semibold text-text-primary">Newsletter</h3>
+            <p className="text-text-secondary text-xs leading-relaxed">
+              Get hand-picked jobs delivered to your inbox every morning.
+            </p>
             <form onSubmit={handleSubscribe} className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    disabled={loading}
-                    className="w-full bg-bg-secondary border border-border-subtle rounded-xl px-4 py-3 text-xs text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary/50 transition-colors disabled:opacity-50"
-                  />
-                  <button 
-                    type="submit"
-                    disabled={loading}
-                    className="absolute right-2 top-2 bottom-2 px-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary-dark transition-colors disabled:bg-slate-700"
-                  >
-                    {loading ? '...' : 'Join'}
-                  </button>
-                </div>
-                {status.message && (
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${status.type === 'success' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {status.message}
-                    </p>
-                )}
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  disabled={loading}
+                  className="w-full input-field px-4 py-2.5 text-sm pr-16 disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#4F8EF7] text-white text-xs font-semibold rounded-lg hover:bg-[#6BA3FF] transition-colors disabled:bg-[#475569]"
+                >
+                  {loading ? '...' : 'Join'}
+                </button>
+              </div>
+              {status.message && (
+                <p className={`text-xs font-medium ${status.type === 'success' ? 'text-[#34D399]' : 'text-[#F05674]'}`}>
+                  {status.message}
+                </p>
+              )}
             </form>
           </div>
         </div>
 
-        <div className="border-t border-border-subtle pt-10 flex flex-col md:flex-row items-center justify-between gap-6 text-[11px] font-black text-text-secondary/60 uppercase tracking-widest">
-          <p>&copy; {new Date().getFullYear()} AK Job Services Inc. Crafted for Pioneers.</p>
-          <div className="flex gap-8">
-            <Link to="/terms" className="hover:text-slate-400">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-slate-400">Privacy Policy</Link>
-            <Link to="/security" className="hover:text-slate-400">Security</Link>
+        {/* Bottom bar */}
+        <div className="border-t border-[rgba(255,255,255,0.06)] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-text-muted">© {new Date().getFullYear()} AK Job Services. All rights reserved.</p>
+          <div className="flex gap-6 text-xs text-text-muted">
+            <Link to="/terms" className="hover:text-text-secondary transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-text-secondary transition-colors">Privacy</Link>
+            <Link to="/security" className="hover:text-text-secondary transition-colors">Security</Link>
           </div>
         </div>
       </div>
@@ -113,3 +124,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

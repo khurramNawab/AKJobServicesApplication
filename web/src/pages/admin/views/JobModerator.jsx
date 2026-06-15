@@ -11,7 +11,7 @@ import {
   ArrowUpDown,
   Filter,
   Eye,
-  DollarSign
+  IndianRupee
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
@@ -92,7 +92,7 @@ const JobModerator = () => {
                       </td>
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-2 text-indigo-400 font-black text-[11px] uppercase tracking-tighter">
-                            <DollarSign size={14} /> 
+                            <IndianRupee size={14} /> 
                             {j.salaryRange?.min ? `${j.salaryRange.min} - ${j.salaryRange.max} ${j.salaryRange.currency}` : 'Confidential'}
                          </div>
                       </td>

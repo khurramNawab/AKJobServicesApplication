@@ -32,6 +32,7 @@ const Security = lazy(() => import('./pages/Security'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // 🛡️ Admin Matrix Pages (Lazy Loaded)
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -47,7 +48,7 @@ const ReportsView = lazy(() => import('./pages/admin/views/ReportsView'));
 const SettingsView = lazy(() => import('./pages/admin/views/SettingsView'));
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center gap-6">
+  <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center gap-6">
     <div className="w-12 h-12 border-4 border-[#2563EB]/20 border-t-[#2563EB] rounded-full animate-spin" />
     <p className="text-[#2563EB] font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Establishing Secure Sector...</p>
   </div>
@@ -100,6 +101,9 @@ function App() {
               <Route path="/jobs/:jobId/edit" element={<ProtectedRoute role="RECRUITER"><EditJob /></ProtectedRoute>} />
               <Route path="/jobs/:jobId/applications" element={<ProtectedRoute role="RECRUITER"><JobApplications /></ProtectedRoute>} />
               <Route path="/recruiter-profile" element={<ProtectedRoute role="RECRUITER"><RecruiterProfile /></ProtectedRoute>} />
+
+              {/* Website Fallback (404) */}
+              <Route path="*" element={<NotFound />} />
             </Route>
 
             {/* 🛡️ ADMIN MATRIX CLUSTER (Isolated Sector) */}
@@ -119,8 +123,8 @@ function App() {
               </Route>
             </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Admin Fallback (404) */}
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </Suspense>
@@ -130,3 +134,4 @@ function App() {
 }
 
 export default App;
+

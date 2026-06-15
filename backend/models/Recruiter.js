@@ -23,6 +23,18 @@ const recruiterSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    foundedDate: {
+        type: String,
+        default: ''
+    },
+    baseLocations: {
+        type: String,
+        default: ''
+    },
+    companyType: {
+        type: String,
+        default: ''
+    },
     companyLogo: {
         type: String,
         default: ''

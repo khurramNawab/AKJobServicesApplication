@@ -71,126 +71,124 @@ const JobDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] pt-40 flex flex-col items-center justify-center gap-6">
-        <div className="w-16 h-16 border-4 border-[#2563EB]/20 border-t-[#2563EB] rounded-full animate-spin" />
-        <p className="text-text-secondary font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Establishing Connection...</p>
+      <div className="min-h-screen bg-bg-main pt-40 flex flex-col items-center justify-center gap-6">
+        <div className="w-12 h-12 border-2 border-[#4F8EF7]/20 border-t-[#4F8EF7] rounded-full animate-spin" />
+        <p className="text-text-muted text-xs">Loading opportunity...</p>
       </div>
     );
   }
 
   if (error || !job) {
     return (
-      <div className="min-h-screen bg-[#020617] pt-40 px-6 text-center space-y-10">
-        <div className="w-24 h-24 bg-[#EF4444]/10 rounded-full flex items-center justify-center mx-auto border border-[#EF4444]/20 shadow-inner">
-          <AlertCircle className="w-10 h-10 text-[#EF4444]" />
+      <div className="min-h-screen bg-bg-main pt-40 px-6 text-center space-y-8">
+        <div className="w-20 h-20 bg-[#F05674]/10 rounded-2xl flex items-center justify-center mx-auto border border-[#F05674]/20">
+          <AlertCircle className="w-8 h-8 text-[#F05674]" />
         </div>
-        <div className="space-y-3">
-          <h2 className="text-4xl font-black text-white tracking-tight">Opportunity Not Found</h2>
-          <p className="text-text-secondary font-medium opacity-60">This role may have been filled or is no longer accepting applications.</p>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold text-text-primary">Opportunity Not Found</h2>
+          <p className="text-text-secondary text-sm">This role may have been filled or is no longer accepting applications.</p>
         </div>
         <Link to="/jobs">
-          <Button variant="outline" className="px-10 py-5 rounded-2xl">Return to Search</Button>
+          <Button variant="secondary">Return to Search</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[60vh] bg-[#020617] pt-24 pb-6 px-6 relative overflow-hidden">
+    <div className="min-h-[60vh] bg-bg-main pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
+        <div className="glow-orb top-[-10%] right-[-5%] w-[42%] h-[42%] bg-[#4F8EF7]" style={{ animationName: 'pulse-glow', animationDuration: '10s', animationIterationCount: 'infinite' }} />
+        <div className="glow-orb bottom-[-5%] left-[-5%] w-[35%] h-[35%] bg-[#38BDF8]" style={{ animationName: 'pulse-glow', animationDuration: '12s', animationIterationCount: 'infinite', animationDelay: '-5s' }} />
       </div>
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/noise.png')] opacity-[0.1] mix-blend-overlay pointer-events-none z-0" />
 
       <div className="max-w-6xl mx-auto z-10 space-y-12 relative">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <Link to="/jobs" className="inline-flex items-center gap-3 text-text-secondary hover:text-[#2563EB] transition-all group">
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:border-[#2563EB]/40 transition-all">
-              <ChevronLeft className="w-5 h-5" />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Link to="/jobs" className="inline-flex items-center gap-2 text-text-secondary hover:text-[#4F8EF7] transition-colors group">
+            <div className="p-2 rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.07)] group-hover:border-[#4F8EF7]/30 transition-all">
+              <ChevronLeft className="w-4 h-4" />
             </div>
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Return to Listings</span>
+            <span className="text-xs font-medium">Back to Jobs</span>
           </Link>
-          <div className="flex gap-4">
-             <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied to clipboard!'); }} className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:text-[#2563EB] hover:border-[#2563EB]/40 transition-all shadow-xl"><Share2 className="w-5 h-5" /></button>
-             <button onClick={handleBookmark} className={`p-4 rounded-2xl border transition-all shadow-xl ${isSaved ? 'bg-[#EF4444]/10 border-[#EF4444]/40 text-[#EF4444]' : 'bg-white/5 border-white/10 text-white hover:text-[#EF4444] hover:border-[#EF4444]/40'}`}><Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} /></button>
+          <div className="flex gap-2">
+             <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }} className="p-2.5 rounded-lg bg-white/[0.04] border border-[rgba(255,255,255,0.07)] text-text-muted hover:text-[#4F8EF7] hover:border-[#4F8EF7]/30 transition-all"><Share2 className="w-4 h-4" /></button>
+             <button onClick={handleBookmark} className={`p-2.5 rounded-lg border transition-all ${isSaved ? 'bg-[#F05674]/10 border-[#F05674]/30 text-[#F05674]' : 'bg-white/[0.04] border-[rgba(255,255,255,0.07)] text-text-muted hover:text-[#F05674] hover:border-[#F05674]/30'}`}><Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} /></button>
           </div>
         </div>
 
-        <div className="glass-card p-6 lg:p-10 rounded-2xl border-white/5 relative shadow-xl overflow-hidden group">
-             <div className="absolute top-0 right-0 w-[400px] h-full bg-gradient-to-l from-[#2563EB]/5 to-transparent blur-3xl rounded-full translate-x-1/2 -z-10 opacity-60" />
-             <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden group-hover:border-[#2563EB]/40 transition-all shadow-inner flex-shrink-0">
-                  {job.recruiterId?.companyLogo ? <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-contain" /> : <span className="text-3xl font-black text-white/30 group-hover:text-white transition-all">{job.recruiterId?.companyName?.charAt(0) || 'J'}</span>}
+        <div className="glass-card p-6 lg:p-8 relative overflow-hidden group">
+             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white/[0.05] border border-[rgba(255,255,255,0.08)] p-2 flex items-center justify-center overflow-hidden group-hover:border-[#4F8EF7]/30 transition-all flex-shrink-0">
+                  {job.recruiterId?.companyLogo ? <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-contain" /> : <span className="text-2xl font-bold text-text-muted group-hover:text-[#4F8EF7] transition-colors">{job.recruiterId?.companyName?.charAt(0) || 'J'}</span>}
                 </div>
-                <div className="flex-1 space-y-5">
+                <div className="flex-1 space-y-3">
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-[#2563EB]/10 rounded-full text-[9px] font-black uppercase tracking-widest text-[#2563EB] border border-[#2563EB]/20 flex items-center gap-1.5"><Zap className="w-2.5 h-2.5" /> Featured Role</span>
-                    <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-text-secondary border border-white/10">{job.jobType}</span>
+                    <span className="badge badge-blue text-[10px] uppercase tracking-wider"><Zap className="w-3 h-3 mr-1" /> Featured</span>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-medium text-text-secondary border border-[rgba(255,255,255,0.08)] bg-white/[0.03]">{job.jobType}</span>
                   </div>
-                  <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">{job.title}</h1>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-text-secondary font-bold text-sm opacity-80">
-                    <span className="flex items-center gap-2"><Building2 className="w-4 h-4 text-[#2563EB]" /> {job.recruiterId?.companyName}</span>
-                    <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[#EF4444]" /> {job.location}</span>
-                    <span className="flex items-center gap-2 text-white"><IndianRupee className="w-4 h-4 text-[#2563EB]" /> {job.salaryRange?.min}L - {job.salaryRange?.max}L / annum</span>
+                  <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-text-primary leading-tight">{job.title}</h1>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-text-secondary text-sm">
+                    <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-[#4F8EF7]" /> {job.recruiterId?.companyName}</span>
+                    <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-[#F05674]" /> {job.location}</span>
+                    <span className="flex items-center gap-1.5 text-text-primary font-medium"><IndianRupee className="w-4 h-4 text-[#4F8EF7]" /> {job.salaryRange?.min} - {job.salaryRange?.max} / annum</span>
                   </div>
                 </div>
                 <div className="w-full md:w-auto self-stretch flex flex-col justify-center gap-2">
                    <button 
                      disabled={applied || applying || user?.role === 'RECRUITER'} 
                      onClick={handleApply} 
-                     className={`!w-full md:!w-48 !py-4 !rounded-xl transition-all flex items-center justify-center gap-2 shadow-md font-black uppercase tracking-widest text-[11px] 
+                     className={`w-full md:w-44 py-3 rounded-[10px] transition-all flex items-center justify-center gap-2 text-sm font-semibold
                        ${applied 
-                         ? '!bg-emerald-500/20 !text-emerald-500 border border-emerald-500/30 cursor-not-allowed' 
-                         : 'btn-power text-white'
+                         ? 'bg-[#34D399]/10 text-[#34D399] border border-[#34D399]/25 cursor-not-allowed' 
+                         : 'btn-power'
                        } 
                        ${(applying || user?.role === 'RECRUITER') ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
                      {applying ? (
                        <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Applying...</>
                      ) : applied ? (
-                       <><CheckCircle2 className="w-4 h-4" /> Already Applied</>
+                       <><CheckCircle2 className="w-4 h-4" /> Applied</>
                      ) : (
                        <>Apply Now <ArrowRight className="w-4 h-4" /></>
                      )}
                    </button>
-                   <p className="text-[10px] text-center font-black text-text-muted uppercase tracking-widest">Application ends soon</p>
+                   <p className="text-[10px] text-center text-text-muted">Application ends soon</p>
                 </div>
              </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="glass-card p-6 md:p-10 rounded-2xl border-white/5 shadow-xl space-y-8">
-               <div className="space-y-4">
-                 <h2 className="text-xl font-black flex items-center gap-3 text-white tracking-tight"><div className="w-1.5 h-5 bg-[#2563EB] rounded-full" /> Job Description</h2>
-                 <p className="text-text-secondary text-base leading-relaxed font-medium opacity-80 whitespace-pre-wrap">{job.description}</p>
+            <div className="glass-card p-6 md:p-8 space-y-6">
+               <div className="space-y-3">
+                 <h2 className="text-lg font-semibold flex items-center gap-2.5 text-text-primary"><div className="w-1 h-5 bg-[#4F8EF7] rounded-full" /> Job Description</h2>
+                 <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">{job.description}</p>
                </div>
-               <div className="space-y-6">
-                  <h3 className="text-lg font-black flex items-center gap-3 text-white tracking-tight"><div className="w-1.5 h-5 bg-[#EF4444] rounded-full" /> Key Responsibilities</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="space-y-4">
+                  <h3 className="text-base font-semibold flex items-center gap-2.5 text-text-primary"><div className="w-1 h-4 bg-[#34D399] rounded-full" /> Key Responsibilities</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                      {job.requirements?.split('\n').filter(r => r.trim() !== '').map((req, i) => (
-                       <div key={i} className="flex items-start gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-xl group/item hover:border-[#2563EB]/20 transition-all"><div className="w-6 h-6 rounded-lg bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0 group-hover/item:bg-[#2563EB]/20 transition-all"><CheckCircle2 className="w-3 h-3 text-[#2563EB]" /></div><span className="text-sm font-bold text-text-secondary opacity-80">{req}</span></div>
+                       <div key={i} className="flex items-start gap-3 p-3.5 bg-white/[0.02] border border-[rgba(255,255,255,0.06)] rounded-xl hover:border-[#4F8EF7]/20 transition-all"><div className="w-5 h-5 rounded-lg bg-[#4F8EF7]/10 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-3 h-3 text-[#4F8EF7]" /></div><span className="text-sm text-text-secondary">{req}</span></div>
                      ))}
                   </div>
                </div>
             </div>
           </div>
-          <div className="space-y-6">
-            <div className="glass-card p-6 rounded-2xl border-white/5 space-y-6 shadow-xl">
-              <h3 className="text-xs font-black uppercase tracking-widest text-text-muted">Opportunity Overview</h3>
-              <div className="space-y-5">
-                  <div className="flex gap-4 items-center group/ov"><div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover/ov:border-[#2563EB]/40 transition-all"><Calendar className="w-4 h-4 text-[#2563EB]" /></div><div><p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Posted On</p><p className="text-sm font-bold text-white">{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div></div>
-                  <div className="flex gap-4 items-center group/ov"><div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover/ov:border-[#EF4444]/40 transition-all"><UserCheck className="w-4 h-4 text-[#EF4444]" /></div><div><p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Experience Level</p><p className="text-sm font-bold text-white">{job.experienceLevel}</p></div></div>
-                  <div className="flex gap-4 items-center group/ov"><div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover/ov:border-[#2563EB]/40 transition-all"><Globe className="w-4 h-4 text-[#2563EB]" /></div><div><p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Deployment Location</p><p className="text-sm font-bold text-white">{job.location}</p></div></div>
+          <div className="space-y-4">
+            <div className="glass-card p-5 space-y-4">
+              <h3 className="label-caps">Overview</h3>
+              <div className="space-y-4">
+                  <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#4F8EF7]/10 flex items-center justify-center border border-[#4F8EF7]/15"><Calendar className="w-4 h-4 text-[#4F8EF7]" /></div><div><p className="label-caps">Posted On</p><p className="text-sm font-medium text-text-primary mt-0.5">{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div></div>
+                  <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#34D399]/10 flex items-center justify-center border border-[#34D399]/15"><UserCheck className="w-4 h-4 text-[#34D399]" /></div><div><p className="label-caps">Experience</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.experienceLevel}</p></div></div>
+                  <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#38BDF8]/10 flex items-center justify-center border border-[#38BDF8]/15"><Globe className="w-4 h-4 text-[#38BDF8]" /></div><div><p className="label-caps">Location</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.location}</p></div></div>
               </div>
             </div>
-            <div className="glass-card p-6 rounded-2xl border-white/5 space-y-6 shadow-xl group/rec">
-               <h3 className="text-xs font-black uppercase tracking-widest text-text-muted">Hiring Organization</h3>
-               <div className="space-y-4 text-center">
-                  <div className="w-16 h-16 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 mx-auto group-hover/rec:border-[#2563EB]/40 transition-all shadow-inner overflow-hidden">{job.recruiterId?.companyLogo ? <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-contain p-1" /> : <Building2 className="w-8 h-8 text-white/20" />}</div>
-                  <div className="space-y-1"><h4 className="font-black text-white text-lg tracking-tight">{job.recruiterId?.companyName}</h4><div className="flex items-center justify-center gap-1.5 text-[#2563EB] text-[10px] font-black uppercase tracking-widest"><div className="p-0.5 bg-[#2563EB] rounded-full text-white"><CheckCircle2 className="w-2 h-2" /></div>Verified Partner</div></div>
-                  <button onClick={() => navigate(`/companies/${job.recruiterId?._id}`)} className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] hover:text-white transition-all">View Corporate Profile</button>
+            <div className="glass-card p-5 space-y-4">
+               <h3 className="label-caps">Hiring Company</h3>
+               <div className="space-y-3 text-center">
+                  <div className="w-14 h-14 bg-white/[0.05] rounded-xl flex items-center justify-center border border-[rgba(255,255,255,0.08)] mx-auto overflow-hidden">{job.recruiterId?.companyLogo ? <img src={job.recruiterId.companyLogo} alt={job.recruiterId.companyName} className="w-full h-full object-contain p-1" /> : <Building2 className="w-7 h-7 text-text-muted" />}</div>
+                  <div className="space-y-1"><h4 className="font-semibold text-text-primary">{job.recruiterId?.companyName}</h4><div className="badge badge-green text-[10px] mx-auto w-fit"><CheckCircle2 className="w-3 h-3 mr-1" />Verified</div></div>
+                  <button onClick={() => navigate(`/companies/${job.recruiterId?._id}`)} className="text-xs font-medium text-text-muted hover:text-[#4F8EF7] transition-colors">View Company Profile</button>
                </div>
             </div>
             
@@ -201,10 +199,10 @@ const JobDetails = () => {
                         {job.recruiterId.companyPhotos.map((photo, i) => (
                             <div 
                                 key={i} 
-                                onClick={() => setLightboxImage(photo)}
+                                onClick={() => setLightboxImage(photo.url || photo)}
                                 className={`aspect-square rounded-xl overflow-hidden border border-white/5 cursor-pointer group relative ${i === 2 && job.recruiterId.companyPhotos.length === 3 ? 'col-span-2 aspect-[2/1]' : ''}`}
                             >
-                                <img src={photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <img src={photo.url || photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                             </div>
                         ))}
@@ -242,4 +240,5 @@ const JobDetails = () => {
 };
 
 export default JobDetails;
+
 

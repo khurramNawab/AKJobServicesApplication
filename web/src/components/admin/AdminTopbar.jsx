@@ -1,64 +1,49 @@
 import React from 'react';
-import { 
-  Search, 
-  Bell, 
-  Plus, 
-  User, 
-  HelpCircle, 
-  Command,
-  Sun,
-  Moon,
-  Inbox
-} from 'lucide-react';
+import { Search, Bell, User, Command, Sun } from 'lucide-react';
 
 const AdminTopbar = ({ adminUser }) => {
   return (
-    <header className="h-16 border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-md sticky top-0 z-40 px-8 flex items-center justify-between">
-      
-      {/* 🔍 Universal Search Node */}
-      <div className="flex-1 max-w-lg relative group">
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <Search size={16} className="text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+    <header className="h-16 border-b border-[rgba(255,255,255,0.06)] bg-[#0A1628]/90 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
+
+      {/* Search */}
+      <div className="flex-1 max-w-md relative group">
+        <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+          <Search size={15} className="text-text-muted group-focus-within:text-[#4F8EF7] transition-colors" />
         </div>
-        <input 
-          type="text" 
-          placeholder="Command + K to Search Portal..."
-          className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-12 pr-4 text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+        <input
+          type="text"
+          placeholder="Search portal..."
+          className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-lg py-2 pl-10 pr-14 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-[#4F8EF7]/20 focus:border-[#4F8EF7]/50 transition-all"
         />
-        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[9px] font-medium text-text-muted">
             <Command size={8} /> K
           </div>
         </div>
       </div>
 
-      {/* ⚡ Action Cluster */}
-      <div className="flex items-center gap-6 ml-10">
-        
-        {/* Toggle Dark/Light Placeholder */}
-        <button className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all">
-          <Sun size={18} />
+      {/* Actions */}
+      <div className="flex items-center gap-2 ml-6">
+        <button className="p-2 rounded-lg hover:bg-white/[0.04] text-text-muted hover:text-text-secondary transition-all">
+          <Sun size={17} />
         </button>
 
-        {/* Notifications Matrix */}
-        <button className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all relative">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+        <button className="p-2 rounded-lg hover:bg-white/[0.04] text-text-muted hover:text-text-secondary transition-all relative">
+          <Bell size={17} />
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#4F8EF7] shadow-[0_0_6px_rgba(79,142,247,0.6)]" />
         </button>
 
-        {/* 👤 Admin Profile Hub */}
-        <div className="h-8 w-px bg-white/5 mx-2" />
-        
-        <div className="flex items-center gap-4">
+        <div className="h-6 w-px bg-[rgba(255,255,255,0.07)] mx-2" />
+
+        <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <p className="text-[11px] font-black text-white uppercase tracking-tighter leading-none">{adminUser?.name || 'Administrator'}</p>
-            <p className="text-[9px] font-medium text-gray-500 mt-1 uppercase tracking-widest">{adminUser?.role || 'Root'}</p>
+            <p className="text-xs font-semibold text-text-primary leading-none">{adminUser?.name || 'Administrator'}</p>
+            <p className="text-[10px] text-text-muted mt-0.5 uppercase tracking-wider">{adminUser?.role || 'Admin'}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 border border-white/10 flex items-center justify-center text-white font-black shadow-lg">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#4F8EF7] to-[#38BDF8] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-white font-bold text-sm shadow-md">
             {adminUser?.name?.charAt(0).toUpperCase() || 'A'}
           </div>
         </div>
-
       </div>
     </header>
   );

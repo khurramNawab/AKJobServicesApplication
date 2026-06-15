@@ -292,7 +292,7 @@ const JobApplications = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-[#020617]/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-bg-main/90 backdrop-blur-sm"
           >
             <div className="glass-card w-full h-full max-w-5xl rounded-[3rem] border-white/10 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
                <div className="px-10 py-6 border-b border-white/5 flex items-center justify-between">
@@ -304,7 +304,7 @@ const JobApplications = () => {
                     <XCircle className="w-6 h-6" />
                   </button>
                </div>
-               <div className="flex-1 bg-[#0F172A]">
+               <div className="flex-1 bg-bg-main">
                  {/* Use Google Docs Viewer — raw Cloudinary URLs don't render in plain iframes */}
                  <iframe 
                    src={getViewerUrl(selectedResume)}
@@ -335,3 +335,4 @@ const JobApplications = () => {
 };
 
 export default JobApplications;
+

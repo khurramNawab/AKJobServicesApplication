@@ -43,7 +43,7 @@ const AdminLogin = () => {
 
 
     return (
-        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden">
             
             {/* Background Aesthetics */}
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
@@ -123,3 +123,4 @@ const AdminLogin = () => {
 };
 
 export default AdminLogin;
+

@@ -59,23 +59,23 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-32 pb-24 bg-[#020617] relative overflow-hidden">
-      {/* 🌌 Advanced Background System */}
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 pt-28 pb-20 bg-bg-main relative overflow-hidden">
+      {/* Background orbs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full animate-glow" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full animate-glow" style={{ animationDelay: '-5s' }} />
+        <div className="glow-orb top-[-10%] right-[-5%] w-[50%] h-[50%] bg-[#4F8EF7]" style={{ animationName: 'pulse-glow', animationDuration: '10s', animationIterationCount: 'infinite' }} />
+        <div className="glow-orb bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#38BDF8]" style={{ animationName: 'pulse-glow', animationDuration: '12s', animationIterationCount: 'infinite', animationDelay: '-5s' }} />
       </div>
 
-      {/* Background layer simplified - removed dead noise.svg URL */}
-
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
         className="w-full max-w-xl z-10"
       >
-        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl bg-white/[0.02] backdrop-blur-2xl">
-
+        <div
+          className="p-8 rounded-2xl"
+          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+        >
           <AnimatePresence mode="wait">
             {step === 1 ? (
               <motion.div
@@ -84,53 +84,66 @@ const Register = () => {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="space-y-10"
+                transition={{ duration: 0.25 }}
+                className="space-y-8"
               >
-                <div className="text-center space-y-3">
-                  <h1 className="text-4xl font-black tracking-tight text-white">Create <span className="gradient-text">Account</span></h1>
-                  <p className="text-text-secondary font-medium opacity-80">To get started, please tell us who you are</p>
+                <div className="text-center space-y-2">
+                  <h1 className="text-3xl font-bold text-text-primary">
+                    Create <span className="gradient-text">Account</span>
+                  </h1>
+                  <p className="text-text-secondary text-sm">Tell us who you are to get started</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Candidate Card */}
                   <button
                     onClick={() => handleRoleSelect('CANDIDATE')}
-                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${formData.role === 'CANDIDATE'
-                        ? 'bg-[#2563EB]/10 border-[#2563EB] shadow-lg shadow-[#2563EB]/20'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                      }`}
+                    className={`group p-6 rounded-xl border transition-all duration-200 text-left space-y-3 hover:scale-[1.02] active:scale-[0.98] ${
+                      formData.role === 'CANDIDATE'
+                        ? 'bg-[#4F8EF7]/10 border-[#4F8EF7]/40'
+                        : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:border-[rgba(79,142,247,0.3)]'
+                    }`}
                   >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${formData.role === 'CANDIDATE' ? 'bg-[#2563EB] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
-                      }`}>
-                      <UserCheck className="w-7 h-7" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.role === 'CANDIDATE'
+                        ? 'bg-[#4F8EF7] text-white'
+                        : 'bg-white/[0.05] text-text-muted group-hover:bg-[#4F8EF7]/10 group-hover:text-[#4F8EF7]'
+                    }`}>
+                      <UserCheck className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">I'm a Job Seeker</h3>
-                      <p className="text-sm text-text-secondary font-medium opacity-60">Discover opportunities and grow your career</p>
+                      <h3 className="text-base font-semibold text-text-primary">I'm a Job Seeker</h3>
+                      <p className="text-xs text-text-secondary leading-relaxed mt-0.5">Discover opportunities and grow your career</p>
                     </div>
                   </button>
 
+                  {/* Recruiter Card */}
                   <button
                     onClick={() => handleRoleSelect('RECRUITER')}
-                    className={`group p-8 rounded-3xl border transition-all duration-300 text-left space-y-4 hover:scale-[1.02] active:scale-95 ${formData.role === 'RECRUITER'
-                        ? 'bg-[#EF4444]/10 border-[#EF4444] shadow-lg shadow-[#EF4444]/20'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                      }`}
+                    className={`group p-6 rounded-xl border transition-all duration-200 text-left space-y-3 hover:scale-[1.02] active:scale-[0.98] ${
+                      formData.role === 'RECRUITER'
+                        ? 'bg-[#38BDF8]/10 border-[#38BDF8]/40'
+                        : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:border-[rgba(56,189,248,0.3)]'
+                    }`}
                   >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${formData.role === 'RECRUITER' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-slate-400 group-hover:text-white'
-                      }`}>
-                      <Briefcase className="w-7 h-7" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.role === 'RECRUITER'
+                        ? 'bg-[#38BDF8] text-white'
+                        : 'bg-white/[0.05] text-text-muted group-hover:bg-[#38BDF8]/10 group-hover:text-[#38BDF8]'
+                    }`}>
+                      <Briefcase className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">I'm a Recruiter</h3>
-                      <p className="text-sm text-text-secondary font-medium opacity-60">Post jobs and find the best talent</p>
+                      <h3 className="text-base font-semibold text-text-primary">I'm a Recruiter</h3>
+                      <p className="text-xs text-text-secondary leading-relaxed mt-0.5">Post jobs and find the best talent</p>
                     </div>
                   </button>
                 </div>
 
-                <div className="text-center pt-4 border-t border-white/5">
-                  <p className="text-slate-400 font-medium">
+                <div className="text-center pt-2 border-t border-[rgba(255,255,255,0.06)]">
+                  <p className="text-sm text-text-secondary">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-white hover:text-primary-light font-bold transition-colors">
+                    <Link to="/login" className="text-[#4F8EF7] hover:text-[#6BA3FF] font-semibold transition-colors">
                       Sign in
                     </Link>
                   </p>
@@ -143,38 +156,40 @@ const Register = () => {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="space-y-8"
+                transition={{ duration: 0.25 }}
+                className="space-y-6"
               >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between">
                   <button
                     onClick={() => setStep(1)}
-                    className="p-2 -ml-2 text-slate-500 hover:text-white transition-colors"
+                    className="p-1.5 -ml-1 text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-white/[0.04]"
                   >
-                    <ArrowLeft className="w-6 h-6" />
+                    <ArrowLeft className="w-5 h-5" />
                   </button>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-primary-light uppercase tracking-[0.2em]">Step 02/02</span>
-                    <h2 className="text-xl font-bold text-white">Personal Details</h2>
+                    <span className="label-caps text-[#4F8EF7]">Step 2 of 2</span>
+                    <h2 className="text-lg font-semibold text-text-primary mt-0.5">Personal Details</h2>
                   </div>
                 </div>
 
                 {error && (
                   <motion.div
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/10 border border-secondary/20 text-secondary-soft text-sm font-medium"
+                    className="flex items-center gap-3 p-3.5 rounded-xl bg-[#F05674]/10 border border-[#F05674]/20 text-[#F05674] text-sm"
                   >
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {error}
                   </motion.div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                    {/* Full Name */}
+                    <div className="space-y-1.5">
+                      <label className="label-caps">Full Name</label>
                       <div className="relative group">
-                        <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-[#4F8EF7] transition-colors" />
                         <input
                           type="text"
                           name="name"
@@ -182,31 +197,33 @@ const Register = () => {
                           onChange={handleChange}
                           placeholder="What should we call you?"
                           required
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
+                          className="input-field py-3 pl-11 pr-4 text-sm"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                    {/* Email */}
+                    <div className="space-y-1.5">
+                      <label className="label-caps">Email Address</label>
                       <div className="relative group">
-                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-[#4F8EF7] transition-colors" />
                         <input
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          placeholder="Your email address"
+                          placeholder="your@email.com"
                           required
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
+                          className="input-field py-3 pl-11 pr-4 text-sm"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                    {/* Password */}
+                    <div className="space-y-1.5">
+                      <label className="label-caps">Password</label>
                       <div className="relative group">
-                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-[#4F8EF7] transition-colors" />
                         <input
                           type="password"
                           name="password"
@@ -214,32 +231,32 @@ const Register = () => {
                           onChange={handleChange}
                           placeholder="Create a strong password"
                           required
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium"
+                          className="input-field py-3 pl-11 pr-4 text-sm"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <Button
                       type="submit"
                       size="lg"
-                      variant="cta"
+                      variant="primary"
                       loading={isLoading}
-                      className="py-5 shadow-2xl shadow-primary/20"
+                      className="py-3"
                     >
-                      Complete Registration <ArrowRight className="ml-2 w-5 h-5" />
+                      Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
 
-                  <div className="flex items-center gap-4 py-1">
-                    <div className="flex-1 h-px bg-white/10"></div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">OR</span>
-                    <div className="flex-1 h-px bg-white/10"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
+                    <span className="text-xs text-text-muted uppercase tracking-wider">or</span>
+                    <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
                   </div>
-                  
-                  <div className="flex justify-center pb-2">
-                    <GoogleLogin 
+
+                  <div className="flex justify-center">
+                    <GoogleLogin
                       onSuccess={async (credentialResponse) => {
                         setError('');
                         setIsLoading(true);
@@ -261,8 +278,11 @@ const Register = () => {
                     />
                   </div>
 
-                  <p className="text-[11px] text-center text-slate-500 leading-relaxed max-w-xs mx-auto">
-                    By clicking register, you agree to our <Link to="/terms" className="text-slate-300 hover:text-white transition-colors">Terms of Service</Link> and <Link to="/privacy" className="text-slate-300 hover:text-white transition-colors">Privacy Policy</Link>
+                  <p className="text-xs text-center text-text-muted leading-relaxed max-w-xs mx-auto">
+                    By registering, you agree to our{' '}
+                    <Link to="/terms" className="text-text-secondary hover:text-text-primary transition-colors">Terms</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-text-secondary hover:text-text-primary transition-colors">Privacy Policy</Link>
                   </p>
                 </form>
               </motion.div>
@@ -275,3 +295,4 @@ const Register = () => {
 };
 
 export default Register;
+

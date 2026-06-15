@@ -32,10 +32,10 @@ const AboutUs = () => {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto px-6 pt-32 pb-32 w-full relative overflow-hidden bg-[#020617]">
+        <div className="max-w-7xl mx-auto px-6 pt-8 pb-28 w-full relative overflow-hidden bg-bg-main">
             {/* Background Orbs */}
-            <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-[#2563EB]/10 blur-[150px] rounded-full animate-glow -z-10" />
-            <div className="absolute bottom-[20%] right-[-10%] w-[40%] h-[40%] bg-[#EF4444]/5 blur-[150px] rounded-full animate-glow -z-10" />
+            <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-[#4F8EF7]/10 blur-[150px] rounded-full animate-glow -z-10" />
+            <div className="absolute bottom-[20%] right-[-10%] w-[40%] h-[40%] bg-[#F05674]/5 blur-[150px] rounded-full animate-glow -z-10" />
 
             {/* Hero Section */}
             <motion.div
@@ -45,10 +45,10 @@ const AboutUs = () => {
                 className="text-center mb-28 md:mb-40"
             >
                 <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 text-primary-light text-[10px] font-black uppercase tracking-[0.3em] mb-10 shadow-2xl">
-                    <Rocket className="w-4 h-4 text-[#EF4444]" /> The Future of Global Talent Architecture
+                    <Rocket className="w-4 h-4 text-[#F05674]" /> The Future of Global Talent Architecture
                 </div>
                 <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter mb-10 leading-[0.85]">
-                   Architecting the <span className="gradient-text block">1% Workforce</span>
+                    Architecting the <span className="gradient-text block">1% Workforce</span>
                 </h1>
                 <p className="text-xl md:text-3xl text-text-secondary max-w-4xl mx-auto leading-relaxed font-medium">
                     AK Job Services is a gated ecosystem engineered for the world's most ambitious builders and the companies that need them most.
@@ -84,7 +84,7 @@ const AboutUs = () => {
                         transition={{ delay: index * 0.2 }}
                         className="glass-card p-12 rounded-[3.5rem] border-white/5 relative overflow-hidden group hover:scale-[1.02] transition-all"
                     >
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-[#2563EB]/5 blur-[80px] pointer-events-none group-hover:bg-[#2563EB]/10 transition-all duration-700" />
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-[#4F8EF7]/5 blur-[80px] pointer-events-none group-hover:bg-[#4F8EF7]/10 transition-all duration-700" />
                         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-10 group-hover:rotate-12 transition-transform border border-white/10">
                             <value.icon className="w-8 h-8 text-primary" />
                         </div>
@@ -103,7 +103,7 @@ const AboutUs = () => {
                 viewport={{ once: true }}
                 className="glass rounded-[5rem] p-16 md:p-32 text-center border-white/5 relative overflow-hidden"
             >
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#2563EB]/10 via-transparent to-[#EF4444]/5 opacity-40" />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#4F8EF7]/10 via-transparent to-[#F05674]/5 opacity-40" />
                 <h2 className="text-4xl md:text-7xl font-black text-white mb-12 tracking-tighter relative z-10 leading-tight">
                     Start Your <span className="gradient-text italic">Performance Journey</span>
                 </h2>
@@ -127,3 +127,4 @@ const AboutUs = () => {
 };
 
 export default AboutUs;
+

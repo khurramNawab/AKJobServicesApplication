@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -24,7 +24,6 @@ const CheckEmail = () => {
       await api.post('/auth/resend-verification', { email });
       setResendStatus('sent');
 
-      // 60 second cooldown before allowing another resend
       let timer = 60;
       setCooldown(timer);
       const interval = setInterval(() => {
@@ -42,73 +41,69 @@ const CheckEmail = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-[#020617] relative overflow-hidden">
-      {/* Background */}
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 pt-28 pb-20 bg-bg-main relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[70%] bg-[#2563EB]/8 blur-[140px] rounded-full" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[60%] bg-[#1e40af]/6 blur-[120px] rounded-full" />
+        <div className="glow-orb top-[-10%] left-[-5%] w-[50%] h-[50%] bg-[#4F8EF7]" style={{ animationName: 'pulse-glow', animationDuration: '10s', animationIterationCount: 'infinite' }} />
+        <div className="glow-orb bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-[#38BDF8]" style={{ animationName: 'pulse-glow', animationDuration: '12s', animationIterationCount: 'infinite', animationDelay: '-5s' }} />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
         className="w-full max-w-md z-10"
       >
-        <div className="glass-card p-10 rounded-[2.5rem] border-white/5 shadow-2xl bg-white/[0.02] backdrop-blur-2xl text-center space-y-8">
-
-          {/* Icon */}
+        <div
+          className="p-8 rounded-2xl text-center space-y-6"
+          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+        >
           <motion.div
             initial={{ scale: 0.7, rotate: -5 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-            className="mx-auto w-24 h-24 rounded-3xl bg-[#2563EB]/10 border border-[#2563EB]/20 flex items-center justify-center"
+            className="mx-auto w-20 h-20 rounded-2xl bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 flex items-center justify-center"
           >
-            <Mail className="w-12 h-12 text-[#2563EB]" />
+            <Mail className="w-10 h-10 text-[#4F8EF7]" />
           </motion.div>
 
-          {/* Heading */}
-          <div className="space-y-3">
-            <h1 className="text-3xl font-black tracking-tight text-white">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-text-primary">
               Check Your <span className="gradient-text">Inbox</span>
             </h1>
-            <p className="text-slate-400 font-medium leading-relaxed">
+            <p className="text-text-secondary text-sm leading-relaxed">
               We've sent a verification link to:
             </p>
-            <div className="inline-block bg-white/5 border border-white/10 rounded-2xl px-5 py-2.5">
-              <span className="text-white font-bold text-sm">{email || 'your email address'}</span>
+            <div className="inline-block bg-white/[0.05] border border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-2">
+              <span className="text-text-primary font-semibold text-sm">{email || 'your email address'}</span>
             </div>
-            <p className="text-slate-500 text-sm font-medium pt-1">
-              Click the link in the email to activate your account.
-              <br />
-              <span className="text-amber-400/80">The link expires in <strong>15 minutes</strong>.</span>
+            <p className="text-text-muted text-xs leading-relaxed pt-1">
+              Click the link in the email to activate your account.{' '}
+              <span className="text-[#FBBF24]">Link expires in <strong>15 minutes</strong>.</span>
             </p>
           </div>
 
-          {/* Steps */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-left space-y-3">
+          <div className="bg-white/[0.03] border border-[rgba(255,255,255,0.06)] rounded-xl p-4 text-left space-y-3">
             {[
               { step: '1', text: 'Open your email app' },
               { step: '2', text: 'Find the email from AK Job Services' },
               { step: '3', text: 'Click "Verify My Account" button' },
             ].map(({ step, text }) => (
               <div key={step} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#2563EB]/20 border border-[#2563EB]/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[#60a5fa] font-black text-xs">{step}</span>
+                <div className="w-6 h-6 rounded-lg bg-[#4F8EF7]/15 border border-[#4F8EF7]/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#4F8EF7] font-semibold text-xs">{step}</span>
                 </div>
-                <span className="text-slate-300 font-medium text-sm">{text}</span>
+                <span className="text-text-secondary text-sm">{text}</span>
               </div>
             ))}
           </div>
 
-          {/* Feedback messages */}
           {resendStatus === 'sent' && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium"
+              className="flex items-center gap-3 p-3.5 rounded-xl bg-[#34D399]/10 border border-[#34D399]/20 text-[#34D399] text-sm"
             >
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
               New verification email sent! Check your inbox.
             </motion.div>
           )}
@@ -117,17 +112,16 @@ const CheckEmail = () => {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium"
+              className="flex items-center gap-3 p-3.5 rounded-xl bg-[#F05674]/10 border border-[#F05674]/20 text-[#F05674] text-sm"
             >
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {errorMsg}
             </motion.div>
           )}
 
-          {/* Actions */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-1">
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={handleResend}
               loading={resendStatus === 'loading'}
               disabled={cooldown > 0 || resendStatus === 'loading'}
@@ -139,16 +133,15 @@ const CheckEmail = () => {
 
             <button
               onClick={() => navigate('/login')}
-              className="flex items-center justify-center gap-2 w-full text-slate-500 hover:text-white font-bold text-sm transition-colors"
+              className="flex items-center justify-center gap-1.5 w-full text-text-muted hover:text-text-secondary font-medium text-sm transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Login
             </button>
           </div>
 
-          {/* Spam tip */}
-          <p className="text-slate-600 text-xs font-medium">
-            💡 Can't find it? Check your <strong className="text-slate-500">Spam</strong> or <strong className="text-slate-500">Promotions</strong> folder.
+          <p className="text-text-muted text-xs">
+            💡 Can't find it? Check your <strong className="text-text-secondary">Spam</strong> or <strong className="text-text-secondary">Promotions</strong> folder.
           </p>
         </div>
       </motion.div>
@@ -157,3 +150,4 @@ const CheckEmail = () => {
 };
 
 export default CheckEmail;
+

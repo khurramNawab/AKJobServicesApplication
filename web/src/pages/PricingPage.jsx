@@ -50,7 +50,7 @@ const PricingPage = () => {
                     email: user.email
                 },
                 theme: {
-                    color: "#2563EB"
+                    color: "#4F8EF7"
                 }
             };
 
@@ -93,7 +93,7 @@ const PricingPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0F172A] py-24 px-6 relative overflow-hidden">
+        <div className="min-h-screen bg-bg-main py-24 px-6 relative overflow-hidden">
             {/* Glossy Background Elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 blur-[120px] rounded-full" />
@@ -167,3 +167,4 @@ const PricingPage = () => {
 };
 
 export default PricingPage;
+

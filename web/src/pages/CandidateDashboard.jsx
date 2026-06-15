@@ -49,10 +49,10 @@ const CandidateDashboard = () => {
   }, [profile]);
 
   const stats = [
-    { label: 'Total Applied', value: applications.length, icon: Briefcase, color: 'text-[#2563EB]', bg: 'bg-[#2563EB]/10' },
-    { label: 'Under Review', value: applications.filter(a => a.status === 'PENDING' || a.status === 'REVIEWING').length, icon: Clock, color: 'text-amber-400', bg: 'bg-amber-400/10' },
-    { label: 'Accepted', value: applications.filter(a => a.status === 'HIRED' || a.status === 'SHORTLISTED').length, icon: UserCheck, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    { label: 'Declined', value: applications.filter(a => a.status === 'REJECTED').length, icon: XCircle, color: 'text-[#EF4444]', bg: 'bg-[#EF4444]/10' }
+    { label: 'Total Applied',  value: applications.length, icon: Briefcase, color: 'text-[#4F8EF7]', bg: 'bg-[#4F8EF7]/10' },
+    { label: 'Under Review',   value: applications.filter(a => a.status === 'PENDING' || a.status === 'REVIEWING').length, icon: Clock, color: 'text-[#FBBF24]', bg: 'bg-[#FBBF24]/10' },
+    { label: 'Accepted',       value: applications.filter(a => a.status === 'HIRED' || a.status === 'SHORTLISTED').length, icon: UserCheck, color: 'text-[#34D399]', bg: 'bg-[#34D399]/10' },
+    { label: 'Declined',       value: applications.filter(a => a.status === 'REJECTED').length, icon: XCircle, color: 'text-[#F05674]', bg: 'bg-[#F05674]/10' }
   ];
 
   const filteredApplications = activeTab === 'All'
@@ -61,48 +61,47 @@ const CandidateDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] pt-40 flex flex-col items-center justify-center gap-6">
-        <div className="w-16 h-16 border-4 border-[#2563EB]/20 border-t-[#2563EB] rounded-full animate-spin" />
-        <p className="text-text-secondary font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Syncing Dashboard Data...</p>
+      <div className="min-h-screen bg-bg-main pt-40 flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-2 border-[#4F8EF7]/20 border-t-[#4F8EF7] rounded-full animate-spin" />
+        <p className="text-text-muted text-xs">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[60vh] bg-[#020617] pt-24 pb-6 px-6 relative overflow-hidden">
-      {/* 🌌 Background Elements */}
+    <div className="min-h-[60vh] bg-bg-main pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#2563EB]/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#EF4444]/5 blur-[120px] rounded-full" />
+        <div className="glow-orb top-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#4F8EF7]" style={{ animationName: 'pulse-glow', animationDuration: '10s', animationIterationCount: 'infinite' }} />
+        <div className="glow-orb bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-[#38BDF8]" style={{ animationName: 'pulse-glow', animationDuration: '12s', animationIterationCount: 'infinite', animationDelay: '-5s' }} />
       </div>
 
-      <div className="max-w-7xl mx-auto z-10 space-y-10 relative">
+      <div className="max-w-7xl mx-auto z-10 space-y-8 relative">
 
         {/* Welcome Block */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2563EB]/10 border border-[#2563EB]/20 text-[9px] font-black uppercase tracking-[0.2em] text-[#2563EB]">
-              <Activity className="w-3 h-3" /> Operations Center
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 text-[10px] font-medium text-[#4F8EF7] uppercase tracking-wider">
+              <Activity className="w-3 h-3" /> Dashboard
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-white">Welcome, <span className="text-[#2563EB]">{user?.name?.split(' ')[0]}</span></h1>
-            <p className="text-text-secondary text-sm font-medium opacity-60">Monitor your applications and accelerate your career trajectory.</p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">Welcome, <span className="gradient-text">{user?.name?.split(' ')[0]}</span></h1>
+            <p className="text-text-secondary text-sm">Monitor your applications and accelerate your career.</p>
           </div>
           <Link to="/jobs">
-            <button className="bg-[#2563EB] text-white px-6 py-3 rounded-xl flex items-center gap-2 text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB]/90 transition-all">
-              Explore Roles <ArrowRight className="w-3.5 h-3.5" />
+            <button className="btn-power flex items-center gap-2 text-sm">
+              Explore Roles <ArrowRight className="w-4 h-4" />
             </button>
           </Link>
         </div>
 
-        {/* Stats Matrix */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white/[0.02] border border-white/10 p-5 rounded-2xl backdrop-blur-md">
-              <div className={`p-3 rounded-lg ${stat.bg} ${stat.color} w-fit mb-4`}>
+            <div key={i} className="glass-card p-5">
+              <div className={`p-2.5 rounded-lg ${stat.bg} ${stat.color} w-fit mb-3`}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-black text-white">{stat.value}</p>
-              <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">{stat.label}</p>
+              <p className="text-2xl font-bold text-text-primary">{stat.value}</p>
+              <p className="label-caps mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -111,18 +110,22 @@ const CandidateDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
           {/* LEFT SIDE: Applications List */}
-          <div className="lg:col-span-2 space-y-6 w-full">
-            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 min-h-[450px] flex flex-col">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-white/5 pb-6 mb-6">
-                <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-[#2563EB] rounded-full" /> Recent Applications
+          <div className="lg:col-span-2 space-y-4 w-full">
+            <div className="glass-card p-6 min-h-[420px] flex flex-col">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.06)] pb-5 mb-5">
+                <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+                  <div className="w-1 h-5 bg-[#4F8EF7] rounded-full" /> Recent Applications
                 </h2>
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 md:pb-0 flex-wrap">
                   {['All', 'PENDING', 'SHORTLISTED', 'REJECTED', 'HIRED'].map(t => (
                     <button
                       key={t}
                       onClick={() => setActiveTab(t)}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t ? 'bg-[#2563EB] text-white' : 'bg-white/5 text-text-muted hover:text-white'}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase tracking-wider transition-all whitespace-nowrap ${
+                        activeTab === t
+                          ? 'bg-[#4F8EF7] text-white'
+                          : 'bg-white/[0.04] text-text-muted hover:text-text-secondary border border-[rgba(255,255,255,0.07)]'
+                      }`}
                     >
                       {t}
                     </button>
@@ -133,34 +136,35 @@ const CandidateDashboard = () => {
               <div className="flex-1">
                 <AnimatePresence mode="popLayout">
                   {filteredApplications.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {filteredApplications.map((app) => (
                         <motion.div
                           key={app._id}
-                          initial={{ opacity: 0, y: 10 }}
+                          initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 hover:border-[#2563EB]/30 transition-all"
+                          transition={{ duration: 0.2 }}
+                          className="glass-card p-4 flex flex-col md:flex-row items-center justify-between gap-4"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 text-white/30 font-black">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center border border-[rgba(255,255,255,0.07)] text-text-muted font-semibold text-sm">
                               {app?.jobId?.recruiterId?.companyName?.charAt(0) || 'J'}
                             </div>
                             <div>
-                              <h3 className="text-sm font-black text-white">{app?.jobId?.title}</h3>
-                              <p className="text-[10px] font-bold text-text-secondary opacity-60 uppercase tracking-widest">{app?.jobId?.recruiterId?.companyName}</p>
+                              <h3 className="text-sm font-semibold text-text-primary">{app?.jobId?.title}</h3>
+                              <p className="text-xs text-text-muted">{app?.jobId?.recruiterId?.companyName}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-6">
-                            <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${
-                              app.status === 'PENDING' ? 'text-amber-400 border-amber-400/20 bg-amber-400/5' :
-                              app.status === 'HIRED' || app.status === 'SHORTLISTED' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' :
-                              'text-red-400 border-red-400/20 bg-red-400/5'
+                          <div className="flex items-center gap-4">
+                            <span className={`badge ${
+                              app.status === 'PENDING' ? 'badge-yellow' :
+                              app.status === 'HIRED' || app.status === 'SHORTLISTED' ? 'badge-green' :
+                              'badge-red'
                             }`}>
                               {app.status}
                             </span>
                             <Link to={`/jobs/${app?.jobId?._id}`}>
-                              <button className="p-2 bg-white/5 border border-white/10 rounded-lg text-text-muted hover:text-white hover:border-[#2563EB]/40 transition-all">
-                                <ExternalLink className="w-4 h-4" />
+                              <button className="p-2 bg-white/[0.04] border border-[rgba(255,255,255,0.07)] rounded-lg text-text-muted hover:text-[#4F8EF7] hover:border-[#4F8EF7]/30 transition-all">
+                                <ExternalLink className="w-3.5 h-3.5" />
                               </button>
                             </Link>
                           </div>
@@ -187,14 +191,14 @@ const CandidateDashboard = () => {
           </div>
 
           {/* RIGHT SIDE: Profile Intelligence Sidebar */}
-          <div className="lg:col-span-1 w-full lg:sticky lg:top-24 self-start space-y-6">
-            <div className="bg-white/[0.02] border border-white/10 p-6 rounded-3xl backdrop-blur-md space-y-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#2563EB]/10 blur-3xl" />
+          <div className="lg:col-span-1 w-full lg:sticky lg:top-24 self-start space-y-4">
+            <div className="glass-card p-6 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-28 h-28 bg-[#4F8EF7]/8 blur-3xl" />
               
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 p-1">
-                    <div className="w-full h-full rounded-xl bg-[#020617] flex items-center justify-center overflow-hidden">
+                  <div className="w-20 h-20 rounded-2xl bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 p-1">
+                    <div className="w-full h-full rounded-xl bg-bg-main flex items-center justify-center overflow-hidden">
                       {user?.profilePhoto ? (
                         <img src={user.profilePhoto} alt="User" className="w-full h-full object-cover" />
                       ) : (
@@ -202,65 +206,64 @@ const CandidateDashboard = () => {
                       )}
                     </div>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 bg-[#2563EB] text-white p-1.5 rounded-lg border-4 border-[#020617]">
+                  <div className="absolute -bottom-1 -right-1 bg-[#4F8EF7] text-white p-1.5 rounded-lg border-2 border-[#050B18]">
                     <UserCheck className="w-4 h-4" />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <h3 className="text-xl font-black text-white tracking-tight">{user?.name}</h3>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2563EB]/10 border border-[#2563EB]/20 text-[8px] font-black uppercase tracking-widest text-[#2563EB]">
-                    ID Verified
-                  </div>
+                  <h3 className="text-lg font-bold text-text-primary">{user?.name}</h3>
+                  <div className="badge badge-blue text-[10px] mx-auto w-fit">Verified</div>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Matrix Completion</span>
-                  <span className="text-[9px] font-black text-[#2563EB]">{completionPercentage}%</span>
+                  <span className="label-caps">Profile Completion</span>
+                  <span className="text-xs font-semibold text-[#4F8EF7]">{completionPercentage}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${completionPercentage}%` }}
-                    className="h-full bg-[#2563EB]"
+                    transition={{ duration: 0.8 }}
+                    className="h-full bg-[#4F8EF7] rounded-full"
                   />
                 </div>
                 
-                <Link to="/profile" className="block pt-4">
-                  <button className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-[#2563EB]/40 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <Settings className="w-4 h-4 text-text-muted group-hover:text-[#2563EB]" />
-                      <span className="text-[9px] font-black text-white/60 uppercase tracking-widest group-hover:text-white">Profile Config</span>
+                <Link to="/profile" className="block pt-3">
+                  <button className="w-full flex items-center justify-between p-3.5 bg-white/[0.04] border border-[rgba(255,255,255,0.08)] rounded-xl hover:border-[#4F8EF7]/30 transition-all group">
+                    <div className="flex items-center gap-2.5">
+                      <Settings className="w-4 h-4 text-text-muted group-hover:text-[#4F8EF7] transition-colors" />
+                      <span className="text-xs font-medium text-text-secondary group-hover:text-text-primary">Edit Profile</span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-white/20 group-hover:translate-x-1" />
+                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </Link>
               </div>
 
-              <div className="pt-8 border-t border-white/5 space-y-6">
+              <div className="pt-5 border-t border-[rgba(255,255,255,0.06)] space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black text-text-muted uppercase tracking-widest">Market Bookmarks</h4>
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <h4 className="label-caps">Saved Jobs</h4>
+                  <Zap className="w-3.5 h-3.5 text-[#FBBF24]" />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {savedJobs.length > 0 ? (
                     savedJobs.slice(0, 3).map(bookmark => (
                       <Link key={bookmark._id} to={`/jobs/${bookmark.jobId?._id}`} className="block">
-                        <div className="p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:border-[#2563EB]/30 transition-all flex items-center justify-between">
-                          <div>
-                            <p className="text-[11px] font-black text-white line-clamp-1">{bookmark.jobId?.title}</p>
-                            <p className="text-[8px] font-bold text-text-secondary opacity-50 uppercase tracking-widest">{bookmark.jobId?.recruiterId?.companyName}</p>
+                        <div className="p-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] bg-white/[0.02] hover:border-[#4F8EF7]/25 transition-all flex items-center justify-between group">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-text-primary line-clamp-1 group-hover:text-[#4F8EF7] transition-colors">{bookmark.jobId?.title}</p>
+                            <p className="text-[10px] text-text-muted mt-0.5">{bookmark.jobId?.recruiterId?.companyName}</p>
                           </div>
-                          <ChevronRight className="w-3 h-3 text-white/20" />
+                          <ChevronRight className="w-3.5 h-3.5 text-text-muted flex-shrink-0 ml-2" />
                         </div>
                       </Link>
                     ))
                   ) : (
-                    <div className="text-center py-6 bg-white/[0.01] rounded-2xl border border-white/5 border-dashed">
-                      <p className="text-[9px] font-black text-text-muted uppercase tracking-widest leading-relaxed">No active <br /> bookmarks</p>
+                    <div className="text-center py-5 bg-white/[0.01] rounded-xl border border-[rgba(255,255,255,0.05)] border-dashed">
+                      <p className="text-xs text-text-muted">No saved jobs yet</p>
                     </div>
                   )}
                 </div>
@@ -275,3 +278,4 @@ const CandidateDashboard = () => {
 };
 
 export default CandidateDashboard;
+

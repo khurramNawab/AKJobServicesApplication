@@ -17,29 +17,27 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex overflow-hidden">
-      
+    <div className="min-h-screen bg-[#0A1628] flex overflow-hidden">
+
       {/* 🔳 Isolated Admin Sidebar */}
-      <AdminSidebar 
-        collapsed={collapsed} 
-        setCollapsed={setCollapsed} 
-        // Note: activeTab logic and setTab will now be handled via nested routes (e.g. /admin/users)
+      <AdminSidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
       />
 
       {/* 🖥️ Admin Command Sector */}
-      <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${collapsed ? 'ml-[80px]' : 'ml-[260px]'}`}>
-        
+      <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${collapsed ? 'ml-[72px]' : 'ml-[256px]'}`}>
+
         {/* 🧭 Top operational Header */}
         <AdminTopbar adminUser={user} />
 
         {/* 📄 Dynamic Content (Admin Modules) */}
-        <div className="flex-1 p-10 overflow-y-auto no-scrollbar bg-[#0F172A]">
+        <div className="flex-1 p-8 overflow-y-auto no-scrollbar bg-[#0A1628]">
           <Outlet />
         </div>
 
       </main>
 
-      {/* Global Admin Styles Overlay (Localized here instead of page as it's the root of Admin) */}
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

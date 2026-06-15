@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Mail, Phone, MapPin, Globe, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, Briefcase } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Globe, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, Briefcase, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -18,6 +18,9 @@ const RecruiterProfile = () => {
     companyLogo: '',
     designation: '',
     description: '',
+    foundedDate: '',
+    baseLocations: '',
+    companyType: '',
     companyPhotos: [],
   });
 
@@ -40,6 +43,9 @@ const RecruiterProfile = () => {
               companyLogo: res.data.data.companyLogo || '',
               designation: res.data.data.designation || '',
               description: res.data.data.description || '',
+              foundedDate: res.data.data.foundedDate || '',
+              baseLocations: res.data.data.baseLocations || '',
+              companyType: res.data.data.companyType || '',
               companyPhotos: res.data.data.companyPhotos || [],
            });
         }
@@ -324,6 +330,48 @@ const RecruiterProfile = () => {
                             rows={4}
                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium resize-none"
                           />
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Clock className="w-3.5 h-3.5" /> Founded Year (Optional)
+                             </label>
+                             <input 
+                                type="text" 
+                                name="foundedDate"
+                                value={profile.foundedDate}
+                                onChange={handleChange}
+                                placeholder="e.g. 2012" 
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <MapPin className="w-3.5 h-3.5" /> Base Locations (Optional)
+                             </label>
+                             <input 
+                                type="text" 
+                                name="baseLocations"
+                                value={profile.baseLocations}
+                                onChange={handleChange}
+                                placeholder="e.g. San Francisco, Miami, Delhi" 
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Building2 className="w-3.5 h-3.5" /> Company Type (Optional)
+                             </label>
+                             <input 
+                                type="text" 
+                                name="companyType"
+                                value={profile.companyType}
+                                onChange={handleChange}
+                                placeholder="e.g. Public Enterprise" 
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
+                             />
+                          </div>
                        </div>
 
                        <div className="space-y-6 pt-6 border-t border-white/5">

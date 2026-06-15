@@ -103,7 +103,15 @@ const CompanyProfile = () => {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <Globe className="w-5 h-5 text-slate-500" />
-                                    <span className="text-sm font-bold text-slate-300">active.company.io</span>
+                                    <span className="text-sm font-bold text-slate-300">
+                                        {company.companyWebsite || company.website ? (
+                                            <a href={company.companyWebsite || company.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary-light transition-colors">
+                                                {(company.companyWebsite || company.website).replace(/^https?:\/\//, '')}
+                                            </a>
+                                        ) : (
+                                            'Website not provided'
+                                        )}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -129,10 +137,10 @@ const CompanyProfile = () => {
                             {company.companyPhotos.map((photo, i) => (
                                 <div 
                                   key={i} 
-                                  onClick={() => setLightboxImage(photo)}
+                                  onClick={() => setLightboxImage(photo.url || photo)}
                                   className="aspect-video rounded-[2rem] overflow-hidden border border-white/5 cursor-pointer group relative shadow-xl"
                                 >
-                                    <img src={photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <img src={photo.url || photo} alt="Workspace" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                                 </div>
                             ))}
@@ -152,18 +160,24 @@ const CompanyProfile = () => {
                                     {company.description || "A global leader in high-performance computing and sustainable energy management, dedicated to enabling a better world through sophisticated engineering and human-centric design."}
                                 </p>
                                 <div className="space-y-4 pt-4">
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-bold uppercase tracking-widest">Founded</span>
-                                        <span className="text-white font-black">2012</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-bold uppercase tracking-widest">Base</span>
-                                        <span className="text-white font-black">{company.location || 'Remote'}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-bold uppercase tracking-widest">Type</span>
-                                        <span className="text-white font-black">Public Enterprise</span>
-                                    </div>
+                                    {company.foundedDate && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500 font-bold uppercase tracking-widest">Founded</span>
+                                            <span className="text-white font-black">{company.foundedDate}</span>
+                                        </div>
+                                    )}
+                                    {(company.baseLocations || company.location) && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500 font-bold uppercase tracking-widest">Base</span>
+                                            <span className="text-white font-black">{company.baseLocations || company.location || 'Remote'}</span>
+                                        </div>
+                                    )}
+                                    {company.companyType && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500 font-bold uppercase tracking-widest">Type</span>
+                                            <span className="text-white font-black">{company.companyType}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -196,7 +210,7 @@ const CompanyProfile = () => {
                                                     <div className="flex flex-wrap gap-4 text-xs font-bold text-slate-500">
                                                         <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary-light" /> {job.location}</span>
                                                         <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary-light" /> {job.jobType}</span>
-                                                        <span className="flex items-center gap-2"><IndianRupee className="w-4 h-4 text-primary-light" /> {job.salaryRange?.min}L - {job.salaryRange?.max}L</span>
+                                                        <span className="flex items-center gap-2"><IndianRupee className="w-4 h-4 text-primary-light" /> {job.salaryRange?.min} - {job.salaryRange?.max} / annum</span>
                                                     </div>
                                                 </div>
                                                 <Button variant="outline" className="rounded-xl px-6 py-3 text-xs w-full md:w-auto">
