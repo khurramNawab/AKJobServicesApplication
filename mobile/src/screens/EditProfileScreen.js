@@ -165,18 +165,23 @@ const EditProfileScreen = ({ navigation }) => {
         type: file.mimeType || "application/pdf",
       });
 
-      // Using our configured api instance for automatic token and base URL
-      const res = await api.post("/candidates/me/resume", formData, {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`${api.defaults.baseURL}/candidates/me/resume`, {
+        method: 'POST',
+        body: formData,
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       });
 
-      if (res.data.success) {
+      const resData = await response.json();
+
+      if (resData.success) {
         Alert.alert("Success", "Resume uploaded successfully!");
-        setForm((prev) => ({ ...prev, resumeUrl: res.data.data.resumeUrl }));
+        setForm((prev) => ({ ...prev, resumeUrl: resData.data?.resumeUrl || resData.resumeUrl }));
       } else {
-        throw new Error(res.data.message || "Error uploading resume");
+        throw new Error(resData.message || "Error uploading resume");
       }
     } catch (error) {
       console.error("Upload Error:", error);

@@ -128,14 +128,21 @@ const ResumeViewerScreen = ({ route, navigation }) => {
             });
 
             console.log('[ResumeViewer] Starting upload to:', `${api.defaults.baseURL}/candidates/me/resume`);
-            const res = await api.post('/candidates/me/resume', formData, {
-                timeout: 120000, // 2 minutes
+            const token = await SecureStore.getItemAsync('userToken');
+            const response = await fetch(`${api.defaults.baseURL}/candidates/me/resume`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
             });
 
-            console.log('[ResumeViewer] Upload response:', JSON.stringify(res.data, null, 2));
+            const resData = await response.json();
+            console.log('[ResumeViewer] Upload response:', JSON.stringify(resData, null, 2));
 
-            if (res.data.success) {
-                const newUrl = res.data.resumeUrl || res.data.data?.resumeUrl;
+            if (resData.success) {
+                const newUrl = resData.resumeUrl || resData.data?.resumeUrl;
                 console.log('[ResumeViewer] New resume URL:', newUrl);
                 setResumeUrl(newUrl);
                 setHasError(false);
@@ -143,7 +150,7 @@ const ResumeViewerScreen = ({ route, navigation }) => {
                 setWebViewKey(prev => prev + 1);
                 Alert.alert('Success! 🎉', 'Your resume has been updated.');
             } else {
-                throw new Error(res.data.message || 'Error updating resume');
+                throw new Error(resData.message || 'Error updating resume');
             }
         } catch (error) {
             console.error('[ResumeViewer] Upload error:', error);
