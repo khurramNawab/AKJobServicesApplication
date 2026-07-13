@@ -215,6 +215,7 @@ const limiter = rateLimit({
   message: { success: false, message: "Too many requests" },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 if (process.env.NODE_ENV === 'production') {

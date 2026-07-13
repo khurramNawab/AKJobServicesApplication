@@ -441,7 +441,7 @@ const ProfileScreen = ({ navigation }) => {
                                                 {app.jobId?.title || 'Job Opening'}
                                             </Text>
                                             <Text style={[styles.jobRowCompany, { color: COLORS.textSecondary }]}>
-                                                {app.jobId?.companyName || 'Top Company'}
+                                                {app.jobId?.recruiterId?.companyName || 'Top Company'}
                                             </Text>
                                         </View>
                                         <View style={[styles.statusBadge, { 

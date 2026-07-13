@@ -356,7 +356,7 @@ const Profile = () => {
                        <div key={app._id} className="glass-card p-6 rounded-2xl border-white/5 hover:border-[#4F8EF7]/30 transition-all flex justify-between items-center">
                           <div>
                              <h4 className="font-bold text-white mb-1">{app.jobId?.title || 'Job Opening'}</h4>
-                             <p className="text-xs text-slate-500 font-semibold">{app.jobId?.companyName || 'Company'}</p>
+                             <p className="text-xs text-slate-500 font-semibold">{app.jobId?.recruiterId?.companyName || 'Company'}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
                              app.status === 'HIRED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
