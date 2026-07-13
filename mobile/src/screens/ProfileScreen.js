@@ -42,15 +42,39 @@ const ProfileScreen = ({ navigation }) => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [photoUploading, setPhotoUploading] = useState(false);
+    const [appliedJobs, setAppliedJobs] = useState([]);
+    const [savedJobs, setSavedJobs] = useState([]);
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const endpoint = user?.role === 'RECRUITER' ? '/recruiters/me' : '/candidates/me';
-            const res = await api.get(endpoint);
-            if (res.data.success && res.data.data) {
-                setProfile(res.data.data);
-                setStats(res.data.stats);
+            const requests = [api.get(endpoint)];
+
+            if (user?.role === 'CANDIDATE') {
+                requests.push(api.get('/applications/me'));
+                requests.push(api.get('/saved-jobs/me'));
+            }
+
+            const results = await Promise.allSettled(requests);
+
+            const profileResult = results[0];
+            if (profileResult.status === 'fulfilled' && profileResult.value.data.success) {
+                setProfile(profileResult.value.data.data);
+                setStats(profileResult.value.data.stats);
+            }
+
+            if (user?.role === 'CANDIDATE' && results[1] && results[2]) {
+                const appResult = results[1];
+                const savedResult = results[2];
+
+                if (appResult.status === 'fulfilled' && appResult.value.data.success) {
+                    setAppliedJobs(appResult.value.data.data || []);
+                }
+                if (savedResult.status === 'fulfilled' && savedResult.value.data.success) {
+                    const validSaved = (savedResult.value.data.data || []).filter(item => item && item.jobId);
+                    setSavedJobs(validSaved);
+                }
             }
         } catch (error) {
             console.error('Profile Fetch Error:', error);
@@ -394,10 +418,93 @@ const ProfileScreen = ({ navigation }) => {
                     {renderMenuButton('shield-checkmark-outline', 'Privacy', 'Security settings and data privacy', () => navigation.navigate('PrivacySecurity'))}
                 </View>
 
-                <View style={[styles.section, { marginBottom: 120 }]}>
+                <View style={[styles.section, { marginBottom: user?.role === 'CANDIDATE' ? 20 : 120 }]}>
                     {renderSectionHeader('System')}
                     {renderMenuButton('log-out-outline', 'Sign Out', 'Safely log out of your session', handleLogout, true)}
                 </View>
+
+                {/* ── Candidate Jobs & Wishlist ── */}
+                {user?.role === 'CANDIDATE' && (
+                    <>
+                        {/* Applied Jobs */}
+                        <View style={[styles.section, { paddingHorizontal: 4 }]}>
+                            {renderSectionHeader('My Applications')}
+                            {appliedJobs.length > 0 ? (
+                                appliedJobs.map((app) => (
+                                    <TouchableOpacity 
+                                        key={app._id} 
+                                        style={[styles.jobRow, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                                        onPress={() => navigation.navigate('JobDetails', { jobId: app.jobId?._id })}
+                                    >
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.jobRowTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>
+                                                {app.jobId?.title || 'Job Opening'}
+                                            </Text>
+                                            <Text style={[styles.jobRowCompany, { color: COLORS.textSecondary }]}>
+                                                {app.jobId?.companyName || 'Top Company'}
+                                            </Text>
+                                        </View>
+                                        <View style={[styles.statusBadge, { 
+                                            backgroundColor: app.status === 'HIRED' ? 'rgba(16, 185, 129, 0.1)' : 
+                                                             app.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)' 
+                                        }]}>
+                                            <Text style={[styles.statusBadgeText, { 
+                                                color: app.status === 'HIRED' ? COLORS.success : 
+                                                       app.status === 'REJECTED' ? COLORS.danger : COLORS.warning 
+                                            }]}>
+                                                {app.status}
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))
+                            ) : (
+                                <Text style={[styles.emptySectionText, { color: COLORS.textTertiary }]}>No applications sent yet.</Text>
+                            )}
+                        </View>
+
+                        {/* My Wishlist */}
+                        <View style={[styles.section, { paddingHorizontal: 4, marginBottom: 120 }]}>
+                            {renderSectionHeader('My Wishlist')}
+                            {savedJobs.length > 0 ? (
+                                savedJobs.map((item) => {
+                                    const job = item.jobId;
+                                    if (!job) return null;
+                                    return (
+                                        <TouchableOpacity 
+                                            key={item._id} 
+                                            style={[styles.jobRow, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                                            onPress={() => navigation.navigate('JobDetails', { jobId: job._id })}
+                                        >
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.jobRowTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>
+                                                    {job.title}
+                                                </Text>
+                                                <Text style={[styles.jobRowCompany, { color: COLORS.textSecondary }]}>
+                                                    {job.recruiterId?.companyName || 'Top Company'}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity 
+                                                onPress={async () => {
+                                                    try {
+                                                        await api.post(`/saved-jobs/toggle/${job._id}`);
+                                                        setSavedJobs(prev => prev.filter(s => s._id !== item._id));
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                    }
+                                                }}
+                                                style={styles.unsaveBtn}
+                                            >
+                                                <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                                            </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            ) : (
+                                <Text style={[styles.emptySectionText, { color: COLORS.textTertiary }]}>No saved jobs in wishlist.</Text>
+                            )}
+                        </View>
+                    </>
+                )}
             </ScrollView>
         </ScreenWrapper>
     );
@@ -628,6 +735,45 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '500',
         marginTop: 2,
+    },
+    jobRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginBottom: 10,
+    },
+    jobRowTitle: {
+        fontSize: 14,
+        fontWeight: '800',
+        marginBottom: 2,
+    },
+    jobRowCompany: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+    },
+    statusBadgeText: {
+        fontSize: 10,
+        fontWeight: '850',
+        textTransform: 'uppercase',
+    },
+    unsaveBtn: {
+        padding: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptySectionText: {
+        fontSize: 12,
+        fontWeight: '600',
+        textAlign: 'center',
+        marginVertical: 14,
     }
 });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft, CreditCard } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft, CreditCard, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -19,6 +19,8 @@ const Profile = () => {
     profilePhoto: '',
   });
 
+  const [applications, setApplications] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
@@ -26,26 +28,36 @@ const Profile = () => {
   const [fileLoading, setFileLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       try {
-        const res = await api.get('/candidates/me');
-        if (res.data.success) {
+        const [profileRes, appRes, savedRes] = await Promise.all([
+          api.get('/candidates/me'),
+          api.get('/applications/me'),
+          api.get('/saved-jobs/me')
+        ]);
+        
+        if (profileRes.data.success) {
            setProfile({
-              bio: res.data.data.bio || '',
-              location: res.data.data.location || '',
-              skills: res.data.data.skills?.join(', ') || '',
-              experience: res.data.data.experience || '',
-              resumeUrl: res.data.data.resumeUrl || '',
-              profilePhoto: res.data.data.profilePhoto || '',
+              bio: profileRes.data.data.bio || '',
+              location: profileRes.data.data.location || '',
+              skills: profileRes.data.data.skills?.join(', ') || '',
+              experience: profileRes.data.data.experience || '',
+              resumeUrl: profileRes.data.data.resumeUrl || '',
+              profilePhoto: profileRes.data.data.profilePhoto || '',
            });
         }
+        setApplications(appRes.data.data || []);
+        
+        // Filter out any null jobs just in case
+        const validSavedJobs = (savedRes.data.data || []).filter(item => item && item.jobId);
+        setSavedJobs(validSavedJobs);
       } catch (err) {
-        console.error('Failed to fetch profile:', err);
+        console.error('Failed to fetch profile data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProfile();
+    fetchProfileData();
   }, []);
 
   const handleChange = (e) => {
@@ -322,6 +334,97 @@ const Profile = () => {
               </form>
            </div>
         </div>
+
+        {/* ── Applied Jobs & Wishlist Sections ── */}
+        <hr className="border-white/5 my-12" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+           
+           {/* Applied Jobs */}
+           <div className="space-y-6 text-left">
+              <div className="flex items-center gap-3">
+                 <div className="w-8 h-8 bg-blue-600/10 rounded-xl flex items-center justify-center border border-blue-500/20 text-[#4F8EF7]">
+                    <Briefcase className="w-4 h-4" />
+                 </div>
+                 <h3 className="text-xl font-black">Applied Jobs</h3>
+                 <span className="px-2 py-0.5 bg-blue-600/20 text-[#4F8EF7] text-[10px] font-black rounded-md">{applications.length}</span>
+              </div>
+
+              <div className="space-y-4">
+                 {applications.length > 0 ? (
+                    applications.map((app) => (
+                       <div key={app._id} className="glass-card p-6 rounded-2xl border-white/5 hover:border-[#4F8EF7]/30 transition-all flex justify-between items-center">
+                          <div>
+                             <h4 className="font-bold text-white mb-1">{app.jobId?.title || 'Job Opening'}</h4>
+                             <p className="text-xs text-slate-500 font-semibold">{app.jobId?.companyName || 'Company'}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                             app.status === 'HIRED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                             app.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                             'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                             {app.status}
+                          </span>
+                       </div>
+                    ))
+                 ) : (
+                    <div className="glass-card py-8 text-center text-slate-500 rounded-2xl border-white/5">
+                       <Briefcase className="w-8 h-8 mx-auto mb-2 opacity-35" />
+                       <p className="text-xs font-bold uppercase tracking-wider">No applications yet</p>
+                    </div>
+                 )}
+              </div>
+           </div>
+
+           {/* Wishlist (Saved Jobs) */}
+           <div className="space-y-6 text-left">
+              <div className="flex items-center gap-3">
+                 <div className="w-8 h-8 bg-rose-600/10 rounded-xl flex items-center justify-center border border-rose-500/20 text-rose-400">
+                    <Heart className="w-4 h-4" />
+                 </div>
+                 <h3 className="text-xl font-black">My Wishlist</h3>
+                 <span className="px-2 py-0.5 bg-rose-600/20 text-rose-400 text-[10px] font-black rounded-md">{savedJobs.length}</span>
+              </div>
+
+              <div className="space-y-4">
+                 {savedJobs.length > 0 ? (
+                    savedJobs.map((item) => {
+                       const job = item.jobId;
+                       if (!job) return null;
+                       return (
+                          <div key={item._id} className="glass-card p-6 rounded-2xl border-white/5 hover:border-rose-500/30 transition-all flex justify-between items-center">
+                             <div>
+                                <Link to={`/jobs/${job._id}`} className="font-bold text-white hover:text-rose-400 transition-colors mb-1 block">{job.title}</Link>
+                                <p className="text-xs text-slate-500 font-semibold">{job.recruiterId?.companyName || 'Company'}</p>
+                             </div>
+                             <button 
+                                onClick={async () => {
+                                   try {
+                                      await api.post(`/saved-jobs/toggle/${job._id}`);
+                                      setSavedJobs(prev => prev.filter(s => s._id !== item._id));
+                                   } catch (err) {
+                                      console.error(err);
+                                   }
+                                }}
+                                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl border border-rose-500/20 transition-all"
+                                title="Remove from Wishlist"
+                             >
+                                <Trash2 className="w-4 h-4" />
+                             </button>
+                          </div>
+                       );
+                    })
+                 ) : (
+                    <div className="glass-card py-8 text-center text-slate-500 rounded-2xl border-white/5">
+                       <Heart className="w-8 h-8 mx-auto mb-2 opacity-35" />
+                       <p className="text-xs font-bold uppercase tracking-wider">Wishlist is empty</p>
+                    </div>
+                 )}
+              </div>
+           </div>
+
+        </div>
+
       </div>
     </div>
   );
