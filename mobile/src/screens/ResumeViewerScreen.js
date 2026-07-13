@@ -136,6 +136,7 @@ const ResumeViewerScreen = ({ route, navigation }) => {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
+                    'x-client-type': 'mobile',
                 },
             });
 
