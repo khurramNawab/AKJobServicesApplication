@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import api from '../services/api';
 
 export const useAuthStore = create((set) => ({
     user: null,
@@ -59,6 +60,20 @@ export const useAuthStore = create((set) => ({
                 try {
                     const user = JSON.parse(userInfoStr);
                     set({ user, token, refreshToken, isLoading: false });
+                    
+                    // Sync with server in background to get latest role/status
+                    api.get('/auth/me')
+                        .then(res => {
+                            if (res.data.success && res.data.data) {
+                                const latestUser = res.data.data;
+                                SecureStore.setItemAsync('userInfo', JSON.stringify(latestUser));
+                                set({ user: latestUser });
+                                console.log('[AuthStore] Synced user from server. Role:', latestUser.role);
+                            }
+                        })
+                        .catch(err => {
+                            console.error('[AuthStore] Server sync failed:', err.message);
+                        });
                 } catch (parseError) {
                     console.error('[AuthStore] Parse error:', parseError);
                     set({ isLoading: false });
