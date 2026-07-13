@@ -98,7 +98,6 @@ const MainTabs = () => {
             ) : (
                 <>
                     <Tab.Screen name="Applications" component={MyApplicationsScreen} options={{ title: 'My Jobs' }} />
-                    <Tab.Screen name="Wishlist" component={SavedJobsScreen} options={{ title: 'Wishlist' }} />
                 </>
             )}
             <Tab.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Chat' }} />
