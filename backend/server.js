@@ -87,11 +87,8 @@ app.use(correlationIdMiddleware);
 
 const isProd = process.env.NODE_ENV === "production";
 
-// Trust proxy ONLY in production (so req.secure + req.ip work correctly behind Nginx/Cloudflare).
-// In local dev, trusting a proxy can make req.secure depend on spoofable headers.
-if (isProd) {
-  app.set("trust proxy", 1);
-}
+// Trust proxy (so req.secure + req.ip work correctly behind Nginx/Cloudflare/Passenger).
+app.set("trust proxy", true);
 
 // On unified server: same origin — no CORS issues for same-port requests.
 // Keep CORS open for Postman/mobile in dev, strict in production.
