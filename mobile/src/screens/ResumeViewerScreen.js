@@ -10,6 +10,7 @@ import { LIGHT_COLORS, DARK_COLORS } from '../constants/theme';
 import { useThemeStore } from '../store/useThemeStore';
 import * as DocumentPicker from 'expo-document-picker';
 import api from '../services/api';
+import * as SecureStore from 'expo-secure-store';
 import ModernButton from '../components/ModernButton';
 
 /**
