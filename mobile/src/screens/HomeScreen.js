@@ -70,8 +70,8 @@ const HomeScreen = ({ navigation }) => {
             const isCandidate = user?.role === 'CANDIDATE';
             const isRecruiter = user?.role === 'RECRUITER';
 
-            // Distinct default fetch for recruiters vs. candidates
-            const baseEndpoint = isRecruiter ? '/jobs/me' : '/jobs';
+            // Load all jobs on the explore feed for both Candidates and Recruiters
+            const baseEndpoint = '/jobs';
 
             // Base requests (Index 0 is Jobs, Index 1 is Notifications)
             const requests = [
