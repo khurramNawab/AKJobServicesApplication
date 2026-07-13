@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback } from 'react';
+ï»¿import React, { useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Shield, Star, Rocket, Loader2, CheckCircle2, XCircle, X, LogIn } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
@@ -215,7 +215,7 @@ const PricingPage = () => {
                 </div>
 
                 <p className="text-center mt-12 text-text-muted text-[10px] font-black uppercase tracking-[0.3em]">
-                    Secured by Razorpay · 256-bit AES Encryption · Cancel Anytime
+                    Secured by Razorpay ï¿½ 256-bit AES Encryption ï¿½ Cancel Anytime
                 </p>
             </div>
         </div>
