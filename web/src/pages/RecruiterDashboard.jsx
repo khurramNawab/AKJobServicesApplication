@@ -19,6 +19,7 @@ const RecruiterDashboard = () => {
     newApplicants: 0
   });
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false);
 
   // Click outside listener for dropdowns
   useEffect(() => {
@@ -30,15 +31,29 @@ const RecruiterDashboard = () => {
   useEffect(() => {
     const fetchRecruiterData = async () => {
       try {
-        const res = await api.get('/jobs/me');
-        const jobsData = res.data.data;
+        const [jobsRes, configRes, appsRes] = await Promise.all([
+          api.get('/jobs/me'),
+          api.get('/platform-config'),
+          api.get('/applications/recruiter')
+        ]);
+        const jobsData = jobsRes.data.data;
+        const appsData = appsRes.data?.data || [];
         setJobs(jobsData);
+        setSubscriptionEnabled(configRes.data?.data?.subscriptionEnabled || false);
         
+        const shortlistedCount = appsData.filter(a => 
+          a.status === 'SHORTLISTED' || a.status === 'HIRED'
+        ).length;
+
         setStats({
           activeJobs: jobsData.length,
           totalApplicants: jobsData.reduce((acc, job) => acc + (job.applicantsCount || 0), 0),
-          shortlisted: 0,
-          newApplicants: jobsData.reduce((acc, job) => acc + (job.newApplicantsCount || 0), 0)
+          shortlisted: shortlistedCount,
+          newApplicants: appsData.filter(a => {
+            const created = new Date(a.createdAt);
+            const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            return created > cutoff;
+          }).length
         });
       } catch (err) {
         console.error('Failed to fetch recruiter data:', err);
@@ -82,6 +97,21 @@ const RecruiterDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto z-10 space-y-8 relative">
+        {subscriptionEnabled && user?.planType === 'FREE' && (
+           <div className="p-6 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-500/30 rounded-[2rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-2xl backdrop-blur-md">
+              <div className="space-y-1 text-left">
+                 <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                    <Plus className="text-blue-400 w-4 h-4 animate-pulse" />
+                    Unlock Premium Recruiting
+                 </h3>
+                 <p className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">You are currently on the Free plan. Upgrade to view candidate resumes and post unlimited jobs.</p>
+              </div>
+              <button onClick={() => navigate('/pricing')} className="px-6 py-3 bg-white text-black hover:bg-blue-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all">
+                 Upgrade Plan
+              </button>
+           </div>
+        )}
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
            <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 text-[10px] font-medium uppercase tracking-wider text-[#4F8EF7]">

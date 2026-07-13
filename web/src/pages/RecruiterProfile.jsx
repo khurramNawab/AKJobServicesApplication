@@ -22,6 +22,9 @@ const RecruiterProfile = () => {
     baseLocations: '',
     companyType: '',
     companyPhotos: [],
+    // New fields
+    gstNumber: '',
+    companyAddress: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,8 @@ const RecruiterProfile = () => {
               baseLocations: res.data.data.baseLocations || '',
               companyType: res.data.data.companyType || '',
               companyPhotos: res.data.data.companyPhotos || [],
+              gstNumber: res.data.data.gstNumber || '',
+              companyAddress: res.data.data.companyAddress || '',
            });
         }
       } catch (err) {
@@ -317,6 +322,37 @@ const RecruiterProfile = () => {
                             <option value="Other" className="bg-slate-800 text-white">Other</option>
                           </select>
                        </div>
+
+                       {/* ── New Spec Fields ── */}
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5" /> GST Number (Optional)
+                             </label>
+                             <input 
+                                type="text" 
+                                name="gstNumber"
+                                value={profile.gstNumber || ''}
+                                onChange={handleChange}
+                                placeholder="e.g. 29GGGGG1314R9Z6" 
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <MapPin className="w-3.5 h-3.5" /> Company Address
+                             </label>
+                             <input 
+                                type="text" 
+                                name="companyAddress"
+                                value={profile.companyAddress || ''}
+                                onChange={handleChange}
+                                placeholder="Complete company location address..." 
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium" 
+                             />
+                          </div>
+                       </div>
+                       {/* ───────────────────── */}
 
                        <div className="space-y-3">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">

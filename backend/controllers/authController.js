@@ -1,4 +1,6 @@
 import User from '../models/User.js';
+import Recruiter from '../models/Recruiter.js';
+import Candidate from '../models/Candidate.js';
 import { sendTokenResponse, clearTokens, clearAllSessions } from '../utils/tokenService.js';
 import { sendVerificationEmail, sendPasswordResetEmail, sendAccountLockedEmail } from '../utils/emailService.js';
 import { OAuth2Client } from "google-auth-library";
@@ -64,8 +66,8 @@ export const registerUser = async (req, res) => {
         });
     } catch (error) {
         if (error instanceof z.ZodError) {
-            const errorMsg = error.errors.map(e => e.message).join(', ');
-            return res.status(400).json({ success: false, message: errorMsg, errors: error.errors });
+            const errorMsg = error.issues.map(e => e.message).join(', ');
+            return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
         }
         res.status(500).json({ success: false, message: error.message });
     }
@@ -104,15 +106,6 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Account suspended. Contact support.' });
         }
 
-        // Check account lock
-        if (user.lockUntil && user.lockUntil > Date.now()) {
-            const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
-            return res.status(423).json({
-                success: false,
-                message: `Account locked. Try again in ${minutesLeft} minute(s).`,
-            });
-        }
-
         // Verify password
         if (!user.password) {
             return res.status(401).json({ 
@@ -122,17 +115,9 @@ export const loginUser = async (req, res) => {
         }
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
-            const locked = await user.registerFailedLogin();
-            console.warn(`[AUTH] Login failed (Credentials): ${email} - Attempts remaining: ${5 - user.failedLoginAttempts}`);
-            if (locked && user.email) {
-                sendAccountLockedEmail(user.email, user.name).catch(() => {});
-            }
-            const remaining = 5 - (user.failedLoginAttempts || 0);
             return res.status(401).json({
                 success: false,
-                message: locked
-                    ? 'Account locked due to too many failed attempts. Try again in 30 minutes.'
-                    : `Invalid credentials. ${remaining > 0 ? remaining : 0} attempt(s) remaining.`,
+                message: 'Invalid credentials. Please check your email or password.',
             });
         }
 
@@ -158,8 +143,8 @@ export const loginUser = async (req, res) => {
         await sendTokenResponse(user, 200, res, req);
     } catch (error) {
         if (error instanceof z.ZodError) {
-            const errorMsg = error.errors.map(e => e.message).join(', ');
-            return res.status(400).json({ success: false, message: errorMsg, errors: error.errors });
+            const errorMsg = error.issues.map(e => e.message).join(', ');
+            return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
         }
         res.status(500).json({ success: false, message: error.message });
     }
@@ -418,12 +403,29 @@ export const getMe = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+
+        let profilePhoto = '';
+        let companyLogo = '';
+        let companyName = '';
+        if (user.role === 'CANDIDATE') {
+            const cand = await Candidate.findOne({ userId: user._id }).select('profilePhoto');
+            profilePhoto = cand ? cand.profilePhoto : '';
+        } else if (user.role === 'RECRUITER') {
+            const rec = await Recruiter.findOne({ userId: user._id }).select('companyLogo companyName');
+            companyLogo = rec ? rec.companyLogo : '';
+            companyName = rec ? rec.companyName : '';
+        }
+
         const userData = {
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-            isVerified: user.isVerified
+            isVerified: user.isVerified,
+            planType: user.planType || 'FREE',
+            profilePhoto,
+            companyLogo,
+            companyName
         };
         res.status(200).json({ success: true, data: userData });
     } catch (error) {

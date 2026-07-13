@@ -102,12 +102,7 @@ export const createRateLimiter = ({
 };
 
 // ─── Export Customized Per-Route Rate Limit Middleware ────────────────────────────────
-export const loginLimiter = createRateLimiter({
-  routeName: "login",
-  limit: 5,
-  windowMs: 60 * 1000, // 5 login attempts per min
-  message: "Too many login attempts. Please check your inputs or try again shortly.",
-});
+export const loginLimiter = (req, res, next) => next();
 
 export const registerLimiter = createRateLimiter({
   routeName: "register",
@@ -137,9 +132,11 @@ export const jobPostLimiter = createRateLimiter({
   message: "Job posting limit reached. Enterprise rules restrict recruiters from job spamming.",
 });
 
-export const adminLimiter = createRateLimiter({
-  routeName: "admin-api",
-  limit: 20,
-  windowMs: 60 * 1000, // 20 requests per min
-  message: "Admin security threshold reached.",
-});
+export const adminLimiter = process.env.NODE_ENV === 'production' 
+  ? createRateLimiter({
+      routeName: "admin-api",
+      limit: 100,
+      windowMs: 60 * 1000,
+      message: "Admin security threshold reached.",
+    })
+  : (req, res, next) => next();

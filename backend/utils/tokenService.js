@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/User.js";
+import Recruiter from "../models/Recruiter.js";
+import Candidate from "../models/Candidate.js";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -42,14 +44,34 @@ export const generateRefreshToken = (user, jti) => {
 /**
  * Cookie configuration — centralized for consistency.
  */
-const getCookieOptions = (maxAgeMs) => ({
-  maxAge: maxAgeMs,
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "None" : "Lax",
-  path: "/",
-  domain: isProd ? ".akjobservices.com" : undefined,
-});
+const isProductionHost = (req) => {
+  if (!req) return false;
+  const host = (req.get("host") || "").toLowerCase();
+  const forwarded = (req.get("X-Forwarded-Proto") || "").toLowerCase();
+  const isLocalHost = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("10.0.2.2");
+  const isHttpsForwarded = forwarded === "https";
+  // Only treat as production if NOT localhost AND (using HTTPS or X-Forwarded-Proto is https)
+  return !isLocalHost && (req.secure || isHttpsForwarded);
+};
+
+/**
+ * Cookie configuration — centralized for consistency.
+ * Uses actual request context to determine secure flag reliably.
+ */
+const getCookieOptions = (maxAgeMs, req = null) => {
+  const secure = isProductionHost(req);
+  const sameSite = secure ? "None" : "Lax";
+  const domain = secure ? ".akjobservices.com" : undefined;
+
+  return {
+    maxAge: maxAgeMs,
+    httpOnly: true,
+    secure,
+    sameSite,
+    path: "/",
+    domain,
+  };
+};
 
 /**
  * Issue both tokens, store JTI session details in DB,
@@ -134,6 +156,18 @@ export const sendTokenResponse = async (user, statusCode, res, req, existingJtiT
     await userWithSessions.save();
   }
 
+  let profilePhoto = '';
+  let companyLogo = '';
+  let companyName = '';
+  if (user.role === 'CANDIDATE') {
+    const cand = await Candidate.findOne({ userId: user._id || user.id }).select('profilePhoto');
+    profilePhoto = cand ? cand.profilePhoto : '';
+  } else if (user.role === 'RECRUITER') {
+    const rec = await Recruiter.findOne({ userId: user._id || user.id }).select('companyLogo companyName');
+    companyLogo = rec ? rec.companyLogo : '';
+    companyName = rec ? rec.companyName : '';
+  }
+
   const responsePayload = {
     success: true,
     user: {
@@ -142,6 +176,10 @@ export const sendTokenResponse = async (user, statusCode, res, req, existingJtiT
       email: user.email,
       role: user.role,
       isVerified: user.isVerified,
+      planType: user.planType || 'FREE',
+      profilePhoto,
+      companyLogo,
+      companyName
     },
   };
 
@@ -168,8 +206,8 @@ export const sendTokenResponse = async (user, statusCode, res, req, existingJtiT
   // Web clients strictly receive HttpOnly cookies
   return res
     .status(statusCode)
-    .cookie("accessToken", accessToken, getCookieOptions(15 * 60 * 1000))
-    .cookie("refreshToken", refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000))
+    .cookie("accessToken", accessToken, getCookieOptions(15 * 60 * 1000, req))
+    .cookie("refreshToken", refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000, req))
     .json(responsePayload);
 };
 
@@ -182,7 +220,7 @@ export const rotateRefreshToken = async (req, res) => {
     let incomingToken = req.cookies?.refreshToken;
     
     // Support mobile tokens sent in request payload
-    if (!incomingToken && req.body.refreshToken) {
+    if (!incomingToken && req.body?.refreshToken) {
       incomingToken = req.body.refreshToken;
     }
 
@@ -266,8 +304,8 @@ export const rotateRefreshToken = async (req, res) => {
       user.refreshToken = null;
       await user.save();
 
-      res.cookie("accessToken", "", getCookieOptions(1));
-      res.cookie("refreshToken", "", getCookieOptions(1));
+      res.cookie("accessToken", "", getCookieOptions(1, req));
+      res.cookie("refreshToken", "", getCookieOptions(1, req));
 
       return res.status(401).json({
         success: false,
@@ -315,15 +353,15 @@ export const clearTokens = async (userId, res, req) => {
     console.error("[Token Service] Logout clear fail:", err.message);
   }
 
-  res.cookie("accessToken", "", getCookieOptions(1));
-  res.cookie("refreshToken", "", getCookieOptions(1));
+  res.cookie("accessToken", "", getCookieOptions(1, req));
+  res.cookie("refreshToken", "", getCookieOptions(1, req));
 };
 
 /**
  * Logout from ALL devices — Clear refresh tokens and wipe the entire session array.
  */
-export const clearAllSessions = async (userId, res) => {
+export const clearAllSessions = async (userId, res, req = null) => {
   await User.findByIdAndUpdate(userId, { refreshToken: null, sessions: [] });
-  res.cookie("accessToken", "", getCookieOptions(1));
-  res.cookie("refreshToken", "", getCookieOptions(1));
+  res.cookie("accessToken", "", getCookieOptions(1, req));
+  res.cookie("refreshToken", "", getCookieOptions(1, req));
 };

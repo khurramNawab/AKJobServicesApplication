@@ -253,13 +253,29 @@ const HomeScreen = ({ navigation }) => {
                         </Text>
                     </Animated.View>
                 </View>
-                <TouchableOpacity
-                    style={[styles.notifBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-                    onPress={() => navigation.navigate('Notifications')}
-                >
-                    <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
-                    {hasUnreadNotifs && <View style={styles.notifBadge} />}
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    {user?.role === 'CANDIDATE' && (
+                        <TouchableOpacity
+                            style={[styles.notifBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                navigation.navigate('SavedJobs');
+                            }}
+                        >
+                            <Ionicons name="heart-outline" size={22} color={COLORS.textPrimary} />
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        style={[styles.notifBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate('Notifications');
+                        }}
+                    >
+                        <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
+                        {hasUnreadNotifs && <View style={styles.notifBadge} />}
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Interest Prompt */}

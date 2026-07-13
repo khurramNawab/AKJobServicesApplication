@@ -13,7 +13,7 @@ const razorpay = new Razorpay({
 
 // @desc    Create Razorpay Order
 // @route   POST /api/v1/payments/create-order
-// @access  Private (Recruiter)
+// @access  Private
 export const createOrder = async (req, res) => {
     try {
         const { planType, duration } = req.body; // duration: 'monthly' | 'yearly'
@@ -22,19 +22,37 @@ export const createOrder = async (req, res) => {
             config = await PlatformConfig.create({});
         }
 
+        const role = req.user.role;
         let amount = 0;
-        if (planType === 'BASIC') {
-            amount = duration === 'monthly' ? config.pricing.basic.monthly : config.pricing.basic.yearly;
-        } else if (planType === 'PREMIUM') {
-            amount = duration === 'monthly' ? config.pricing.premium.monthly : config.pricing.premium.yearly;
+
+        if (role === 'RECRUITER') {
+            if (planType === 'PRO' || planType === 'BASIC') {
+                amount = duration === 'monthly' ? config.pricing.basic.monthly : config.pricing.basic.yearly;
+            } else if (planType === 'ELITE' || planType === 'PREMIUM') {
+                amount = duration === 'monthly' ? config.pricing.premium.monthly : config.pricing.premium.yearly;
+            } else {
+                return res.status(400).json({ success: false, message: 'Invalid recruiter plan type' });
+            }
+        } else if (role === 'CANDIDATE') {
+            if (!config.candidateSubscriptionEnabled) {
+                return res.status(403).json({ success: false, message: 'Candidate subscriptions are currently disabled by admin.' });
+            }
+
+            if (planType === 'BASIC') {
+                amount = duration === 'monthly' ? config.candidateBasicMonthly : config.candidateBasicYearly;
+            } else if (planType === 'PREMIUM') {
+                amount = duration === 'monthly' ? config.candidatePremiumMonthly : config.candidatePremiumYearly;
+            } else {
+                return res.status(400).json({ success: false, message: 'Invalid candidate plan type' });
+            }
         } else {
-            return res.status(400).json({ success: false, message: 'Invalid plan type' });
+            return res.status(403).json({ success: false, message: 'Role unauthorized for payment operations' });
         }
 
         const options = {
             amount: amount * 100, // Razorpay works in paise
             currency: 'INR',
-            receipt: `receipt_${Date.now()}_${req.user._id}`,
+            receipt: `rcpt_${req.user._id.toString().slice(-10)}_${Date.now()}`,
         };
 
         const order = await razorpay.orders.create(options);
@@ -55,6 +73,7 @@ export const createOrder = async (req, res) => {
             keyId: process.env.RAZORPAY_KEY_ID
         });
     } catch (error) {
+        console.error("Error in createOrder:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -94,8 +113,14 @@ export const verifyPayment = async (req, res) => {
                 endDate.setFullYear(now.getFullYear() + 1);
             }
 
+            let finalPlanType = planType;
+            if (req.user.role === 'RECRUITER') {
+                if (planType === 'BASIC') finalPlanType = 'PRO';
+                else if (planType === 'PREMIUM') finalPlanType = 'ELITE';
+            }
+
             await User.findByIdAndUpdate(req.user._id, {
-                planType,
+                planType: finalPlanType,
                 subscriptionStart: now,
                 subscriptionEnd: endDate,
                 isActive: true

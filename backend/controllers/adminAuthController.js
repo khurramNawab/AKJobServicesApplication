@@ -38,18 +38,11 @@ export const loginAdmin = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access denied. Authorized personnel only.' });
         }
 
-        // Account lock check
-        if (user.lockUntil && user.lockUntil > Date.now()) {
-            const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
-            return res.status(423).json({ success: false, message: `Account temporarily locked for security. Try again in ${minutesLeft} mins.` });
-        }
-
         // Password verification
         const isMatch = await user.matchPassword(password);
         console.log(`[AUTH] Password match status: ${isMatch}`);
 
         if (!isMatch) {
-            await user.registerFailedLogin();
             return res.status(401).json({ success: false, message: 'Invalid credentials - Access Denied' });
         }
 
@@ -68,8 +61,8 @@ export const loginAdmin = async (req, res) => {
     } catch (error) {
         console.error("Critical Admin Login Error:", error);
         if (error instanceof z.ZodError) {
-            const errorMsg = error.errors.map(e => e.message).join(', ');
-            return res.status(400).json({ success: false, message: errorMsg, errors: error.errors });
+            const errorMsg = error.issues.map(e => e.message).join(', ');
+            return res.status(400).json({ success: false, message: errorMsg, errors: error.issues });
         }
         res.status(500).json({ success: false, message: error.message || 'Platform Logic Error' });
     }

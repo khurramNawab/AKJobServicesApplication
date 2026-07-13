@@ -50,20 +50,48 @@ const DashboardView = () => {
   };
 
   const kpiData = [
-    { label: 'Total Signal', value: stats?.totalUsers || 0, icon: Users, color: 'blue', change: '+12%', positive: true },
-    { label: 'Active Jobs', value: stats?.totalJobs || 0, icon: Briefcase, color: 'emerald', change: '+5%', positive: true },
-    { label: 'Platform Revenue', value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, icon: IndianRupee, color: 'indigo', change: '+18%', positive: true },
-    { label: 'Active Plans', value: stats?.activeSubscriptions || 0, icon: Zap, color: 'amber', change: '-2%', positive: false },
+    { 
+      label: 'Total Users', 
+      value: stats?.totalUsers || 0, 
+      icon: Users, 
+      color: 'blue', 
+      change: stats?.userChangePct !== undefined ? `${parseFloat(stats.userChangePct) >= 0 ? '+' : ''}${stats.userChangePct}%` : '+0%', 
+      positive: stats?.userChangePct !== undefined ? parseFloat(stats.userChangePct) >= 0 : true 
+    },
+    { 
+      label: 'Active Jobs', 
+      value: stats?.totalJobs || 0, 
+      icon: Briefcase, 
+      color: 'emerald', 
+      change: stats?.jobChangePct !== undefined ? `${parseFloat(stats.jobChangePct) >= 0 ? '+' : ''}${stats.jobChangePct}%` : '+0%', 
+      positive: stats?.jobChangePct !== undefined ? parseFloat(stats.jobChangePct) >= 0 : true 
+    },
+    { 
+      label: 'Platform Revenue', 
+      value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, 
+      icon: IndianRupee, 
+      color: 'indigo', 
+      change: stats?.revenueChangePct !== undefined ? `${parseFloat(stats.revenueChangePct) >= 0 ? '+' : ''}${stats.revenueChangePct}%` : '+0%', 
+      positive: stats?.revenueChangePct !== undefined ? parseFloat(stats.revenueChangePct) >= 0 : true 
+    },
+    { 
+      label: 'Active Plans', 
+      value: stats?.activeSubscriptions || 0, 
+      icon: Zap, 
+      color: 'amber', 
+      change: stats?.subscriptionChangePct !== undefined ? `${parseFloat(stats.subscriptionChangePct) >= 0 ? '+' : ''}${stats.subscriptionChangePct}%` : '+0%', 
+      positive: stats?.subscriptionChangePct !== undefined ? parseFloat(stats.subscriptionChangePct) >= 0 : true 
+    },
   ];
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* 🚀 Tactical Header */}
+      {/* 🚀 Dashboard Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1 text-left">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">System <span className="text-blue-500">Overview</span>.</h2>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Real-time operational metrics across all sectors.</p>
+          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Dashboard <span className="text-blue-500">Overview</span>.</h2>
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Real-time operational statistics of the portal.</p>
         </div>
         <div className="flex gap-4">
           <button 

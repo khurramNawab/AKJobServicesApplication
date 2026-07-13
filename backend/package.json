@@ -10,7 +10,6 @@
     "dev": "nodemon server.js",
     "build:frontend": "cd ../web && npm run build",
     "build": "npm run build:frontend",
-    "postinstall": "cd ../web && npm install --include=dev --legacy-peer-deps && npm run build",
     "start:unified": "npm run build && cross-env NODE_ENV=production node server.js"
   },
   "keywords": [],

@@ -40,7 +40,7 @@ const Salaries = () => {
                   <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 text-[10px] font-black uppercase tracking-[0.2em] text-[#4F8EF7]">
                      <TrendingUp className="w-3 h-3" /> Financial Intelligence Matrix
                   </div>
-                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-white">Know your <span className="gradient-text">Worth</span>.</h1>
+                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-text-primary">Know your <span className="gradient-text">Worth</span>.</h1>
                   <p className="text-text-secondary text-xl font-medium opacity-80 leading-relaxed max-w-xl">
                      Navigate the financial landscape of the modern job market with real-time data and corporate trends across India.
                   </p>
@@ -56,7 +56,7 @@ const Salaries = () => {
                            <stat.icon className="w-6 h-6" />
                         </div>
                         <div>
-                           <p className="text-3xl font-black text-white">{stat.val}</p>
+                           <p className="text-3xl font-black text-text-primary">{stat.val}</p>
                            <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1">{stat.label}</p>
                         </div>
                      </div>
@@ -71,7 +71,7 @@ const Salaries = () => {
                   <input
                      type="text"
                      placeholder="Job Role / Domain / Industry..."
-                     className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 font-black text-2xl tracking-tight"
+                     className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-muted pl-20 pr-6 py-8 font-black text-2xl tracking-tight"
                      value={searchQuery}
                      onChange={(e) => setSearchQuery(e.target.value)}
                   />

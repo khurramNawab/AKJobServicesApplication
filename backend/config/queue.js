@@ -121,18 +121,24 @@ export const emailQueue = new QueueClass("emailQueue", { connection: redisConnec
 export const notificationQueue = new QueueClass("notificationQueue", { connection: redisConnection });
 
 // ─── Nodemailer Setup for Email Worker ───────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: parseInt(process.env.SMTP_PORT) === 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false
+let transporter;
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: parseInt(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
   }
-});
+  return transporter;
+};
 
 // ─── ClamAV Mock / Hex Polyglot & Macro Payload Checkers ─────────────────────
 const scanQuarantineFile = async (filePath) => {
@@ -224,7 +230,7 @@ if (!process.env.NO_BACKGROUND_WORKERS) {
         const uploadResult = await cloudinary.uploader.upload(filePath, {
           folder: "jobportal/resumes",
           resource_type: "raw",
-          public_id: `${Date.now()}-${path.basename(filePath, path.extname(filePath))}`,
+          public_id: `${Date.now()}-${path.basename(filePath)}`,
         });
 
         await Candidate.findOneAndUpdate(
@@ -269,7 +275,7 @@ if (!process.env.NO_BACKGROUND_WORKERS) {
       console.log(`[Worker] Sending email to: ${to} | job: ${job.id} | attempt: ${attempt}`);
       
       try {
-        await transporter.sendMail({
+        await getTransporter().sendMail({
           from: `"${process.env.SMTP_FROM_NAME || 'AKJOB Services'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
           to,
           subject,

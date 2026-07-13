@@ -20,6 +20,11 @@ const EditJob = () => {
     jobType: 'Full-time',
     experienceLevel: 'Entry Level',
     requirements: [''],
+    educationQualification: '',
+    vacancies: 1,
+    applicationDeadline: '',
+    interviewMode: 'Online',
+    skills: ''
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +51,11 @@ const EditJob = () => {
           jobType: job.jobType || 'Full-time',
           experienceLevel: job.experienceLevel || 'Entry Level',
           requirements: job.requirements?.length > 0 ? job.requirements : [''],
+          educationQualification: job.educationQualification || '',
+          vacancies: job.vacancies || 1,
+          applicationDeadline: job.applicationDeadline ? job.applicationDeadline.split('T')[0] : '',
+          interviewMode: job.interviewMode || 'Online',
+          skills: Array.isArray(job.skills) ? job.skills.join(', ') : '',
         });
       } catch (err) {
         setError('Failed to fetch job data.');
@@ -85,10 +95,14 @@ const EditJob = () => {
     setIsUpdating(true);
 
     try {
-      await api.put(`/jobs/${jobId}`, {
+      const payload = {
           ...formData,
-          requirements: formData.requirements.filter(r => r.trim() !== '')
-      });
+          requirements: formData.requirements.filter(r => r.trim() !== ''),
+          vacancies: Number(formData.vacancies),
+          skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+          applicationDeadline: formData.applicationDeadline || null
+      };
+      await api.put(`/jobs/${jobId}`, payload);
       setSuccess(true);
       setTimeout(() => navigate('/recruiter-dashboard'), 2000);
     } catch (err) {
@@ -188,6 +202,73 @@ const EditJob = () => {
                         {jobTypes.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
+
+                {/* ── New Spec Fields ── */}
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Education Qualification</label>
+                    <input
+                        type="text"
+                        name="educationQualification"
+                        value={formData.educationQualification || ''}
+                        onChange={handleChange}
+                        placeholder="e.g. B.Tech, MCA, or Equivalent"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Number of Vacancies</label>
+                    <input
+                        type="number"
+                        name="vacancies"
+                        min="1"
+                        value={formData.vacancies || 1}
+                        onChange={handleChange}
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Application Deadline</label>
+                    <input
+                        type="date"
+                        name="applicationDeadline"
+                        value={formData.applicationDeadline || ''}
+                        onChange={handleChange}
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Interview Mode</label>
+                    <select
+                        name="interviewMode"
+                        value={formData.interviewMode || 'Online'}
+                        onChange={handleChange}
+                        className="w-full bg-bg-main border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
+                    >
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Both">Both</option>
+                    </select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Key Skills (Comma Separated)</label>
+                    <input
+                        type="text"
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleChange}
+                        placeholder="e.g. React, Node.js, TypeScript, Docker"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+                {/* ───────────────────── */}
              </div>
           </div>
 

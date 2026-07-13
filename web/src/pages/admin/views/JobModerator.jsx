@@ -13,13 +13,14 @@ import {
   Eye,
   IndianRupee
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
 import Pagination from '../../../components/ui/Pagination';
 
 const JobModerator = () => {
   const { jobs, pagination, fetchAdminData, handleDeleteJob: onDelete } = useOutletContext();
   const [search, setSearch] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
   
   const filtered = jobs.filter(j => 
     j.title?.toLowerCase().includes(search.toLowerCase()) || 
@@ -71,13 +72,17 @@ const JobModerator = () => {
                    >
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                               <Briefcase size={20} />
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black text-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
+                               {j.recruiterId?.companyLogo ? (
+                                  <img src={j.recruiterId.companyLogo} alt="Logo" className="w-full h-full object-contain p-1" />
+                               ) : (
+                                  <Briefcase size={20} />
+                               )}
                             </div>
                             <div className="text-left">
                                <p className="text-white font-black text-sm tracking-tight">{j.title}</p>
                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                                 <Building2 size={10} /> {j.companyName}
+                                 <Building2 size={10} /> {j.companyName || j.recruiterId?.companyName || 'Corporate Entity'}
                                </p>
                             </div>
                          </div>
@@ -93,12 +98,12 @@ const JobModerator = () => {
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-2 text-indigo-400 font-black text-[11px] uppercase tracking-tighter">
                             <IndianRupee size={14} /> 
-                            {j.salaryRange?.min ? `${j.salaryRange.min} - ${j.salaryRange.max} ${j.salaryRange.currency}` : 'Confidential'}
+                            {j.salaryRange?.min ? `${j.salaryRange.min} - ${j.salaryRange.max} ${j.salaryRange.currency || 'INR'}` : 'Confidential'}
                          </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                         <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                            <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all">
+                         <div className="flex items-center justify-end gap-3 transition-all">
+                            <button onClick={() => setSelectedJob(j)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all">
                                <Eye size={16} />
                             </button>
                             <button 
@@ -124,6 +129,76 @@ const JobModerator = () => {
           />
         </div>
       </div>
+
+      {/* Details Modal */}
+      <AnimatePresence>
+         {selectedJob && (
+            <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+               onClick={(e) => e.target === e.currentTarget && setSelectedJob(null)}
+            >
+               <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-8"
+               >
+                  <div className="flex items-center justify-between">
+                     <div>
+                        <h3 className="text-xl font-black text-white uppercase tracking-tight">{selectedJob.title}</h3>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">{selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Corporate Entity'}</p>
+                     </div>
+                     <button onClick={() => setSelectedJob(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                        ✕
+                     </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-slate-400 text-xs">
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Location</p>
+                        <p className="text-white font-bold mt-1 flex items-center gap-1.5"><MapPin size={12} /> {selectedJob.location}</p>
+                     </div>
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Salary / Year</p>
+                        <p className="text-white font-bold mt-1 flex items-center gap-1.5"><IndianRupee size={12} /> {selectedJob.salaryRange?.min || selectedJob.salaryRange} - {selectedJob.salaryRange?.max || ''} {selectedJob.salaryRange?.currency || 'INR'}</p>
+                     </div>
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Vacancies</p>
+                        <p className="text-white font-bold mt-1">{selectedJob.vacancies || 1}</p>
+                     </div>
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Interview Mode</p>
+                        <p className="text-white font-bold mt-1">{selectedJob.interviewMode || 'Online'}</p>
+                     </div>
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Education Required</p>
+                        <p className="text-white font-bold mt-1">{selectedJob.educationQualification || 'N/A'}</p>
+                     </div>
+                     <div>
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Deadline</p>
+                        <p className="text-white font-bold mt-1">{selectedJob.applicationDeadline ? new Date(selectedJob.applicationDeadline).toLocaleDateString() : 'None'}</p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                     <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Description</p>
+                     <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedJob.description}</p>
+                  </div>
+
+                  {selectedJob.requirements && (
+                     <div className="space-y-3">
+                        <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Requirements</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedJob.requirements}</p>
+                     </div>
+                  )}
+               </motion.div>
+            </motion.div>
+         )}
+      </AnimatePresence>
+
     </div>
   );
 };

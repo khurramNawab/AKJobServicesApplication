@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -43,7 +43,7 @@ const AdminLogin = () => {
 
 
     return (
-        <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden">
+        <div data-theme="dark" className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden text-slate-100">
             
             {/* Background Aesthetics */}
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
@@ -123,4 +123,3 @@ const AdminLogin = () => {
 };
 
 export default AdminLogin;
-

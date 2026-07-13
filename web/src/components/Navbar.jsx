@@ -1,24 +1,26 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Briefcase, User, LogOut, Menu, X, ShieldCheck, Bell, CheckCircle2, Clock } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Briefcase, User, LogOut, Menu, X, ShieldCheck, Bell, CheckCircle2, Clock, Sun, Moon } from 'lucide-react';
 import api from '../services/api';
 import Button from './ui/Button';
 import Logo from '../assets/brand-logo.png';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
-  // 🛡️ ADMIN ISOLATION: Hide Navbar completely on all /admin routes
-  if (location.pathname.startsWith('/admin')) return null;
-
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = React.useRef(null);
+
+  // 🛡️ ADMIN ISOLATION: Hide Navbar completely on all /admin routes
+  if (location.pathname.startsWith('/admin')) return null;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +29,18 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    if (!isNotificationsOpen) return;
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isNotificationsOpen]);
 
   useEffect(() => {
     if (user) {
@@ -68,19 +82,21 @@ const Navbar = () => {
     { name: 'Companies', path: '/companies' },
     { name: 'Salaries', path: '/salaries' },
     { name: 'About Us', path: '/about' },
+    // Recruiter Pricing — only show when logged in as RECRUITER
+    ...(user?.role === 'RECRUITER' ? [{ name: 'Pricing', path: '/pricing' }] : []),
   ];
 
   return (
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-300 px-6 ${
         isScrolled || isMobileMenuOpen
-          ? 'bg-[#1E293B]/95 backdrop-blur-[12px] border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.15)]'
-          : 'bg-[#1E293B]/70 backdrop-blur-[8px] border-b border-transparent'
+          ? 'bg-bg-surface/95 backdrop-blur-[12px] border-b border-[rgba(0,0,0,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.15)]'
+          : 'bg-bg-surface/70 backdrop-blur-[8px] border-b border-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
         <Link to="/" className="group" onClick={() => setIsMobileMenuOpen(false)}>
-          <img src={Logo} alt="AK Job Services" className="w-20 h-20 object-contain group-hover:scale-105 transition-transform duration-200" />
+          <img src={Logo} alt="AK Job Services" className="w-24 h-24 object-contain group-hover:scale-105 transition-transform duration-200" />
         </Link>
 
         {/* Desktop Links */}
@@ -105,11 +121,19 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* 🌙 Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-white/[0.06] text-text-secondary hover:text-text-primary transition-all"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4">
                 {/* Notification Bell */}
-                <div className="relative">
+                <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                     className="p-2 text-text-secondary hover:text-[#4F8EF7] transition-colors relative rounded-lg hover:bg-white/[0.04]"
@@ -161,8 +185,8 @@ const Navbar = () => {
                   )}
                 </div>
 
-                <Link
-                  to={user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard'}
+                 <Link
+                  to={user.role === 'ADMIN' ? '/admin' : user.role === 'RECRUITER' ? '/recruiter-dashboard' : '/dashboard'}
                   className="text-sm font-medium text-text-secondary hover:text-[#4F8EF7] transition-colors"
                 >
                   Dashboard
@@ -179,7 +203,7 @@ const Navbar = () => {
                     )}
                   </div>
                   <Link
-                    to={user.role === 'RECRUITER' ? '/recruiter-profile' : '/profile'}
+                    to={user.role === 'ADMIN' ? '/admin' : user.role === 'RECRUITER' ? '/recruiter-profile' : '/profile'}
                     className="text-sm text-text-primary hover:text-[#4F8EF7] font-medium hidden sm:inline transition-colors"
                   >
                     {user.name}

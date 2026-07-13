@@ -1,4 +1,5 @@
 import Newsletter from '../models/Newsletter.js';
+import { sendNewsletterSubscriptionEmail } from '../utils/emailService.js';
 
 /**
  * @desc    Subscribe to newsletter
@@ -21,9 +22,15 @@ export const subscribeToNewsletter = async (req, res) => {
 
         await Newsletter.create({ email });
 
+        try {
+            await sendNewsletterSubscriptionEmail(email);
+        } catch (mailErr) {
+            console.error('[NEWSLETTER] Mail send failure:', mailErr);
+        }
+
         res.status(201).json({
             success: true,
-            message: 'Successfully joined our newsletter matrix!'
+            message: 'Successfully joined our newsletter list!'
         });
     } catch (error) {
         console.error('[NEWSLETTER] Error:', error);

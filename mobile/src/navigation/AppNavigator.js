@@ -29,6 +29,7 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import PrivacySecurityScreen from '../screens/PrivacySecurityScreen';
 import SavedJobsScreen from '../screens/SavedJobsScreen';
 import InterestSelectionScreen from '../screens/InterestSelectionScreen';
+import TalentDirectoryScreen from '../screens/TalentDirectoryScreen';
 
 // Ensure splash screen doesn't stay forever
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -51,9 +52,11 @@ const MainTabs = () => {
                     let iconName;
                     if (route.name === 'Home') iconName = focused ? 'sparkles' : 'sparkles-outline';
                     else if (route.name === 'Applications') iconName = focused ? 'briefcase' : 'briefcase-outline';
+                    else if (route.name === 'Wishlist') iconName = focused ? 'heart' : 'heart-outline';
+                    else if (route.name === 'Talents') iconName = focused ? 'people' : 'people-outline';
                     else if (route.name === 'ChatList') iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
                     else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
-
+ 
                     return (
                         <View style={focused ? styles.activeIconCircle : null}>
                             <Ionicons name={iconName} size={size + (focused ? 2 : 0)} color={color} />
@@ -88,9 +91,15 @@ const MainTabs = () => {
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Explore' }} />
             {user?.role === 'RECRUITER' ? (
-                <Tab.Screen name="Applications" component={RecruiterJobsScreen} options={{ title: 'Postings' }} />
+                <>
+                    <Tab.Screen name="Applications" component={RecruiterJobsScreen} options={{ title: 'Postings' }} />
+                    <Tab.Screen name="Talents" component={TalentDirectoryScreen} options={{ title: 'Talents' }} />
+                </>
             ) : (
-                <Tab.Screen name="Applications" component={MyApplicationsScreen} options={{ title: 'My Jobs' }} />
+                <>
+                    <Tab.Screen name="Applications" component={MyApplicationsScreen} options={{ title: 'My Jobs' }} />
+                    <Tab.Screen name="Wishlist" component={SavedJobsScreen} options={{ title: 'Wishlist' }} />
+                </>
             )}
             <Tab.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Chat' }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Settings' }} />
@@ -163,6 +172,7 @@ const AppNavigator = () => {
                         <Stack.Screen name="Notifications" component={NotificationsScreen} />
                         <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
                         <Stack.Screen name="SavedJobs" component={SavedJobsScreen} />
+                        <Stack.Screen name="Talents" component={TalentDirectoryScreen} />
                         <Stack.Screen name="InterestSelection" component={InterestSelectionScreen} />
                         <Stack.Screen 
                             name="ResumeViewer" 

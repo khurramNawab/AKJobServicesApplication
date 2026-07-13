@@ -11,19 +11,19 @@
 /* ── Design Tokens ───────────────────────────────────────── */
 @theme {
   /* Backgrounds */
-  --color-bg-main:           #1E293B;  /* Slate-800 - balanced premium dark gray */
-  --color-bg-surface:        #334155;  /* Slate-700 - elevated cards */
-  --color-bg-elevated:       #475569;  /* Slate-600 - dropdowns, modals */
-  --color-bg-admin:          #0F172A;  /* Slate-900 - admin sidebar */
+  --color-bg-main:           #0B0F19;  /* Elegant deep space background */
+  --color-bg-surface:        #111827;  /* Premium dark surface cards */
+  --color-bg-elevated:       #1F2937;  /* Dropdowns, modals */
+  --color-bg-admin:          #090D16;  /* Sleek admin sidebar */
 
   /* Borders */
-  --color-border-subtle:     rgba(255,255,255,0.08);
-  --color-border-focus:      rgba(59,130,246,0.5);
+  --color-border-subtle:     rgba(255,255,255,0.06);
+  --color-border-focus:      rgba(59,130,246,0.4);
 
   /* Primary — Electric Blue */
-  --color-primary:           #3B82F6;  /* Electric Blue */
-  --color-primary-hover:     #60A5FA;
-  --color-primary-dark:      #2563EB;
+  --color-primary:           #2563EB;  /* Rich Corporate Blue */
+  --color-primary-hover:     #3B82F6;
+  --color-primary-dark:      #1D4ED8;
 
   /* Semantic */
   --color-secondary:         #F43F5E;  /* Rose-pink */
@@ -33,14 +33,14 @@
   --color-cyan:              #06B6D4;
 
   /* Text */
-  --color-text-primary:      #F8FAFC;  /* Slate-50 */
-  --color-text-secondary:    #CBD5E1;  /* Slate-300 */
-  --color-text-muted:        #94A3B8;  /* Slate-400 */
+  --color-text-primary:      #F9FAFB;  /* Crisp Off-White */
+  --color-text-secondary:    #E5E7EB;  /* Light Gray */
+  --color-text-muted:        #9CA3AF;  /* Slate Muted Gray */
 
   /* Legacy aliases — keeps backward compat with existing classes */
-  --color-dark:              #1E293B;
-  --color-dark-surface:      #334155;
-  --color-dark-border:       rgba(255,255,255,0.08);
+  --color-dark:              #0B0F19;
+  --color-dark-surface:      #111827;
+  --color-dark-border:       rgba(255,255,255,0.06);
   --color-accent-glow:       #06B6D4;
 
   /* Typography */
@@ -49,6 +49,465 @@
   /* Spacing helpers */
   --spacing-8:  2rem;
   --spacing-16: 4rem;
+}
+
+/* ── Light Theme Override ─────────────────────────────────── */
+[data-theme="light"] {
+  --color-bg-main:           #E2E8F0;
+  --color-bg-surface:        #FFFFFF;
+  --color-bg-elevated:       #CBD5E1;
+  --color-bg-admin:          #1E293B;
+
+  --color-border-subtle:     rgba(0,0,0,0.08);
+  --color-border-focus:      rgba(59,130,246,0.5);
+
+  --color-text-primary:      #0F172A;
+  --color-text-secondary:    #334155;
+  --color-text-muted:        #64748B;
+
+  --color-dark:              #F1F5F9;
+  --color-dark-surface:      #FFFFFF;
+  --color-dark-border:       rgba(0,0,0,0.08);
+}
+
+/* ── Light Mode: Navbar ───────────────────────────────────── */
+[data-theme="light"] nav {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] nav a,
+[data-theme="light"] nav button,
+[data-theme="light"] nav span {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="light"] nav .text-text-secondary {
+  color: #334155 !important;
+}
+
+[data-theme="light"] nav .text-text-primary {
+  color: #0F172A !important;
+}
+
+/* Mobile menu light mode */
+[data-theme="light"] nav .bg-bg-main\/98 {
+  background: rgba(226, 232, 240, 0.98) !important;
+}
+
+[data-theme="light"] nav .border-\[rgba\(255\,255\,255\,0\.06\)\] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── Light Mode: Hero Section ─────────────────────────────── */
+[data-theme="light"] .glow-orb {
+  opacity: 0.04 !important;
+}
+
+[data-theme="light"] .border-\[rgba\(255\,255\,255\,0\.10\)\] {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] section.py-8.border-y {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Social proof logos in light mode */
+[data-theme="light"] .opacity-30 .font-black.text-white {
+  color: #64748B !important;
+}
+
+/* ── Light Mode: Salary Cards ─────────────────────────────── */
+[data-theme="light"] .glass-card h4.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card p.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card h3.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .glass-card .bg-white\/5 {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .glass-card .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+/* Trend badge in salary cards — growth up (emerald) */
+[data-theme="light"] .glass-card .bg-emerald-500\/10 {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="light"] .glass-card .border-emerald-500\/20 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* BarChart3 icon in salary cards */
+[data-theme="light"] .glass-card .text-white\/40 {
+  color: #94A3B8 !important;
+}
+
+/* glass-island light mode */
+[data-theme="light"] .glass-island {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.10) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dividers inside glass-island */
+[data-theme="light"] .glass-island .bg-white\/10 {
+  background: rgba(0, 0, 0, 0.10) !important;
+}
+
+[data-theme="light"] .glass-island .text-text-muted {
+  color: #64748B !important;
+}
+
+/* ── Light Mode: Footer Newsletter ───────────────────────────── */
+[data-theme="light"] footer {
+  background: var(--color-bg-main) !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] footer .border-t {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] footer [style*="rgba(13,21,38"] {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.10) !important;
+}
+
+[data-theme="light"] footer h3 {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] footer p {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] footer a {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] footer a:hover {
+  color: #2563EB !important;
+}
+
+[data-theme="light"] footer .label-caps {
+  color: var(--color-text-muted) !important;
+}
+
+[data-theme="light"] footer .text-xs.text-text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+/* ── Light Mode: Landing Latest Jobs section ──────────────── */
+[data-theme="light"] section.py-16.border-t {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .glass-card .border-\[rgba\(255\,255\,255\,0\.05\)\] {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .glass-card .border-\[rgba\(255\,255\,255\,0\.06\)\] {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .glass-card .bg-white\/\[0\.03\] {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .glass-card .bg-\[rgba\(255\,255\,255\,0\.05\)\] {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .glass-card .border-\[rgba\(255\,255\,255\,0\.08\)\] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Stats section divider line */
+[data-theme="light"] .glass-card .border-\[rgba\(255\,255\,255\,0\.06\)\] {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Stats section icon bg */
+[data-theme="light"] .glass-card .bg-\[\#4F8EF7\]\/10 {
+  background: rgba(79, 142, 247, 0.12) !important;
+}
+
+/* ── Light Mode: Salary hero insight cards ────────────────── */
+[data-theme="light"] .glass-card .p-5.rounded-2xl.bg-white\/5 {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* HeroIllustration graph visibility fix */
+[data-theme="light"] .glass-card svg {
+  color: var(--color-text-primary);
+}
+
+/* ── Light Mode: Section backgrounds consistent ───────────── */
+[data-theme="light"] .bg-bg-main {
+  background-color: #F1F5F9 !important;
+}
+
+[data-theme="light"] section.py-8.border-y.bg-\[rgba\(255\,255\,255\,0\.01\)\] {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ── Light Mode: Explore Opportunities button ─────────────── */
+[data-theme="light"] button.border.border-\[rgba\(255\,255\,255\,0\.10\)\] {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: var(--color-text-secondary) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] button.border.border-\[rgba\(255\,255\,255\,0\.10\)\]:hover {
+  border-color: rgba(37, 99, 235, 0.4) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #0F172A !important;
+}
+
+/* View All Jobs button in landing */
+[data-theme="light"] button.px-6.py-2\.5.rounded-\[10px\].border {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: var(--color-text-secondary) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ── Light Mode: Job tag chips ────────────────────────────── */
+[data-theme="light"] span.px-2\.5.py-1.rounded-lg.text-\[10px\] {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* ── Light Mode: Notification panel ──────────────────────── */
+[data-theme="light"] .glass-modal .border-\[rgba\(255\,255\,255\,0\.06\)\] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .glass-modal .border-\[rgba\(255\,255\,255\,0\.08\)\] {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+[data-theme="light"] .glass-modal .border-\[rgba\(255\,255\,255\,0\.05\)\] {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .glass-modal .bg-white\/\[0\.04\] {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .glass-modal .hover\:bg-white\/\[0\.03\]:hover {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ── Light Mode: Scrollbar ────────────────────────────────── */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #E2E8F0;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ── Light Mode: Salary page Intelligence Disclosure card ──── */
+[data-theme="light"] .glass-card h3.text-2xl.font-black.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card p.text-base.text-text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Promo video section light mode */
+[data-theme="light"] section h2.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] section p.text-gray-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] section .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ── Light Mode: HeroIllustration (graph card & floating nodes) ─ */
+/* The hero illustration uses a fixed dark card - keep it dark for visual contrast in light mode */
+/* but make the floating company nodes visible */
+[data-theme="light"] .absolute.top-12.left-6.z-30,
+[data-theme="light"] .absolute.bottom-12.right-6.z-30,
+[data-theme="light"] .absolute.top-24.right-4.z-30 {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .absolute.top-12.left-6.z-30 span.font-black.text-white,
+[data-theme="light"] .absolute.bottom-12.right-6.z-30 span.font-black.text-white,
+[data-theme="light"] .absolute.top-24.right-4.z-30 span.font-black.text-white {
+  color: #0F172A !important;
+}
+
+/* ── Light Mode: Salary page - "Explore Opportunities" + section header ─ */
+[data-theme="light"] .min-h-screen.bg-bg-main {
+  background: #E2E8F0 !important;
+}
+
+/* Salary page - insight cards top icons border */
+[data-theme="light"] .glass-card .border-white\/10.w-fit {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Full Stack Developer card trend badge */
+[data-theme="light"] .glass-card .bg-\\[\\#4F8EF7\\]\\/10.border-\\[\\#4F8EF7\\]\\/40 {
+  background: rgba(79, 142, 247, 0.12) !important;
+  border-color: rgba(79, 142, 247, 0.3) !important;
+}
+
+/* Salary page 'Scan Worth' button stays blue - no override needed */
+
+/* Salary page - search island divider */
+[data-theme="light"] .glass-island .hidden.md\\:block.w-\\[1px\\].h-14.bg-white\\/10 {
+  background: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Light Mode overrides for elements and custom classes */
+[data-theme="light"] select option {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .glass-card:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(79, 142, 247, 0.3) !important;
+  box-shadow: 0 10px 30px rgba(79, 142, 247, 0.1) !important;
+}
+
+[data-theme="light"] .glass-island {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .glass-modal {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .input-field {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .input-field::placeholder {
+  color: var(--color-text-muted) !important;
+}
+
+/* Let's override explicit text color class overrides from Tailwind inside light theme glass components */
+[data-theme="light"] .glass-card,
+[data-theme="light"] .glass,
+[data-theme="light"] .glass-island,
+[data-theme="light"] .glass-modal {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] .glass-card h1,
+[data-theme="light"] .glass-card h2,
+[data-theme="light"] .glass-card h3,
+[data-theme="light"] .glass-card h4,
+[data-theme="light"] .glass-card h5,
+[data-theme="light"] .glass-card h6,
+[data-theme="light"] .glass h1,
+[data-theme="light"] .glass h2,
+[data-theme="light"] .glass h3,
+[data-theme="light"] .glass-island h1,
+[data-theme="light"] .glass-island h2,
+[data-theme="light"] .glass-modal h1,
+[data-theme="light"] .glass-modal h2,
+[data-theme="light"] .glass-modal h3 {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card .text-white,
+[data-theme="light"] .glass-card .text-slate-200,
+[data-theme="light"] .glass-card .text-gray-200,
+[data-theme="light"] .glass-modal .text-white,
+[data-theme="light"] .glass-modal .text-slate-200,
+[data-theme="light"] .glass-modal .text-gray-200,
+[data-theme="light"] .glass-island .text-white {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] .glass-card .text-white\/70,
+[data-theme="light"] .glass-card .text-slate-300,
+[data-theme="light"] .glass-card .text-gray-300,
+[data-theme="light"] .glass-modal .text-white\/70,
+[data-theme="light"] .glass-modal .text-slate-300,
+[data-theme="light"] .glass-modal .text-gray-300 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="light"] .glass-card .text-white\/50,
+[data-theme="light"] .glass-card .text-slate-400,
+[data-theme="light"] .glass-card .text-gray-400,
+[data-theme="light"] .glass-card .text-gray-500,
+[data-theme="light"] .glass-modal .text-white\/50,
+[data-theme="light"] .glass-modal .text-slate-400,
+[data-theme="light"] .glass-modal .text-gray-400,
+[data-theme="light"] .glass-modal .text-gray-500 {
+  color: var(--color-text-muted) !important;
+}
+
+/* Fix input boxes inside tailwind groups in light mode */
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="password"],
+[data-theme="light"] input[type="url"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="light"] input[type="text"]::placeholder,
+[data-theme="light"] input[type="email"]::placeholder,
+[data-theme="light"] input[type="password"]::placeholder,
+[data-theme="light"] input[type="url"]::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--color-text-muted) !important;
 }
 
 /* ── Global Base ──────────────────────────────────────────── */
@@ -93,30 +552,25 @@
    COMPONENT CLASSES
    ============================================================ */
 
-/* ── Glass / Card ─────────────────────────────────────────── */
 .glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-card:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(79, 142, 247, 0.4);
+  background: #172033;
+  border-color: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(79, 142, 247, 0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 /* Modal/overlay glass — heavier blur */

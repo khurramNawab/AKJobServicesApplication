@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Sparkles
+  Sparkles,
+  Video,
+  Building2
 } from 'lucide-react';
 
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -29,15 +31,17 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
   };
 
   const menuItems = [
-    { id: 'overview',       label: 'Dashboard',     icon: LayoutDashboard, path: '' },
-    { id: 'users',          label: 'User Directory', icon: Users,           path: 'users' },
-    { id: 'jobs',           label: 'Jobs Moderator', icon: Briefcase,       path: 'jobs' },
-    { id: 'applications',   label: 'Applications',   icon: FileText,        path: 'applications' },
-    { id: 'subscriptions',  label: 'Subscriptions',  icon: Sparkles,        path: 'subscriptions' },
-    { id: 'payments',       label: 'Payments',       icon: CreditCard,      path: 'payments' },
-    { id: 'reports',        label: 'Reports',        icon: BarChart,        path: 'reports' },
-    { id: 'broadcast',      label: 'Broadcaster',    icon: Radio,           path: 'broadcast' },
-    { id: 'settings',       label: 'Settings',       icon: Settings,        path: 'settings' },
+    { id: 'overview',       label: 'Dashboard',       icon: LayoutDashboard, path: '' },
+    { id: 'users',          label: 'User Directory',   icon: Users,           path: 'users' },
+    { id: 'jobs',           label: 'Jobs Moderator',   icon: Briefcase,       path: 'jobs' },
+    { id: 'applications',   label: 'Applications',     icon: FileText,        path: 'applications' },
+    { id: 'companies',      label: 'Companies',        icon: Building2,       path: 'companies' },
+    { id: 'subscriptions',  label: 'Subscriptions',    icon: Sparkles,        path: 'subscriptions' },
+    { id: 'payments',       label: 'Payments',         icon: CreditCard,      path: 'payments' },
+    { id: 'reports',        label: 'Reports',          icon: BarChart,        path: 'reports' },
+    { id: 'broadcast',      label: 'Broadcaster',      icon: Radio,           path: 'broadcast' },
+    { id: 'promo-video',    label: 'Promo Video',      icon: Video,           path: 'promo-video' },
+    { id: 'settings',       label: 'Settings',         icon: Settings,        path: 'settings' },
   ];
 
   return (

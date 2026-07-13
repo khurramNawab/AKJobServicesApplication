@@ -11,9 +11,14 @@ export const generateCsrfToken = (req, res, next) => {
     if (!token) {
         token = crypto.randomBytes(32).toString('hex');
         // Must NOT be httpOnly so frontend JS can read it and send it in headers
+        const host = (req.get("host") || "").toLowerCase();
+        const isLocal = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("10.0.2.2");
+        const isHttps = req.secure || req.get("X-Forwarded-Proto") === "https";
+        // Only use secure cookie if actually on HTTPS AND not localhost
+        const useSecure = !isLocal && isHttps;
         res.cookie('XSRF-TOKEN', token, {
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            secure: useSecure,
+            sameSite: useSecure ? 'Strict' : 'Lax',
             path: '/',
             httpOnly: false 
         });

@@ -73,8 +73,8 @@ const Register = () => {
         className="w-full max-w-xl z-10"
       >
         <div
-          className="p-8 rounded-2xl"
-          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          className="p-8 rounded-2xl glass-card"
+          style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}
         >
           <AnimatePresence mode="wait">
             {step === 1 ? (
@@ -101,13 +101,13 @@ const Register = () => {
                     className={`group p-6 rounded-xl border transition-all duration-200 text-left space-y-3 hover:scale-[1.02] active:scale-[0.98] ${
                       formData.role === 'CANDIDATE'
                         ? 'bg-[#4F8EF7]/10 border-[#4F8EF7]/40'
-                        : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:border-[rgba(79,142,247,0.3)]'
+                        : 'glass-card !border-border-subtle hover:!border-[rgba(79,142,247,0.3)] !transform-none hover:!transform-none'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                       formData.role === 'CANDIDATE'
                         ? 'bg-[#4F8EF7] text-white'
-                        : 'bg-white/[0.05] text-text-muted group-hover:bg-[#4F8EF7]/10 group-hover:text-[#4F8EF7]'
+                        : 'bg-[rgba(0,0,0,0.05)] text-text-muted group-hover:bg-[#4F8EF7]/10 group-hover:text-[#4F8EF7]'
                     }`}>
                       <UserCheck className="w-6 h-6" />
                     </div>
@@ -123,13 +123,13 @@ const Register = () => {
                     className={`group p-6 rounded-xl border transition-all duration-200 text-left space-y-3 hover:scale-[1.02] active:scale-[0.98] ${
                       formData.role === 'RECRUITER'
                         ? 'bg-[#38BDF8]/10 border-[#38BDF8]/40'
-                        : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:border-[rgba(56,189,248,0.3)]'
+                        : 'glass-card !border-border-subtle hover:!border-[rgba(56,189,248,0.3)] !transform-none hover:!transform-none'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                       formData.role === 'RECRUITER'
                         ? 'bg-[#38BDF8] text-white'
-                        : 'bg-white/[0.05] text-text-muted group-hover:bg-[#38BDF8]/10 group-hover:text-[#38BDF8]'
+                        : 'bg-[rgba(0,0,0,0.05)] text-text-muted group-hover:bg-[#38BDF8]/10 group-hover:text-[#38BDF8]'
                     }`}>
                       <Briefcase className="w-6 h-6" />
                     </div>
@@ -140,7 +140,7 @@ const Register = () => {
                   </button>
                 </div>
 
-                <div className="text-center pt-2 border-t border-[rgba(255,255,255,0.06)]">
+                <div className="text-center pt-2 border-t border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.06)]">
                   <p className="text-sm text-text-secondary">
                     Already have an account?{' '}
                     <Link to="/login" className="text-[#4F8EF7] hover:text-[#6BA3FF] font-semibold transition-colors">
@@ -250,9 +250,9 @@ const Register = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
+                    <div className="flex-1 h-px bg-[var(--color-border-subtle)]" />
                     <span className="text-xs text-text-muted uppercase tracking-wider">or</span>
-                    <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
+                    <div className="flex-1 h-px bg-[var(--color-border-subtle)]" />
                   </div>
 
                   <div className="flex justify-center">

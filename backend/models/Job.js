@@ -23,11 +23,39 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please add a location"],
     },
+    category: {
+      type: String,
+      default: 'Other',
+    },
     type: {
       type: String,
       enum: ["Full-time", "Part-time", "Remote", "Contract", "Internship", "Freelance"],
       required: [true, "Please specify job type"],
     },
+    // ── New Spec Fields ────────────────────────────────────
+    educationQualification: {
+      type: String,
+      default: '',
+    },
+    vacancies: {
+      type: Number,
+      default: 1,
+      min: [1, 'At least 1 vacancy required'],
+    },
+    applicationDeadline: {
+      type: Date,
+      default: null,
+    },
+    interviewMode: {
+      type: String,
+      enum: ['Online', 'Offline', 'Both'],
+      default: 'Online',
+    },
+    experienceRequired: {
+      type: String,
+      default: '',
+    },
+    // ──────────────────────────────────────────────────────
     status: {
       type: String,
       enum: ["OPEN", "CLOSED", "DRAFT"],

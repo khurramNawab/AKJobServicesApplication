@@ -2,6 +2,7 @@ import Job from '../models/Job.js';
 import Recruiter from '../models/Recruiter.js';
 import Application from '../models/Application.js';
 import SavedJob from '../models/SavedJob.js';
+import User from '../models/User.js';
 import { buildPagination } from '../utils/pagination.js';
 import { z } from 'zod';
 import { getCachedData, setCachedData, invalidateCache, getOrFetchSWR } from '../utils/cache.js';
@@ -25,7 +26,13 @@ const jobSchema = z.object({
     jobType: z.string().optional(), // Match frontend field name
     category: z.string().optional(),
     experienceLevel: z.string().optional(),
-    status: z.enum(["OPEN", "CLOSED", "DRAFT"]).optional()
+    status: z.enum(["OPEN", "CLOSED", "DRAFT"]).optional(),
+    // ── New fields ───────────────────────────────────────
+    educationQualification: z.string().optional(),
+    vacancies: z.number().optional().default(1),
+    applicationDeadline: z.string().or(z.date()).optional().nullable(),
+    interviewMode: z.string().optional(),
+    experienceRequired: z.string().optional(),
 });
 
 const updateJobSchema = jobSchema.partial();
@@ -53,6 +60,17 @@ export const getJobs = async (req, res) => {
                 query.filter.status = req.query.status;
             } else {
                 query.filter.status = 'OPEN';  // default: only open jobs
+            }
+
+            if (req.query.featured === 'true') {
+                const premiumUsers = await User.find({ role: 'RECRUITER', planType: { $in: ['PRO', 'ELITE'] } }).select('_id');
+                const premiumUserIds = premiumUsers.map(u => u._id);
+                
+                query.filter.$or = [
+                    { recruiterId: { $in: premiumUserIds } },
+                    { companyName: { $in: ['Zomato', 'Reliance', 'Tata', 'HDFC Bank', 'Infosys', 'Tech Corp'] } }
+                ];
+                query.sort = { 'salaryRange.max': -1, createdAt: -1 };
             }
 
             const totalDocs = await Job.countDocuments(query.filter);
@@ -162,7 +180,22 @@ export const getJob = async (req, res) => {
 export const createJob = async (req, res) => {
     try {
         const validated = jobSchema.parse(req.body);
-        const { title, description, requirements, skills, salaryRange, location, type, jobType, category } = validated;
+        const { 
+            title, 
+            description, 
+            requirements, 
+            skills, 
+            salaryRange, 
+            location, 
+            type, 
+            jobType, 
+            category,
+            educationQualification,
+            vacancies,
+            applicationDeadline,
+            interviewMode,
+            experienceRequired
+        } = validated;
 
         // Smart mapping for flexible fields
         const finalType = jobType || type || 'Full-time';
@@ -178,6 +211,11 @@ export const createJob = async (req, res) => {
             type: finalType, 
             category,
             recruiterId: req.user._id,
+            educationQualification,
+            vacancies,
+            applicationDeadline,
+            interviewMode,
+            experienceRequired
         });
 
         let job = await jobDoc.populate('recruiterId', 'name email');
@@ -199,9 +237,9 @@ export const createJob = async (req, res) => {
         res.status(201).json({ success: true, data: job });
     } catch (error) {
         if (error instanceof z.ZodError) {
-            const detail = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            const detail = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
             console.error('❌ [JOB] Zod validation failed:', detail);
-            return res.status(400).json({ success: false, message: `Validation failed: ${detail}`, errors: error.errors });
+            return res.status(400).json({ success: false, message: `Validation failed: ${detail}`, errors: error.issues });
         }
         // Mongoose ValidationError — .errors is an object, not an array
         if (error.name === 'ValidationError') {
@@ -249,7 +287,7 @@ export const updateJob = async (req, res) => {
         res.status(200).json({ success: true, data: job });
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
+            return res.status(400).json({ success: false, message: 'Validation failed', errors: error.issues });
         }
         res.status(500).json({ success: false, message: error.message });
     }

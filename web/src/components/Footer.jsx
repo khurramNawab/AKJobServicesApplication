@@ -44,7 +44,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1 space-y-4">
             <Link to="/" className="group inline-block">
-              <img src={Logo} alt="AK Job Services" className="w-16 h-16 object-contain group-hover:scale-105 transition-transform duration-200" />
+              <img src={Logo} alt="AK Job Services" className="w-20 h-20 object-contain group-hover:scale-105 transition-transform duration-200" />
             </Link>
             <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
               The premium job board connecting India's top talent with the world's most innovative companies.
@@ -75,8 +75,7 @@ const Footer = () => {
 
           {/* Newsletter */}
           <div
-            className="rounded-2xl p-5 space-y-4"
-            style={{ background: 'rgba(13,21,38,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}
+            className="rounded-2xl p-5 space-y-4 glass-card"
           >
             <h3 className="text-sm font-semibold text-text-primary">Newsletter</h3>
             <p className="text-text-secondary text-xs leading-relaxed">

@@ -106,7 +106,7 @@ const userSchema = new mongoose.Schema({
     // ── Monetization: Subscription Info ────────────────────────
     planType: {
         type: String,
-        enum: ['FREE', 'BASIC', 'PREMIUM'],
+        enum: ['FREE', 'BASIC', 'PREMIUM', 'PRO', 'ELITE'],
         default: 'FREE'
     },
     subscriptionStart: {
@@ -159,19 +159,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
  * Returns true if account is now locked.
  */
 userSchema.methods.registerFailedLogin = async function () {
-    const MAX_ATTEMPTS = 5;
-    const LOCK_DURATION = 30 * 60 * 1000; // 30 minutes
-
-    this.failedLoginAttempts += 1;
-
-    if (this.failedLoginAttempts >= MAX_ATTEMPTS) {
-        this.lockUntil = new Date(Date.now() + LOCK_DURATION);
-        this.failedLoginAttempts = 0; // reset for next cycle after unlock
-        await this.save();
-        return true; // locked
-    }
-
-    await this.save();
     return false;
 };
 

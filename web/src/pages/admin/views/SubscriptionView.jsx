@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
 import {
    Zap, CreditCard, TrendingUp, Users, Clock,
@@ -22,6 +22,8 @@ const SubscriptionView = () => {
    const [subscriptions, setSubscriptions] = useState([]);
    const [loading, setLoading] = useState(true);
    const [activeFilter, setActiveFilter] = useState('ALL');
+   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
+   const [newPlanForm, setNewPlanForm] = useState({ userEmail: '', planType: 'PRO', durationMonths: '1', amount: '999' });
 
    useEffect(() => {
       const fetchSubs = async () => {
@@ -106,6 +108,43 @@ const SubscriptionView = () => {
       }
    };
 
+   const handleExportSubscribers = () => {
+      const headers = ['User Name', 'User Email', 'Plan', 'Amount (INR)', 'Status', 'End Date'];
+      const rows = subscriptions.map(s => [
+         s.user?.name || 'Unknown',
+         s.user?.email || '',
+         s.plan,
+         s.amount,
+         s.status,
+         s.endDate ? new Date(s.endDate).toLocaleDateString('en-IN') : 'N/A'
+      ]);
+      const csvContent = "data:text/csv;charset=utf-8," 
+         + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `subscribers_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+   };
+
+   const handleCreateManualSub = async (e) => {
+      e.preventDefault();
+      try {
+         const res = await api.post('/admin/subscriptions', newPlanForm);
+         if (res.data.success) {
+            const updated = await api.get('/admin/subscriptions');
+            if (updated.data.success) setSubscriptions(updated.data.data);
+            setShowNewPlanModal(false);
+            setNewPlanForm({ userEmail: '', planType: 'PRO', durationMonths: '1', amount: '999' });
+            alert('✅ Manual subscription created successfully!');
+         }
+      } catch (err) {
+         alert(err.response?.data?.message || '❌ Failed to create manual subscription');
+      }
+   };
+
    const planCounts = {
       BASIC: subscriptions.filter(s => s.plan === 'BASIC').length,
       PRO: subscriptions.filter(s => s.plan === 'PRO').length,
@@ -150,17 +189,23 @@ const SubscriptionView = () => {
          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div className="space-y-1">
                <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">
-                  Subscription <span className="text-blue-500">Matrix</span>.
+                  Subscription <span className="text-blue-500">Plans</span>.
                </h2>
                <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">
-                  Manage premium tiers and monetization nodes.
+                  Manage premium membership plans and pricing.
                </p>
             </div>
             <div className="flex gap-3">
-               <button className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
+               <button 
+                  onClick={handleExportSubscribers}
+                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+               >
                   <Download size={13} /> Export
                </button>
-               <button className="px-5 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2">
+               <button 
+                  onClick={() => setShowNewPlanModal(true)}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
+               >
                   <Plus size={13} /> New Plan
                </button>
             </div>
@@ -231,8 +276,8 @@ const SubscriptionView = () => {
                      <Settings size={20} />
                   </div>
                   <div>
-                     <h3 className="text-base font-black text-white uppercase tracking-widest">Platform Plan Configuration</h3>
-                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Admin controls for pricing and access</p>
+                     <h3 className="text-base font-black text-white uppercase tracking-widest">Recruiter Plan Pricing</h3>
+                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Set prices and feature access for recruiters</p>
                   </div>
                </div>
                <div className="flex items-center gap-4">
@@ -452,6 +497,303 @@ const SubscriptionView = () => {
                   </table>
                </div>
             )}
+         </div>
+
+         {/* ══════════════════════════════════════════════════════ */}
+         {/* CANDIDATE SUBSCRIPTION CONTROL (Admin-Controlled)     */}
+         {/* ══════════════════════════════════════════════════════ */}
+         <CandidateSubscriptionConfig subscriptions={subscriptions} />
+
+         {/* New Plan / Manual Subscription Modal */}
+         <AnimatePresence>
+            {showNewPlanModal && (
+               <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+                  onClick={(e) => e.target === e.currentTarget && setShowNewPlanModal(false)}
+               >
+                  <motion.div
+                     initial={{ scale: 0.9, opacity: 0 }}
+                     animate={{ scale: 1, opacity: 1 }}
+                     exit={{ scale: 0.9, opacity: 0 }}
+                     className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-md space-y-8 text-left"
+                  >
+                     <div className="flex items-center justify-between">
+                        <div>
+                           <h3 className="text-xl font-black text-white uppercase tracking-tight">Manual Subscription</h3>
+                           <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Activate plan for any user directly</p>
+                        </div>
+                        <button onClick={() => setShowNewPlanModal(false)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                           <Plus className="rotate-45" size={18} />
+                        </button>
+                     </div>
+
+                     <form onSubmit={handleCreateManualSub} className="space-y-5">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">User Email *</label>
+                           <input
+                              type="email"
+                              required
+                              placeholder="e.g. user@company.com"
+                              value={newPlanForm.userEmail}
+                              onChange={e => setNewPlanForm(p => ({ ...p, userEmail: e.target.value }))}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                           />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Plan Type *</label>
+                              <select
+                                 value={newPlanForm.planType}
+                                 onChange={e => setNewPlanForm(p => ({ ...p, planType: e.target.value }))}
+                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
+                              >
+                                 <option value="PRO">PRO</option>
+                                 <option value="ELITE">ELITE</option>
+                                 <option value="BASIC">BASIC</option>
+                              </select>
+                           </div>
+
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Duration *</label>
+                              <select
+                                 value={newPlanForm.durationMonths}
+                                 onChange={e => setNewPlanForm(p => ({ ...p, durationMonths: e.target.value }))}
+                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
+                              >
+                                 <option value="1">1 Month</option>
+                                 <option value="3">3 Months</option>
+                                 <option value="6">6 Months</option>
+                                 <option value="12">12 Months (1 Year)</option>
+                              </select>
+                           </div>
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paid Amount (₹)</label>
+                           <input
+                              type="number"
+                              required
+                              min="0"
+                              placeholder="e.g. 999"
+                              value={newPlanForm.amount}
+                              onChange={e => setNewPlanForm(p => ({ ...p, amount: e.target.value }))}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                           />
+                        </div>
+
+                        <div className="pt-4">
+                           <button
+                              type="submit"
+                              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-lg"
+                           >
+                              <Plus size={16} /> Activate Plan
+                           </button>
+                        </div>
+                     </form>
+                  </motion.div>
+               </motion.div>
+            )}
+         </AnimatePresence>
+
+      </div>
+   );
+};
+
+// ── Candidate Subscription Config Component ────────────────
+const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
+   const [cfg, setCfg] = useState({
+      candidateSubscriptionEnabled: false,
+      candidateBasicMonthly: 299,
+      candidateBasicYearly: 2999,
+      candidatePremiumMonthly: 599,
+      candidatePremiumYearly: 5999,
+      candidateFreeApplicationLimit: 10,
+   });
+   const [loading, setLoading] = useState(true);
+   const [saving, setSaving] = useState(false);
+   const [toast, setToast] = useState('');
+
+   useEffect(() => {
+      const fetch = async () => {
+         try {
+            const { data } = await api.get('/admin/candidate-subscription');
+            if (data.success) setCfg(data.data);
+         } catch { /* use defaults */ } finally { setLoading(false); }
+      };
+      fetch();
+   }, []);
+
+   const handleSave = async () => {
+      setSaving(true);
+      try {
+         await api.put('/admin/candidate-subscription', cfg);
+         setToast('✅ Candidate subscription config saved!');
+      } catch { setToast('❌ Failed to save.'); }
+      finally {
+         setSaving(false);
+         setTimeout(() => setToast(''), 3000);
+      }
+   };
+
+   if (loading) return null;
+
+   const activeBasicUsers = subscriptions.filter(s => (s.plan === 'BASIC' || s.plan === 'CANDIDATE_BASIC') && s.status === 'ACTIVE').length;
+   const activePremiumUsers = subscriptions.filter(s => (s.plan === 'PREMIUM' || s.plan === 'CANDIDATE_PREMIUM') && s.status === 'ACTIVE').length;
+
+   return (
+      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+         <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between">
+            <div>
+               <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-3">
+                  <Users size={20} className="text-purple-500" />
+                  Candidate Subscription Control
+               </h3>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">
+                  Admin toggles — when ON, candidates must pay to use premium features
+               </p>
+            </div>
+            {/* Master Toggle */}
+            <div className="flex items-center gap-4">
+               <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.candidateSubscriptionEnabled ? 'text-purple-400' : 'text-gray-600'}`}>
+                  {cfg.candidateSubscriptionEnabled ? 'ACTIVE' : 'INACTIVE'}
+               </span>
+               <button
+                  onClick={() => setCfg(p => ({ ...p, candidateSubscriptionEnabled: !p.candidateSubscriptionEnabled }))}
+                  className={`w-16 h-8 rounded-full transition-all relative ${cfg.candidateSubscriptionEnabled ? 'bg-purple-600' : 'bg-white/10 border border-white/10'}`}
+               >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-xl ${cfg.candidateSubscriptionEnabled ? 'left-9' : 'left-1'}`} />
+               </button>
+            </div>
+         </div>
+
+         <div className="p-10 space-y-8">
+            {!cfg.candidateSubscriptionEnabled && (
+               <div className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl flex items-center gap-4">
+                  <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" />
+                  <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                     Candidate subscription is currently OFF — candidates can use the platform for free. Toggle ON above to activate paid plans.
+                  </p>
+               </div>
+            )}
+
+            {/* Candidate Plan Overview Cards */}
+            {cfg.candidateSubscriptionEnabled && (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-6">
+                     <div className="flex items-center justify-between">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                           <Star size={11} /> Basic Tier
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{activeBasicUsers} active users</span>
+                     </div>
+                     <div>
+                        <p className="text-3xl font-black text-white tracking-tighter">₹{cfg.candidateBasicMonthly}/mo</p>
+                        <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">₹{cfg.candidateBasicYearly}/yr option</p>
+                     </div>
+                     <ul className="space-y-2.5 text-xs text-gray-400">
+                        <li className="flex items-center gap-2">✓ 10 Applications/mo</li>
+                        <li className="flex items-center gap-2">✓ Standard Profile</li>
+                        <li className="flex items-center gap-2">✓ Resume Builder</li>
+                     </ul>
+                  </div>
+
+                  <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-6">
+                     <div className="flex items-center justify-between">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                           <Crown size={11} /> Premium Tier
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{activePremiumUsers} active users</span>
+                     </div>
+                     <div>
+                        <p className="text-3xl font-black text-white tracking-tighter">₹{cfg.candidatePremiumMonthly}/mo</p>
+                        <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">₹{cfg.candidatePremiumYearly}/yr option</p>
+                     </div>
+                     <ul className="space-y-2.5 text-xs text-gray-400">
+                        <li className="flex items-center gap-2">✓ Unlimited Applications</li>
+                        <li className="flex items-center gap-2">✓ Priority Resume Vetting</li>
+                        <li className="flex items-center gap-2">✓ Advanced Resume Builder</li>
+                        <li className="flex items-center gap-2">✓ Direct Chat Support</li>
+                     </ul>
+                  </div>
+               </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {/* Free Limit */}
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Free Tier — Max Applications</label>
+                  <input
+                     type="number"
+                     min={1}
+                     value={cfg.candidateFreeApplicationLimit}
+                     onChange={e => setCfg(p => ({ ...p, candidateFreeApplicationLimit: +e.target.value }))}
+                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+               </div>
+
+               {/* BASIC prices */}
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Basic Plan — Monthly (₹)</label>
+                  <input
+                     type="number"
+                     min={0}
+                     value={cfg.candidateBasicMonthly}
+                     onChange={e => setCfg(p => ({ ...p, candidateBasicMonthly: +e.target.value }))}
+                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+               </div>
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Basic Plan — Yearly (₹)</label>
+                  <input
+                     type="number"
+                     min={0}
+                     value={cfg.candidateBasicYearly}
+                     onChange={e => setCfg(p => ({ ...p, candidateBasicYearly: +e.target.value }))}
+                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+               </div>
+
+               {/* PREMIUM prices */}
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Premium Plan — Monthly (₹)</label>
+                  <input
+                     type="number"
+                     min={0}
+                     value={cfg.candidatePremiumMonthly}
+                     onChange={e => setCfg(p => ({ ...p, candidatePremiumMonthly: +e.target.value }))}
+                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+               </div>
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Premium Plan — Yearly (₹)</label>
+                  <input
+                     type="number"
+                     min={0}
+                     value={cfg.candidatePremiumYearly}
+                     onChange={e => setCfg(p => ({ ...p, candidatePremiumYearly: +e.target.value }))}
+                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+               </div>
+            </div>
+
+            {toast && (
+               <p className={`text-[11px] font-black uppercase tracking-widest ${toast.startsWith('✅') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {toast}
+               </p>
+            )}
+
+            <button
+               onClick={handleSave}
+               disabled={saving}
+               className="px-8 py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 disabled:opacity-50"
+            >
+               {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+               {saving ? 'Saving...' : 'Save Candidate Config'}
+            </button>
          </div>
       </div>
    );

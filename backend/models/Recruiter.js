@@ -54,6 +54,16 @@ const recruiterSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    // ── New Spec Fields ────────────────────────────────────
+    gstNumber: {
+        type: String,
+        default: ''
+    },
+    companyAddress: {
+        type: String,
+        default: ''
+    },
+    // ──────────────────────────────────────────────────────
     privacy: {
         companyVisibility: { type: Boolean, default: true },
         whatsappUpdates: { type: Boolean, default: false }

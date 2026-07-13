@@ -60,11 +60,22 @@ const LoginScreen = ({ navigation }) => {
             const res = await api.post('/auth/login', { email: trimmedEmail, password });
 
             if (res.data.success) {
+                const userRole = res.data.user?.role || res.data.role;
+                
+                if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'MODERATOR') {
+                    Alert.alert(
+                        'Access Restricted',
+                        'The Admin and Moderator panel is only accessible on the Web dashboard. Mobile login is restricted to Candidates and Recruiters.'
+                    );
+                    setLoading(false);
+                    return;
+                }
+
                 const user = {
                     _id: res.data.user?._id || res.data._id,
                     name: res.data.user?.name || res.data.name,
                     email: res.data.user?.email || res.data.email,
-                    role: res.data.user?.role || res.data.role
+                    role: userRole
                 };
                 const token = res.data.accessToken || res.data.token;
                 const refreshToken = res.data.refreshToken;

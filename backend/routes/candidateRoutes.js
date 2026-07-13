@@ -4,12 +4,16 @@ import {
   updateCandidateProfile,
   uploadResume,
   uploadProfilePhoto,
+  getCandidates,
 } from "../controllers/candidateController.js";
 import { protect, authorizeRoles as authorize } from "../middlewares/authMiddleware.js";
 import upload from "../config/upload.js";
 import { resumeUploadLimiter } from "../middlewares/rateLimiterMiddleware.js";
 
 const router = express.Router();
+
+router.route("/")
+  .get(protect, authorize("RECRUITER", "ADMIN"), getCandidates);
 
 router
   .route("/me")

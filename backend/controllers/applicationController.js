@@ -227,20 +227,41 @@ export const getJobApplicants = async (req, res) => {
                     candidateId: {
                         _id: '$candidateUser._id',
                         name: '$candidateUser.name',
+                        email: '$candidateUser.email',
                         role: '$candidateUser.role',
                         avatar: '$candidateUser.avatar'
                     },
-
                     profile: '$candidateProfile'
                 }
             }
         ]);
 
+        // Check if recruiter has locked resume access due to subscription rule
+        let lockResume = false;
+        if (req.user.role === 'RECRUITER') {
+            const config = await PlatformConfig.findOne();
+            if (config && config.subscriptionEnabled && req.user.planType === 'FREE') {
+                lockResume = true;
+            }
+        }
 
+        const finalApplicants = applicants.map(app => {
+            if (lockResume && app.profile) {
+                return {
+                    ...app,
+                    profile: {
+                        ...app.profile,
+                        resumeUrl: 'LOCKED',
+                        resumeOriginalName: 'Upgrade to Unlock Resume'
+                    }
+                };
+            }
+            return app;
+        });
 
         res.status(200).json({
             success: true,
-            data: applicants
+            data: finalApplicants
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

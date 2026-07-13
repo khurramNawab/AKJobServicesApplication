@@ -68,6 +68,13 @@ const fileFilter = (req, file, cb) => {
     return cb(new Error("Only JPG, PNG, WEBP, or HEIC images are allowed."), false);
   }
 
+  if (file.fieldname === "video") {
+    if (file.mimetype.startsWith("video/")) {
+      return cb(null, true);
+    }
+    return cb(new Error("Only video files are allowed."), false);
+  }
+
   cb(new Error(`Unexpected field: ${file.fieldname}`), false);
 };
 
@@ -186,11 +193,19 @@ const upload = {
             });
           }
 
-          if (fieldname === "photo" && fileSize > 5 * 1024 * 1024) {
+           if (fieldname === "photo" && fileSize > 5 * 1024 * 1024) {
             try { fs.unlinkSync(localPath); } catch {}
             return res.status(400).json({
               success: false,
               message: `Workspace image too large. Maximum size is 5 MB. (Your file is ${(fileSize / (1024 * 1024)).toFixed(2)} MB.)`,
+            });
+          }
+
+          if (fieldname === "video" && fileSize > 50 * 1024 * 1024) {
+            try { fs.unlinkSync(localPath); } catch {}
+            return res.status(400).json({
+              success: false,
+              message: `Video file too large. Maximum size is 50 MB. (Your file is ${(fileSize / (1024 * 1024)).toFixed(2)} MB.)`,
             });
           }
 
@@ -202,16 +217,28 @@ const upload = {
           }
 
           // 4. Prepare Cloudinary options based on field type
-          const folder = "jobportal/avatars";
+          let folder = "jobportal/avatars";
+          let resourceType = "image";
+          let transformation = [
+            { width: 800, height: 800, crop: "limit" },
+            { quality: "auto:good" },
+            { fetch_format: "auto" },
+          ];
+
+          if (fieldname === "video") {
+            folder = "jobportal/videos";
+            resourceType = "video";
+            transformation = [
+              { quality: "auto" },
+              { fetch_format: "auto" }
+            ];
+          }
+
           const uploadOptions = {
             folder,
-            resource_type: "image",
+            resource_type: resourceType,
             public_id: path.basename(localPath, path.extname(localPath)),
-            transformation: [
-              { width: 800, height: 800, crop: "limit" },
-              { quality: "auto:good" },
-              { fetch_format: "auto" },
-            ]
+            transformation: transformation
           };
 
           // 5. Secure upload to Cloudinary using retry manager
@@ -219,6 +246,7 @@ const upload = {
 
           // 6. Replace local disk path with the Cloudinary secure CDN URL
           req.file.path = result.secure_url;
+          req.file.cloudinary_public_id = result.public_id;
 
         } catch (uploadError) {
           console.error("[Multer Cloudinary Wrapper] Upload failed:", uploadError);

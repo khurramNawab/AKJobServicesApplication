@@ -19,6 +19,21 @@ const JobDetails = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
 
+  // Apply Modal states
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applyForm, setApplyForm] = useState({
+     degree: '',
+     institution: '',
+     year: '',
+     jobTitle: '',
+     company: '',
+     duration: '',
+     jobDesc: '',
+     skills: '',
+     expectedSalary: '',
+     noticePeriod: ''
+  });
+
   useEffect(() => {
     const fetchJob = async () => {
       try {
@@ -39,20 +54,44 @@ const JobDetails = () => {
     }
   }, [id, user]);
 
-  const handleApply = async () => {
+  const handleApply = () => {
     if (!user) {
       navigate('/login', { state: { from: `/jobs/${id}` } });
       return;
     }
     if (user.role === 'RECRUITER') return;
+    if (user.role !== 'CANDIDATE') return;
 
+    setShowApplyModal(true);
+  };
+
+  const submitApplication = async (e) => {
+    e.preventDefault();
     setApplying(true);
     try {
-      await api.post(`/jobs/${id}/apply`);
+      const payload = {
+         educationDetails: [{
+            degree: applyForm.degree,
+            institution: applyForm.institution,
+            year: applyForm.year
+         }],
+         workExperience: [{
+            title: applyForm.jobTitle,
+            company: applyForm.company,
+            duration: applyForm.duration,
+            description: applyForm.jobDesc
+         }],
+         skills: applyForm.skills ? applyForm.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+         expectedSalary: applyForm.expectedSalary,
+         noticePeriod: applyForm.noticePeriod
+      };
+
+      await api.post(`/jobs/${id}/apply`, payload);
       setApplied(true);
+      setShowApplyModal(false);
     } catch (err) {
       console.error('Failed to apply:', err);
-      alert(err.response?.data?.message || 'Error applying for job.');
+      alert(err.response?.data?.message || 'Error submitting application.');
     } finally {
       setApplying(false);
     }
@@ -172,6 +211,16 @@ const JobDetails = () => {
                      ))}
                   </div>
                </div>
+               {job.skills && job.skills.length > 0 && (
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                     <h3 className="text-base font-semibold flex items-center gap-2.5 text-text-primary"><div className="w-1 h-4 bg-[#38BDF8] rounded-full" /> Key Skills</h3>
+                     <div className="flex flex-wrap gap-2">
+                        {job.skills.map((skill, idx) => (
+                          <span key={idx} className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#38BDF8] border border-[#38BDF8]/20 bg-[#38BDF8]/5 hover:bg-[#38BDF8]/10 transition-colors uppercase tracking-wider">{skill}</span>
+                        ))}
+                     </div>
+                  </div>
+                )}
             </div>
           </div>
           <div className="space-y-4">
@@ -181,6 +230,20 @@ const JobDetails = () => {
                   <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#4F8EF7]/10 flex items-center justify-center border border-[#4F8EF7]/15"><Calendar className="w-4 h-4 text-[#4F8EF7]" /></div><div><p className="label-caps">Posted On</p><p className="text-sm font-medium text-text-primary mt-0.5">{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div></div>
                   <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#34D399]/10 flex items-center justify-center border border-[#34D399]/15"><UserCheck className="w-4 h-4 text-[#34D399]" /></div><div><p className="label-caps">Experience</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.experienceLevel}</p></div></div>
                   <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-[#38BDF8]/10 flex items-center justify-center border border-[#38BDF8]/15"><Globe className="w-4 h-4 text-[#38BDF8]" /></div><div><p className="label-caps">Location</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.location}</p></div></div>
+                  
+                  {/* New fields */}
+                  {job.educationQualification && (
+                    <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/15"><UserCheck className="w-4 h-4 text-indigo-400" /></div><div><p className="label-caps">Education</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.educationQualification}</p></div></div>
+                  )}
+                  {job.vacancies !== undefined && (
+                    <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/15"><Users className="w-4 h-4 text-purple-400" /></div><div><p className="label-caps">Vacancies</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.vacancies} open position{job.vacancies > 1 ? 's' : ''}</p></div></div>
+                  )}
+                  {job.interviewMode && (
+                    <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center border border-amber-500/15"><Info className="w-4 h-4 text-amber-400" /></div><div><p className="label-caps">Interview Mode</p><p className="text-sm font-medium text-text-primary mt-0.5">{job.interviewMode}</p></div></div>
+                  )}
+                  {job.applicationDeadline && (
+                    <div className="flex gap-3 items-center"><div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/15"><Clock className="w-4 h-4 text-rose-400" /></div><div><p className="label-caps">Deadline</p><p className="text-sm font-medium text-text-primary mt-0.5">{new Date(job.applicationDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div></div>
+                  )}
               </div>
             </div>
             <div className="glass-card p-5 space-y-4">
@@ -232,6 +295,153 @@ const JobDetails = () => {
                       className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl border border-white/10"
                       alt="Workspace Fullscreen"
                   />
+              </motion.div>
+          )}
+
+          {showApplyModal && (
+              <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 overflow-y-auto"
+              >
+                  <motion.div
+                      initial={{ scale: 0.95, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.95, y: 20 }}
+                      className="bg-[#1E293B] border border-white/10 rounded-[2.5rem] p-8 md:p-10 w-full max-w-2xl shadow-2xl relative my-8"
+                  >
+                      <button 
+                         onClick={() => setShowApplyModal(false)}
+                         className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white transition-colors"
+                      >
+                         ✕
+                      </button>
+
+                      <div className="space-y-1 mb-8 text-left">
+                         <h3 className="text-2xl font-black text-white uppercase tracking-tight">Complete Application</h3>
+                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Submit your details to apply for this position</p>
+                      </div>
+
+                      <form onSubmit={submitApplication} className="space-y-6 text-left">
+                         {/* Education Section */}
+                         <div className="space-y-4">
+                            <h4 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2">Education Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                               <input
+                                  type="text"
+                                  placeholder="Degree (e.g. B.Tech)"
+                                  value={applyForm.degree}
+                                  onChange={e => setApplyForm(p => ({ ...p, degree: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                               <input
+                                  type="text"
+                                  placeholder="Institution / School"
+                                  value={applyForm.institution}
+                                  onChange={e => setApplyForm(p => ({ ...p, institution: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                               <input
+                                  type="text"
+                                  placeholder="Year of Passing"
+                                  value={applyForm.year}
+                                  onChange={e => setApplyForm(p => ({ ...p, year: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                            </div>
+                         </div>
+
+                         {/* Experience Section */}
+                         <div className="space-y-4">
+                            <h4 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2">Work Experience</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                               <input
+                                  type="text"
+                                  placeholder="Job Title"
+                                  value={applyForm.jobTitle}
+                                  onChange={e => setApplyForm(p => ({ ...p, jobTitle: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                               <input
+                                  type="text"
+                                  placeholder="Company"
+                                  value={applyForm.company}
+                                  onChange={e => setApplyForm(p => ({ ...p, company: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                               <input
+                                  type="text"
+                                  placeholder="Duration (e.g. 2 years)"
+                                  value={applyForm.duration}
+                                  onChange={e => setApplyForm(p => ({ ...p, duration: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                            </div>
+                            <textarea
+                               placeholder="Briefly describe your responsibilities..."
+                               value={applyForm.jobDesc}
+                               onChange={e => setApplyForm(p => ({ ...p, jobDesc: e.target.value }))}
+                               rows="3"
+                               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                            />
+                         </div>
+
+                         {/* Requirements / Extras */}
+                         <div className="space-y-4">
+                            <h4 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2">Additional Parameters</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <input
+                                  type="text"
+                                  placeholder="Expected Salary"
+                                  value={applyForm.expectedSalary}
+                                  onChange={e => setApplyForm(p => ({ ...p, expectedSalary: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                               <input
+                                  type="text"
+                                  placeholder="Notice Period (e.g. 30 days)"
+                                  value={applyForm.noticePeriod}
+                                  onChange={e => setApplyForm(p => ({ ...p, noticePeriod: e.target.value }))}
+                                  required
+                                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                               />
+                            </div>
+                            <input
+                               type="text"
+                               placeholder="Your Skills (comma separated)"
+                               value={applyForm.skills}
+                               onChange={e => setApplyForm(p => ({ ...p, skills: e.target.value }))}
+                               required
+                               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                         </div>
+
+                         <div className="pt-4 flex gap-4">
+                            <button
+                               type="button"
+                               onClick={() => setShowApplyModal(false)}
+                               className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5"
+                            >
+                               Cancel
+                            </button>
+                            <button
+                               type="submit"
+                               disabled={applying}
+                               className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                            >
+                               {applying ? 'Submitting...' : 'Submit Application'}
+                            </button>
+                         </div>
+                      </form>
+                  </motion.div>
               </motion.div>
           )}
       </AnimatePresence>

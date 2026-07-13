@@ -7,6 +7,7 @@ const SettingsView = () => {
     const [config, setConfig] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState('');
 
     const fetchConfig = async () => {
         try {
@@ -29,13 +30,15 @@ const SettingsView = () => {
 
     const handleSave = async () => {
         setSaving(true);
+        setToast('');
         try {
             await api.put('/admin/platform-config', config);
-            alert('Settings Synchronized Successfully');
+            setToast('✅ Parameter matrix synchronized successfully!');
         } catch (err) {
-            alert('Failed to update config');
+            setToast('❌ Failed to update global configuration.');
         } finally {
             setSaving(false);
+            setTimeout(() => setToast(''), 3000);
         }
     };
 
@@ -43,9 +46,14 @@ const SettingsView = () => {
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl">
+            {toast && (
+               <div className="p-4 bg-[#1E293B]/90 backdrop-blur-md border border-blue-500/30 rounded-2xl text-xs font-black uppercase tracking-widest text-blue-400 text-left">
+                  {toast}
+               </div>
+            )}
             <div className="space-y-1 text-left">
-                <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Global <span className="text-blue-500">Parameter Matrix</span>.</h2>
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Platform-wide business logic overrides.</p>
+                <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Platform <span className="text-blue-500">Preferences</span>.</h2>
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Adjust global settings and access overrides.</p>
             </div>
 
             <div className="grid gap-6">
@@ -57,8 +65,8 @@ const SettingsView = () => {
                             <CreditCard size={28} />
                         </div>
                         <div className="space-y-1">
-                            <h4 className="text-white font-black text-sm uppercase tracking-widest">Revenue System</h4>
-                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Subscription enforcement for Pro segments.</p>
+                            <h4 className="text-white font-black text-sm uppercase tracking-widest">Paid Subscriptions</h4>
+                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Enforce subscription plans for Recruiters & Candidates.</p>
                         </div>
                     </div>
                     <button 
@@ -76,8 +84,8 @@ const SettingsView = () => {
                             <Globe size={28} />
                         </div>
                         <div className="space-y-1">
-                            <h4 className="text-white font-black text-sm uppercase tracking-widest">Campaign Mode (Free)</h4>
-                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Lift all billing restrictions globally.</p>
+                            <h4 className="text-white font-black text-sm uppercase tracking-widest">Free Trial Mode</h4>
+                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Temporarily make all plans and features free for everyone.</p>
                         </div>
                     </div>
                     <button 
@@ -96,8 +104,8 @@ const SettingsView = () => {
                                 <Shield size={28} />
                             </div>
                             <div className="space-y-1">
-                                <h4 className="text-white font-black text-sm uppercase tracking-widest">Protocol Strictness</h4>
-                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Resume verification and delivery rules.</p>
+                                <h4 className="text-white font-black text-sm uppercase tracking-widest">Verification Mode</h4>
+                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Verification rules for new jobs and applicants.</p>
                             </div>
                         </div>
                         <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 gap-1">
@@ -119,7 +127,7 @@ const SettingsView = () => {
                     {config.candidateMessagingMode === 'STRICT' && (
                         <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
                              <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
-                                WARNING: In STRICT mode, ALL applications are quarantined for manual admin review before recruitment visibility.
+                                WARNING: In STRICT mode, all job applications are held for manual admin review before they are visible to recruiters.
                              </p>
                         </div>
                     )}

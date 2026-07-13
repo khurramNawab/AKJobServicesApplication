@@ -114,3 +114,15 @@ export const uploadProfilePhoto = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ─── GET /api/v1/candidates ───────────────────────────────────────────────────
+export const getCandidates = async (req, res) => {
+  try {
+    const candidates = await Candidate.find()
+      .populate('userId', 'name email')
+      .lean();
+    res.status(200).json({ success: true, count: candidates.length, data: candidates });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

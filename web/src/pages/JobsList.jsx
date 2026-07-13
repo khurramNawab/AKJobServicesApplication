@@ -99,8 +99,7 @@ const JobsList = () => {
             </p>
           </div>
           <div
-            className="inline-flex items-center gap-3 px-5 py-3 rounded-xl"
-            style={{ background: 'rgba(13,21,38,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-xl glass-card"
           >
             <div className="w-2 h-2 rounded-full bg-[#34D399] animate-pulse" />
             <span className="text-text-primary font-bold text-xl">{filteredJobs.length}</span>
@@ -109,10 +108,7 @@ const JobsList = () => {
         </div>
 
         {/* Search Bar */}
-        <div
-          className="p-2 rounded-2xl flex flex-col lg:flex-row items-center gap-2"
-          style={{ background: 'rgba(13,21,38,0.9)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
-        >
+        <div className="glass-island p-2 rounded-2xl flex flex-col lg:flex-row items-center gap-2 transition-all shadow-2xl">
           <div className="flex-[1.5] w-full relative flex items-center">
             <Search className="absolute left-5 w-5 h-5 text-[#4F8EF7]" />
             <input
@@ -124,7 +120,7 @@ const JobsList = () => {
             />
           </div>
 
-          <div className="hidden lg:block w-px h-8 bg-[rgba(255,255,255,0.07)]" />
+          <div className="hidden lg:block w-px h-8 bg-border-subtle" />
 
           <div className="flex-1 w-full relative flex items-center">
             <MapPin className="absolute left-5 w-5 h-5 text-[#F05674]" />
@@ -137,9 +133,9 @@ const JobsList = () => {
             />
           </div>
 
-          <div className="hidden lg:block w-px h-8 bg-[rgba(255,255,255,0.07)]" />
+          <div className="hidden lg:block w-px h-8 bg-border-subtle" />
 
-          <div className="w-full lg:w-auto px-5 py-4 flex items-center rounded-xl bg-white/[0.03] border border-[rgba(255,255,255,0.06)]">
+          <div className="w-full lg:w-auto px-5 py-4 flex items-center rounded-xl bg-bg-surface border border-border-subtle shadow-sm">
             <select
               className="bg-transparent border-none outline-none text-text-secondary text-xs font-medium cursor-pointer w-full"
               value={selectedCategory}

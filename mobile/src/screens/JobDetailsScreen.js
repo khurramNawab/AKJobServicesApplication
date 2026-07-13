@@ -474,13 +474,48 @@ const JobDetailsScreen = ({ route, navigation }) => {
                         </View>
                     )
                 ) : (
-                    <PremiumButton 
-                        title={job.status === 'CLOSED' ? 'Job Closed' : (hasApplied ? 'Application Sent' : (applying ? 'Processing...' : 'Apply Now'))} 
-                        variant={job.status === 'CLOSED' || hasApplied ? 'secondary' : 'primary'}
-                        disabled={job.status === 'CLOSED' || hasApplied || applying}
-                        onPress={handleApply}
-                        iconRight={hasApplied ? <Ionicons name="checkmark-circle" size={22} color="#FFF" /> : null}
-                    />
+                    <View style={{ flexDirection: 'row', gap: 12, width: '100%', alignItems: 'center' }}>
+                        <TouchableOpacity
+                            style={[
+                                styles.recruiterActionBtn, 
+                                { 
+                                    borderColor: COLORS.primary,
+                                    maxWidth: 54,
+                                    height: 50,
+                                    borderRadius: 14,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    padding: 0
+                                }
+                            ]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                                if (job.recruiterId?._id) {
+                                    navigation.navigate('ChatRoom', {
+                                        otherUser: {
+                                            _id: job.recruiterId._id,
+                                            name: job.recruiterId.name || 'Recruiter',
+                                            role: 'RECRUITER'
+                                        }
+                                    });
+                                } else {
+                                    Alert.alert('Unavailable', 'Recruiter chat is not available for this job.');
+                                }
+                            }}
+                        >
+                            <Ionicons name="chatbubble-ellipses-outline" size={22} color={COLORS.primary} />
+                        </TouchableOpacity>
+
+                        <View style={{ flex: 1 }}>
+                            <PremiumButton 
+                                title={job.status === 'CLOSED' ? 'Job Closed' : (hasApplied ? 'Application Sent' : (applying ? 'Processing...' : 'Apply Now'))} 
+                                variant={job.status === 'CLOSED' || hasApplied ? 'secondary' : 'primary'}
+                                disabled={job.status === 'CLOSED' || hasApplied || applying}
+                                onPress={handleApply}
+                                iconRight={hasApplied ? <Ionicons name="checkmark-circle" size={22} color="#FFF" /> : null}
+                            />
+                        </View>
+                    </View>
                 )}
             </BlurView>
         </ScreenWrapper>

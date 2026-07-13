@@ -35,7 +35,9 @@ const SavedJobsScreen = () => {
             if (!refreshing) setLoading(true);
             const res = await api.get('/saved-jobs/me');
             if (res.data.success) {
-                setSavedJobs(res.data.data);
+                // Filter out any bookmarked jobs that might have been deleted from the DB
+                const validSavedJobs = (res.data.data || []).filter(item => item && item.jobId);
+                setSavedJobs(validSavedJobs);
             }
         } catch (error) {
             console.error('Fetch saved jobs error:', error);

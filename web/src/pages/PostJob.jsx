@@ -19,6 +19,11 @@ const PostJob = () => {
     jobType: 'Full-time',
     experienceLevel: 'Entry Level',
     requirements: [''],
+    educationQualification: '',
+    vacancies: 1,
+    applicationDeadline: '',
+    interviewMode: 'Online',
+    skills: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -62,10 +67,14 @@ const PostJob = () => {
     setIsLoading(true);
 
     try {
-      await api.post('/jobs', {
+      const payload = {
           ...formData,
-          requirements: formData.requirements.filter(r => r.trim() !== '')
-      });
+          requirements: formData.requirements.filter(r => r.trim() !== ''),
+          vacancies: Number(formData.vacancies),
+          skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+          applicationDeadline: formData.applicationDeadline || null
+      };
+      await api.post('/jobs', payload);
       setSuccess(true);
       setTimeout(() => navigate('/recruiter-dashboard'), 2000);
     } catch (err) {
@@ -197,7 +206,7 @@ const PostJob = () => {
                     </select>
                 </div>
 
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Experience Level</label>
                     <select
                         name="experienceLevel"
@@ -208,6 +217,73 @@ const PostJob = () => {
                         {expLevels.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
+
+                {/* ── New Spec Fields ── */}
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Education Qualification</label>
+                    <input
+                        type="text"
+                        name="educationQualification"
+                        value={formData.educationQualification || ''}
+                        onChange={handleChange}
+                        placeholder="e.g. B.Tech, MCA, or Equivalent"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Number of Vacancies</label>
+                    <input
+                        type="number"
+                        name="vacancies"
+                        min="1"
+                        value={formData.vacancies || 1}
+                        onChange={handleChange}
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Application Deadline</label>
+                    <input
+                        type="date"
+                        name="applicationDeadline"
+                        value={formData.applicationDeadline || ''}
+                        onChange={handleChange}
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Interview Mode</label>
+                    <select
+                        name="interviewMode"
+                        value={formData.interviewMode || 'Online'}
+                        onChange={handleChange}
+                        className="w-full bg-bg-main-surface border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium appearance-none"
+                    >
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Both">Both</option>
+                    </select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Key Skills (Comma Separated)</label>
+                    <input
+                        type="text"
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleChange}
+                        placeholder="e.g. React, Node.js, TypeScript, Docker"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium"
+                    />
+                </div>
+                {/* ───────────────────── */}
              </div>
           </div>
 

@@ -17,7 +17,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex overflow-hidden">
+    <div data-theme="dark" className="min-h-screen bg-[#0A1628] flex overflow-hidden text-slate-100">
 
       {/* 🔳 Isolated Admin Sidebar */}
       <AdminSidebar

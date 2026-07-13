@@ -49,14 +49,14 @@ const Companies = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
           <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-tight text-left">Company <span className="gradient-text">Directory</span></h1>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-text-primary leading-tight text-left">Company <span className="gradient-text">Directory</span></h1>
             <p className="text-text-secondary text-xl max-w-xl font-medium opacity-80 leading-relaxed text-left">
               Explore top-tier corporate organizations and find your next workplace culture that fits yours.
             </p>
           </div>
           <div className="glass-island px-8 py-5 flex items-center gap-4 border-white/5 shadow-2xl">
             <Activity className="w-5 h-5 text-[#F05674] animate-pulse" />
-            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Active Hiring: <span className="text-[#4F8EF7] text-xl ml-2">{companies.length}</span> Companies</span>
+            <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em]">Active Hiring: <span className="text-[#4F8EF7] text-xl ml-2">{companies.length}</span> Companies</span>
           </div>
         </div>
 
@@ -67,7 +67,7 @@ const Companies = () => {
             <input
               type="text"
               placeholder="Search company name..."
-              className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
+              className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -78,7 +78,7 @@ const Companies = () => {
             <input
               type="text"
               placeholder="Headquarters / Remote"
-              className="w-full bg-transparent border-none outline-none text-white placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
+              className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-muted pl-20 pr-6 py-8 text-xl font-bold"
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
             />
@@ -114,7 +114,7 @@ const Companies = () => {
                       {company.companyLogo ? (
                         <img src={company.companyLogo} alt={company.companyName} className="w-full h-full object-contain" />
                       ) : (
-                        <span className="text-4xl font-black text-white/30 group-hover:text-white transition-all">{company.companyName?.charAt(0) || 'C'}</span>
+                        <span className="text-4xl font-black text-text-primary/30 group-hover:text-text-primary transition-all">{company.companyName?.charAt(0) || 'C'}</span>
                       )}
                     </div>
                     <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -123,12 +123,12 @@ const Companies = () => {
                   </div>
 
                   <div className="flex-1 space-y-5">
-                    <h3 className="text-2xl font-black text-white tracking-tight group-hover:text-[#4F8EF7] transition-colors">{company.companyName}</h3>
+                    <h3 className="text-2xl font-black text-text-primary tracking-tight group-hover:text-[#4F8EF7] transition-colors">{company.companyName}</h3>
                     <p className="text-text-secondary font-medium text-sm leading-relaxed opacity-60 line-clamp-3">
                       Leading {company.industry || 'Business Solutions'} organization pioneering excellence through innovation and dedicated corporate culture.
                     </p>
 
-                    <div className="flex flex-wrap gap-4 pt-4 border-t border-white/5">
+                    <div className="flex flex-wrap gap-4 pt-4 border-t border-border-subtle">
                       <div className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest">
                         <MapPin className="w-4 h-4 text-[#F05674]" /> {company.location || 'India'}
                       </div>
@@ -156,7 +156,7 @@ const Companies = () => {
                 <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10 shadow-inner">
                   <Search className="w-10 h-10 text-text-muted opacity-40" />
                 </div>
-                <h3 className="text-3xl font-black text-white tracking-tight">Organization Not Found</h3>
+                <h3 className="text-3xl font-black text-text-primary tracking-tight">Organization Not Found</h3>
                 <Button variant="secondary" className="px-10 py-5 rounded-2xl" onClick={() => { setSearchQuery(''); setLocationQuery(''); }}>Reset Search</Button>
               </div>
             )}

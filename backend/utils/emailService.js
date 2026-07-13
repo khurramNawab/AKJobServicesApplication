@@ -114,7 +114,7 @@ const wrapInTemplate = (heading, bodyContent) => `
  * The verification link points to the frontend /verify-email/:token route.
  */
 export const sendVerificationEmail = async (email, name, verificationToken) => {
-    const verificationLink = `${process.env.CLIENT_URL || 'http://localhost:5001'}/verify-email/${verificationToken}`;
+    const verificationLink = `https://akjobservices.com/verify-email/${verificationToken}`;
 
     const html = wrapInTemplate('Verify Your Account 🔐', `
         <p>Hi <strong>${name}</strong>,</p>
@@ -253,7 +253,7 @@ export const sendAccountLockedEmail = async (email, name) => {
         <p>Hi <strong>${name}</strong>,</p>
         <p>Your account has been <strong>temporarily locked</strong> due to too many failed login attempts.</p>
         <p>It will automatically unlock after <strong>30 minutes</strong>. If this wasn't you, please reset your password immediately.</p>
-        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/forgot-password" class="btn">Reset Password →</a>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5001'}/forgot-password" class="btn">Reset Password →</a>
         <p class="subtle">If you continue to experience issues, contact support@akjobs.com</p>
     `);
 
@@ -261,6 +261,25 @@ export const sendAccountLockedEmail = async (email, name) => {
         from: `"${process.env.SMTP_FROM_NAME || 'AK Job Portal'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@akjobs.com'}>`,
         to: email,
         subject: 'Account Locked — AK Job Portal',
+        html,
+    });
+};
+
+/**
+ * Send newsletter subscription confirmation email
+ */
+export const sendNewsletterSubscriptionEmail = async (email) => {
+    const html = wrapInTemplate('Subscription Successful 📬', `
+        <p>Hi there,</p>
+        <p>You have successfully joined the <strong>AK Job Services</strong> newsletter. You'll receive hand-picked job opportunities from India's top employers delivered straight to your inbox every morning.</p>
+        <a href="${process.env.CLIENT_URL || 'https://akjobservices.com'}/jobs" class="btn">Browse Openings →</a>
+        <p class="subtle">If you did not request this subscription, you can ignore this email or unsubscribe at any time.</p>
+    `);
+
+    return sendEmailWithRetry({
+        from: `"${process.env.SMTP_FROM_NAME || 'AK Job Services'}" <${process.env.SMTP_FROM_EMAIL || 'jobak726@gmail.com'}>`,
+        to: email,
+        subject: 'Welcome to AK Job Services Newsletter! 📬',
         html,
     });
 };

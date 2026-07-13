@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Users, TrendingUp, Sparkles, ArrowRight, Zap, ShieldCheck, Globe, Rocket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const AboutUs = () => {
     const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
+
+    const getDashboardPath = () => {
+        if (!user) return '/register';
+        if (user.role === 'RECRUITER') return '/recruiter-dashboard';
+        if (user.role === 'ADMIN') return '/admin';
+        return '/dashboard';
+    };
 
     const stats = [
         { label: "Global Pioneers", value: "450k+" },
@@ -47,7 +56,7 @@ const AboutUs = () => {
                 <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10 text-primary-light text-[10px] font-black uppercase tracking-[0.3em] mb-10 shadow-2xl">
                     <Rocket className="w-4 h-4 text-[#F05674]" /> The Future of Global Talent Architecture
                 </div>
-                <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter mb-10 leading-[0.85]">
+                <h1 className="text-6xl md:text-9xl font-black text-text-primary tracking-tighter mb-10 leading-[0.85]">
                     Architecting the <span className="gradient-text block">1% Workforce</span>
                 </h1>
                 <p className="text-xl md:text-3xl text-text-secondary max-w-4xl mx-auto leading-relaxed font-medium">
@@ -68,7 +77,7 @@ const AboutUs = () => {
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <h4 className="text-text-muted text-[10px] font-black uppercase tracking-[0.2em] mb-4 group-hover:text-primary transition-colors relative z-10">{stat.label}</h4>
-                        <div className="text-5xl md:text-6xl font-black text-white group-hover:text-primary transition-all relative z-10">{stat.value}</div>
+                        <div className="text-5xl md:text-6xl font-black text-text-primary group-hover:text-primary transition-all relative z-10">{stat.value}</div>
                     </motion.div>
                 ))}
             </div>
@@ -88,7 +97,7 @@ const AboutUs = () => {
                         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-10 group-hover:rotate-12 transition-transform border border-white/10">
                             <value.icon className="w-8 h-8 text-primary" />
                         </div>
-                        <h3 className="text-3xl font-black text-white mb-6 tracking-tight">{value.title}</h3>
+                        <h3 className="text-3xl font-black text-text-primary mb-6 tracking-tight">{value.title}</h3>
                         <p className="text-text-secondary text-lg leading-relaxed font-bold opacity-80 group-hover:opacity-100 transition-opacity">
                             {value.description}
                         </p>
@@ -101,10 +110,10 @@ const AboutUs = () => {
                 initial={{ opacity: 0, scale: 0.98 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="glass rounded-[5rem] p-16 md:p-32 text-center border-white/5 relative overflow-hidden"
+                className="glass rounded-[5rem] p-16 md:p-32 text-center border-[rgba(255,255,255,0.05)] relative overflow-hidden"
             >
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#4F8EF7]/10 via-transparent to-[#F05674]/5 opacity-40" />
-                <h2 className="text-4xl md:text-7xl font-black text-white mb-12 tracking-tighter relative z-10 leading-tight">
+                <h2 className="text-4xl md:text-7xl font-black text-text-primary mb-12 tracking-tighter relative z-10 leading-tight">
                     Start Your <span className="gradient-text italic">Performance Journey</span>
                 </h2>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-8 relative z-10">
@@ -115,10 +124,11 @@ const AboutUs = () => {
                         Explore Elite Openings <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform ml-2" />
                     </button>
                     <button
-                        onClick={() => navigate('/register')}
-                        className="h-16 px-12 rounded-[1.2rem] bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black transition-all text-sm uppercase tracking-widest"
+                        onClick={() => navigate(getDashboardPath())}
+                        className="h-16 px-12 rounded-[1.2rem] bg-[rgba(0,0,0,0.05)] border border-[rgba(0,0,0,0.12)] hover:bg-[rgba(0,0,0,0.08)] text-text-primary font-black transition-all text-sm uppercase tracking-widest"
+                        style={{ background: 'rgba(79,142,247,0.08)', border: '1px solid rgba(79,142,247,0.18)' }}
                     >
-                        Join the Gated Community
+                        {user ? 'Go to Dashboard' : 'Join the Gated Community'}
                     </button>
                 </div>
             </motion.div>

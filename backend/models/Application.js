@@ -35,8 +35,30 @@ const applicationSchema = new mongoose.Schema({
     },
     resumeVersionUrl: {
         type: String,
-        default: '' // We will link S3/Cloudinary URL here later
+        default: ''
     },
+    // ── Candidate Apply Fields (Spec) ────────────────────
+    educationDetails: [{
+        degree: { type: String, default: '' },
+        institution: { type: String, default: '' },
+        year: { type: String, default: '' }
+    }],
+    workExperience: [{
+        title: { type: String, default: '' },
+        company: { type: String, default: '' },
+        duration: { type: String, default: '' },
+        description: { type: String, default: '' }
+    }],
+    skills: [{ type: String }],
+    expectedSalary: {
+        type: String,
+        default: ''
+    },
+    noticePeriod: {
+        type: String,
+        default: ''
+    },
+    // ─────────────────────────────────────────────────────
     statusHistory: [
         {
             status: {

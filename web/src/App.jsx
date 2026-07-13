@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ScrollToTop from './components/ScrollToTop';
 
 // 🏗️ Layouts
@@ -27,11 +28,12 @@ const Salaries = lazy(() => import('./pages/Salaries'));
 const Profile = lazy(() => import('./pages/Profile'));
 const RecruiterProfile = lazy(() => import('./pages/RecruiterProfile'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyInfo'));
 const Security = lazy(() => import('./pages/Security'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
+const CandidatePricingPage = lazy(() => import('./pages/CandidatePricingPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // 🛡️ Admin Matrix Pages (Lazy Loaded)
@@ -46,6 +48,8 @@ const PaymentsView = lazy(() => import('./pages/admin/views/PaymentsView'));
 const ApplicationsView = lazy(() => import('./pages/admin/views/ApplicationsView'));
 const ReportsView = lazy(() => import('./pages/admin/views/ReportsView'));
 const SettingsView = lazy(() => import('./pages/admin/views/SettingsView'));
+const PromoVideoView = lazy(() => import('./pages/admin/views/PromoVideoView'));
+const ManageCompaniesView = lazy(() => import('./pages/admin/views/ManageCompaniesView'));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center gap-6">
@@ -64,74 +68,80 @@ const ProtectedRoute = ({ children, role }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            
-            {/* 🏙️ WEBSITE CLUSTER (Candidate, Recruiter, Guest) */}
-            <Route element={<MainLayout />}>
-              {/* ✅ PUBLIC ROUTES */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/verify-account" element={<VerifyAccount />} />
-              <Route path="/verify-email/:token" element={<VerifyEmail />} />
-              <Route path="/check-email" element={<CheckEmail />} />
-              <Route path="/jobs" element={<JobsList />} />
-              <Route path="/jobs/:id" element={<JobDetails />} />
-              <Route path="/companies" element={<Companies />} />
-              <Route path="/companies/:id" element={<CompanyProfile />} />
-              <Route path="/salaries" element={<Salaries />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/security" element={<Security />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/pricing" element={<PricingPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              
+              {/* 🏙️ WEBSITE CLUSTER (Candidate, Recruiter, Guest) */}
+              <Route element={<MainLayout />}>
+                {/* ✅ PUBLIC ROUTES */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/verify-account" element={<VerifyAccount />} />
+                <Route path="/verify-email/:token" element={<VerifyEmail />} />
+                <Route path="/check-email" element={<CheckEmail />} />
+                <Route path="/jobs" element={<JobsList />} />
+                <Route path="/jobs/:id" element={<JobDetails />} />
+                <Route path="/companies" element={<Companies />} />
+                <Route path="/companies/:id" element={<CompanyProfile />} />
+                <Route path="/salaries" element={<Salaries />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/security" element={<Security />} />
+                <Route path="/about" element={<AboutUs />} />
 
-              {/* 🔒 PROTECTED: Candidate Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute role="CANDIDATE"><CandidateDashboard /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                {/* 🔒 PROTECTED: Candidate Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute role="CANDIDATE"><CandidateDashboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute role="CANDIDATE"><Profile /></ProtectedRoute>} />
+                {/* Candidate Pricing — admin-controlled, only CANDIDATE role */}
+                <Route path="/candidate-pricing" element={<ProtectedRoute role="CANDIDATE"><CandidatePricingPage /></ProtectedRoute>} />
 
-              {/* 🔒 PROTECTED: Recruiter Routes */}
-              <Route path="/recruiter-dashboard" element={<ProtectedRoute role="RECRUITER"><RecruiterDashboard /></ProtectedRoute>} />
-              <Route path="/post-job" element={<ProtectedRoute role="RECRUITER"><PostJob /></ProtectedRoute>} />
-              <Route path="/jobs/:jobId/edit" element={<ProtectedRoute role="RECRUITER"><EditJob /></ProtectedRoute>} />
-              <Route path="/jobs/:jobId/applications" element={<ProtectedRoute role="RECRUITER"><JobApplications /></ProtectedRoute>} />
-              <Route path="/recruiter-profile" element={<ProtectedRoute role="RECRUITER"><RecruiterProfile /></ProtectedRoute>} />
+                {/* 🔒 PROTECTED: Recruiter Routes */}
+                <Route path="/recruiter-dashboard" element={<ProtectedRoute role="RECRUITER"><RecruiterDashboard /></ProtectedRoute>} />
+                <Route path="/post-job" element={<ProtectedRoute role="RECRUITER"><PostJob /></ProtectedRoute>} />
+                <Route path="/jobs/:jobId/edit" element={<ProtectedRoute role="RECRUITER"><EditJob /></ProtectedRoute>} />
+                <Route path="/jobs/:jobId/applications" element={<ProtectedRoute role="RECRUITER"><JobApplications /></ProtectedRoute>} />
+                <Route path="/recruiter-profile" element={<ProtectedRoute role="RECRUITER"><RecruiterProfile /></ProtectedRoute>} />
+                {/* Recruiter Pricing — RECRUITER only */}
+                <Route path="/pricing" element={<ProtectedRoute role="RECRUITER"><PricingPage /></ProtectedRoute>} />
 
-              {/* Website Fallback (404) */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-
-            {/* 🛡️ ADMIN MATRIX CLUSTER (Isolated Sector) */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route element={<AdminDashboard />}>
-                <Route index element={<DashboardView />} />
-                <Route path="users" element={<UserView />} />
-                <Route path="jobs" element={<JobModerator />} />
-                <Route path="applications" element={<ApplicationsView />} />
-                <Route path="subscriptions" element={<SubscriptionView />} />
-                <Route path="payments" element={<PaymentsView />} />
-                <Route path="reports" element={<ReportsView />} />
-                <Route path="broadcast" element={<BroadcastCenter />} />
-                <Route path="settings" element={<SettingsView />} />
+                {/* Website Fallback (404) */}
+                <Route path="*" element={<NotFound />} />
               </Route>
-            </Route>
 
-            {/* Admin Fallback (404) */}
-            <Route path="*" element={<NotFound />} />
+              {/* 🛡️ ADMIN MATRIX CLUSTER (Isolated Sector) */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route element={<AdminDashboard />}>
+                  <Route index element={<DashboardView />} />
+                  <Route path="users" element={<UserView />} />
+                  <Route path="jobs" element={<JobModerator />} />
+                  <Route path="applications" element={<ApplicationsView />} />
+                  <Route path="subscriptions" element={<SubscriptionView />} />
+                  <Route path="payments" element={<PaymentsView />} />
+                  <Route path="reports" element={<ReportsView />} />
+                  <Route path="broadcast" element={<BroadcastCenter />} />
+                  <Route path="settings" element={<SettingsView />} />
+                  <Route path="promo-video" element={<PromoVideoView />} />
+                  <Route path="companies" element={<ManageCompaniesView />} />
+                </Route>
+              </Route>
 
-          </Routes>
-        </Suspense>
-      </Router>
-    </AuthProvider>
+              {/* Admin Fallback (404) */}
+              <Route path="*" element={<NotFound />} />
+
+            </Routes>
+          </Suspense>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 export default App;
-

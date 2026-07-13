@@ -20,6 +20,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import "./config/queue.js";
+import PlatformConfig from "./models/PlatformConfig.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -72,13 +73,9 @@ const CRITICAL_ENV = [
 
 const missingEnv = CRITICAL_ENV.filter((key) => !process.env[key]);
 if (missingEnv.length > 0) {
-  console.error(
-    "\n========================================================================\n" +
-    "💥 FATAL STARTUP ERROR: Missing Critical Environment Variables!\n" +
-    `   Missing fields: ${missingEnv.join(", ")}\n` +
-    "   The server cannot start without these. Please check your .env configuration.\n" +
-    "========================================================================\n"
-  );
+  const errMsg = "💥 FATAL STARTUP ERROR: Missing Critical Environment Variables: " + missingEnv.join(", ");
+  console.error(errMsg);
+  console.error("Server cannot start. Please add the missing environment variables to your Hostinger Environment Variables panel.");
   process.exit(1);
 }
 
@@ -104,10 +101,12 @@ if (isProd) {
 // `x-client-type: mobile`, which we use as an additional signal.
 const ALLOWED_ORIGINS = [
   process.env.CLIENT_URL || "http://localhost:5001",
+  "https://akjobservices.com",       // Production domain
+  "https://www.akjobservices.com",   // Production www
   "http://localhost:5001",
   "http://127.0.0.1:5001",
-  "http://localhost:5173",   // Vite dev server
-  "http://127.0.0.1:5173",
+  "http://localhost:5173",   // Vite dev server localhost
+  "http://127.0.0.1:5173",   // Vite dev server loopback
   "http://10.0.2.2:5001",    // Android Emulator → host machine
   "http://10.0.2.2",
 ];
@@ -115,13 +114,16 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman, mobile apps, server-to-server)
       if (!origin) return callback(null, true);
-      // Allow any origin that's in the whitelist
-      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      // Allow any 192.168.x.x or 10.x.x.x LAN origin (physical devices)
-      if (/^http:\/\/(192\.168\.|10\.)/.test(origin)) return callback(null, true);
-      // Block everything else
+      const cleanOrigin = origin.trim().replace(/\/$/, "");
+      const isLocal = cleanOrigin.includes("localhost") || cleanOrigin.includes("127.0.0.1") || cleanOrigin.includes("10.0.2.2");
+      
+      if (isLocal || ALLOWED_ORIGINS.includes(cleanOrigin)) {
+        return callback(null, true);
+      }
+      if (/^http:\/\/(192\.168\.|10\.)/.test(cleanOrigin)) {
+        return callback(null, true);
+      }
       callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
@@ -173,6 +175,7 @@ app.use(
           "https://checkout.razorpay.com", // Payment form
           "https://tds.razorpay.com", // 3D Secure bank verification
           "https://accounts.google.com", // Google One Tap popup
+          "https://docs.google.com", // Google Docs Viewer
         ],
 
         // ── Images ─────────────────────────────────────────────
@@ -216,7 +219,13 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use("/api/", limiter);
+
+if (process.env.NODE_ENV === 'production') {
+  app.use("/api/", limiter);
+} else {
+  // Mock limiter for development to prevent 429s while testing
+  app.use("/api/", (req, res, next) => next());
+}
 
 // 🛠️ DATA PARSING
 app.use(express.json({ limit: "1mb" }));
@@ -311,6 +320,17 @@ app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/newsletter", newsletterRoutes);
 
+// Public Platform Config route for landing page & users
+app.get("/api/v1/platform-config", async (req, res) => {
+  try {
+    let config = await PlatformConfig.findOne();
+    if (!config) config = await PlatformConfig.create({});
+    res.status(200).json({ success: true, data: config });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // 🌐 SERVE FRONTEND (Unified Port — backend serves built React app)
 
 // Dynamic Path Discovery: Check multiple possible locations for Hostinger environment
@@ -365,8 +385,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 [Server] Unified Server running on http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 [Server] Unified Server running on port ${PORT}`);
   console.log(`   ├─ API:      http://localhost:${PORT}/api/v1`);
   console.log(`   └─ Frontend: http://localhost:${PORT}`);
 });

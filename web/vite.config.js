@@ -12,6 +12,11 @@ export default defineConfig({
         target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
+        cookieDomainRewrite: "localhost",
+        headers: {
+          "X-Forwarded-Proto": "http",
+          "X-Real-IP": "127.0.0.1",
+        },
       },
     },
   },

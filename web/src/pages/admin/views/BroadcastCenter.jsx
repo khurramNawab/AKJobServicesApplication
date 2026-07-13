@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Radio, 
   Send, 
@@ -13,10 +13,22 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
+import api from '../../../services/api';
 
 const BroadcastCenter = () => {
   const { handleBroadcast: onBroadcast, actionLoading: loading } = useOutletContext();
   const [form, setForm] = useState({ title: '', message: '' });
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const { data } = await api.get('/admin/broadcasts/history');
+        if (data.success) setHistory(data.data || []);
+      } catch { /* silent */ }
+    };
+    fetchHistory();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -129,15 +141,26 @@ const BroadcastCenter = () => {
                  </div>
                  <button className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline">View All</button>
               </div>
-              <div className="w-full space-y-3">
-                 <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group cursor-help text-left">
-                    <div className="flex items-center gap-4">
-                       <ShieldCheck size={16} className="text-emerald-500" />
-                       <p className="text-[10px] font-black text-white uppercase tracking-widest italic">System Protocol Update 2.4</p>
-                    </div>
-                    <span className="text-[8px] font-black text-gray-700 italic">2h Ago</span>
-                 </div>
-              </div>
+               <div className="w-full space-y-3 max-h-60 overflow-y-auto no-scrollbar">
+                  {history.length > 0 ? history.map((item, idx) => (
+                     <div key={item._id || idx} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col gap-1 group text-left">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-2">
+                              <ShieldCheck size={14} className="text-emerald-500" />
+                              <p className="text-[10px] font-black text-white uppercase tracking-widest italic">{item.title}</p>
+                           </div>
+                           <span className="text-[8px] font-black text-gray-500 italic">
+                              {new Date(item.createdAt).toLocaleDateString()}
+                           </span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed">{item.message}</p>
+                     </div>
+                  )) : (
+                     <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-center text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                        No broadcast history
+                     </div>
+                  )}
+               </div>
            </div>
         </motion.div>
 

@@ -89,13 +89,23 @@ const Profile = () => {
       });
       
       if (type === 'resume') {
-        setProfile({ ...profile, resumeUrl: res.data.data.resumeUrl });
-        setSuccess('Resume uploaded successfully!');
+        setSuccess(res.data.message || 'Resume uploaded to security quarantine. Scanning...');
+        // Refresh the profile after 3 seconds to fetch the updated resumeUrl
+        setTimeout(async () => {
+          try {
+            const profileRes = await api.get('/candidates/me');
+            if (profileRes.data.success) {
+              setProfile(prev => ({ ...prev, resumeUrl: profileRes.data.data.resumeUrl }));
+            }
+          } catch (fetchErr) {
+            console.error('Failed to reload profile after resume scan:', fetchErr);
+          }
+        }, 3000);
       } else {
         setProfile({ ...profile, profilePhoto: res.data.data.profilePhoto });
         setSuccess('Profile photo updated!');
       }
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       setError('Upload failed. Check file type and size.');
     } finally {

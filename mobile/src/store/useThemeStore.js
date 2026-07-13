@@ -19,7 +19,7 @@ export const useThemeStore = create(
         {
             name: 'theme-storage',
             storage: createJSONStorage(() => AsyncStorage),
-            version: 2
+            version: 3
         }
     )
 );
