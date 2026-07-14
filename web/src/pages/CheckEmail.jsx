@@ -3,11 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
 
 const CheckEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const email = location.state?.email || '';
 
   const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'loading' | 'sent' | 'error'
@@ -55,7 +57,10 @@ const CheckEmail = () => {
       >
         <div
           className="p-8 rounded-2xl text-center space-y-6"
-          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          style={theme === 'light'
+            ? { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }
+            : { background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }
+          }
         >
           <motion.div
             initial={{ scale: 0.7, rotate: -5 }}

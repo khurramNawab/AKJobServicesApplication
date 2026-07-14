@@ -102,16 +102,16 @@ const ReportsView = () => {
       {/* 🚀 Analytics Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Platform <span className="text-blue-500">Analytics</span>.</h2>
+          <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Platform <span className="text-blue-500">Analytics</span>.</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Data visualization and platform performance metrics.</p>
         </div>
         <div className="flex gap-4">
-           <button className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-lg">
+           <button className="px-6 py-2.5 rounded-xl bg-white/5 border border-border-subtle text-[10px] font-black text-text-primary uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-lg">
              <Calendar size={14} /> Last 30 Days
            </button>
            <button 
              onClick={handleExport}
-             className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
+             className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-text-primary uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
            >
              <Download size={14} /> Export Report
            </button>
@@ -125,13 +125,13 @@ const ReportsView = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="p-8 rounded-[3rem] bg-[#1E293B] border border-white/5 space-y-6 flex flex-col items-start shadow-2xl relative overflow-hidden group"
+              className="p-8 rounded-[3rem] bg-bg-surface border border-border-subtle space-y-6 flex flex-col items-start shadow-2xl relative overflow-hidden group"
             >
                <div className={`p-4 rounded-2xl bg-${d.color}-500/10 text-${d.color}-500 border border-${d.color}-500/20 transition-transform group-hover:scale-110`}>
                   <d.icon size={24} />
                </div>
                <div className="space-y-1 text-left">
-                  <p className="text-4xl font-black text-white tracking-tighter leading-none">{d.value}</p>
+                  <p className="text-4xl font-black text-text-primary tracking-tighter leading-none">{d.value}</p>
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{d.label}</p>
                </div>
                <div className="absolute top-8 right-8 flex items-center gap-1 text-[10px] font-black text-emerald-400 uppercase tracking-tighter">
@@ -145,9 +145,9 @@ const ReportsView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
          
          {/* Revenue Projection (Mimicked with CSS Bars) */}
-         <div className="p-10 rounded-[3rem] bg-[#1E293B] border border-white/5 space-y-10 flex flex-col items-start shadow-2xl">
+         <div className="p-10 rounded-[3rem] bg-bg-surface border border-border-subtle space-y-10 flex flex-col items-start shadow-2xl">
             <div className="flex justify-between items-center w-full">
-               <h3 className="text-xl font-black text-white uppercase tracking-tight">Revenue Breakdown</h3>
+               <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">Revenue Breakdown</h3>
                <BarChart className="text-blue-500" size={24} />
             </div>
             
@@ -181,9 +181,9 @@ const ReportsView = () => {
          </div>
 
          {/* Sector Distribution */}
-         <div className="p-10 rounded-[3rem] bg-[#1E293B] border border-white/5 space-y-10 flex flex-col items-start shadow-2xl overflow-hidden relative">
+         <div className="p-10 rounded-[3rem] bg-bg-surface border border-border-subtle space-y-10 flex flex-col items-start shadow-2xl overflow-hidden relative">
             <div className="flex justify-between items-center w-full">
-               <h3 className="text-xl font-black text-white uppercase tracking-tight">User Demographics</h3>
+               <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">User Demographics</h3>
                <PieChart className="text-indigo-500" size={24} />
             </div>
             
@@ -208,7 +208,7 @@ const ReportsView = () => {
                   <div key={i} className="space-y-2">
                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-left">
                         <span className="text-gray-400">{s.label}</span>
-                        <span className="text-white">{s.percent}%</span>
+                        <span className="text-text-primary">{s.percent}%</span>
                      </div>
                     <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                        <motion.div 

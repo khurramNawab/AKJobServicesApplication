@@ -36,29 +36,27 @@ const backendDir = path.dirname(__filename);
 const projectRoot = path.resolve(backendDir, "..");
 
 // Load environment variables with a dev/prod split.
-// - Production defaults to `.env`
-// - Development prefers `.env.development` (fallback to `.env`)
+// - Production: loads .env as base (no override — Hostinger panel vars take precedence)
+// - Development: loads .env first, then overlays .env.development (with override)
 process.env.NODE_ENV = (process.env.NODE_ENV || "development").trim();
 import fs from "fs";
 
-// Load base `.env` first (shared defaults/secrets), then overlay environment-specific file.
-// IMPORTANT: Choose environment from the *real* process environment before reading `.env`,
-// so a production `.env` doesn't accidentally force production behavior locally.
 const bootstrapEnv = (process.env.NODE_ENV || "development").toLowerCase();
 
 const baseEnvPath = path.join(backendDir, ".env");
 if (fs.existsSync(baseEnvPath)) {
+  // Load base .env WITHOUT override — Hostinger/panel env vars take priority.
+  // This only fills in vars not already set (e.g., RAZORPAY, TWILIO not in panel).
   dotenv.config({ path: baseEnvPath });
 }
 
-const overlayEnvPath =
-  process.env.ENV_FILE ||
-  (bootstrapEnv === "production"
-    ? baseEnvPath
-    : path.join(backendDir, ".env.development"));
-
-if (overlayEnvPath && fs.existsSync(overlayEnvPath)) {
-  dotenv.config({ path: overlayEnvPath, override: true });
+// In development only: overlay with .env.development (overrides base for local dev)
+// In production: skip overlay — Hostinger panel vars are authoritative.
+if (bootstrapEnv !== "production") {
+  const devEnvPath = process.env.ENV_FILE || path.join(backendDir, ".env.development");
+  if (devEnvPath && fs.existsSync(devEnvPath)) {
+    dotenv.config({ path: devEnvPath, override: true });
+  }
 }
 
 // ─── Critical Environment Variables Fast-Fail Check ────────────────────────
@@ -209,21 +207,19 @@ app.use(
 );
 
 // Rate Limiting (Prevent DDoS/Brute-force)
+// validate.xForwardedForHeader: false → disables the strict X-Forwarded-For check
+// that crashes the server on Hostinger/Nginx reverse proxy environments.
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 100,
+  max: isProd ? 100 : 500,
   message: { success: false, message: "Too many requests" },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { xForwardedForHeader: false },
+  validate: { xForwardedForHeader: false, trustProxy: false },
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use("/api/", limiter);
-} else {
-  // Mock limiter for development to prevent 429s while testing
-  app.use("/api/", (req, res, next) => next());
-}
+app.use("/api/", limiter);
+
 
 // 🛠️ DATA PARSING
 app.use(express.json({ limit: "1mb" }));
@@ -383,8 +379,13 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 [Server] Unified Server running on port ${PORT}`);
   console.log(`   ├─ API:      http://localhost:${PORT}/api/v1`);
   console.log(`   └─ Frontend: http://localhost:${PORT}`);
 });
+
+// Increase timeouts for large video uploads (10 minutes)
+server.setTimeout(10 * 60 * 1000);
+server.keepAliveTimeout = 10 * 60 * 1000;
+server.headersTimeout = 10 * 60 * 1000;

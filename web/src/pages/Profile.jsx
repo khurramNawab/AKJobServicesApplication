@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft, CreditCard, Heart } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, FileText, Camera, Save, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Trash2, Upload, ExternalLink, ShieldCheck, ChevronLeft, CreditCard, Heart, Zap, GraduationCap, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -23,17 +23,25 @@ const Profile = () => {
   const [savedJobs, setSavedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [fileLoading, setFileLoading] = useState(false);
+  const [candidateSubscriptionEnabled, setCandidateSubscriptionEnabled] = useState(false);
+  const [appTemplate, setAppTemplate] = useState({
+    degree: '', institution: '', graduationYear: '',
+    jobTitle: '', company: '', duration: '', jobDesc: '',
+    skills: '', expectedSalary: '', noticePeriod: ''
+  });
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const [profileRes, appRes, savedRes] = await Promise.all([
+        const [profileRes, appRes, savedRes, configRes] = await Promise.all([
           api.get('/candidates/me'),
           api.get('/applications/me'),
-          api.get('/saved-jobs/me')
+          api.get('/saved-jobs/me'),
+          api.get('/platform-config')
         ]);
         
         if (profileRes.data.success) {
@@ -45,12 +53,28 @@ const Profile = () => {
               resumeUrl: profileRes.data.data.resumeUrl || '',
               profilePhoto: profileRes.data.data.profilePhoto || '',
            });
+           // Load saved applicationTemplate if any
+           const tpl = profileRes.data.data.applicationTemplate;
+           if (tpl) {
+             setAppTemplate({
+               degree: tpl.degree || '', institution: tpl.institution || '',
+               graduationYear: tpl.graduationYear || '', jobTitle: tpl.jobTitle || '',
+               company: tpl.company || '', duration: tpl.duration || '',
+               jobDesc: tpl.jobDesc || '', skills: tpl.skills || '',
+               expectedSalary: tpl.expectedSalary || '', noticePeriod: tpl.noticePeriod || '',
+             });
+           }
         }
         setApplications(appRes.data.data || []);
         
         // Filter out any null jobs just in case
         const validSavedJobs = (savedRes.data.data || []).filter(item => item && item.jobId);
         setSavedJobs(validSavedJobs);
+
+        // Check if candidate subscriptions are enabled globally
+        if (configRes.data?.success) {
+          setCandidateSubscriptionEnabled(configRes.data.data?.candidateSubscriptionEnabled || false);
+        }
       } catch (err) {
         console.error('Failed to fetch profile data:', err);
       } finally {
@@ -64,6 +88,24 @@ const Profile = () => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
     if (error) setError('');
     if (success) setSuccess('');
+  };
+
+  const handleTemplateChange = (e) => {
+    setAppTemplate(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSaveTemplate = async (e) => {
+    e.preventDefault();
+    setSavingTemplate(true);
+    try {
+      await api.put('/candidates/me', { applicationTemplate: appTemplate });
+      setSuccess('Quick Apply Template saved! It will pre-fill your next job application.');
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save template.');
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -223,12 +265,14 @@ const Profile = () => {
                                 </p>
                              )}
                           </div>
-                          <Link 
-                             to="/pricing" 
-                             className="block w-full text-center py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-500 transition-all"
-                          >
-                             Upgrade Matrix
-                          </Link>
+                           {candidateSubscriptionEnabled && (
+                           <Link 
+                              to="/candidate-pricing" 
+                              className="block w-full text-center py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-500 transition-all"
+                           >
+                              Update Your Account
+                           </Link>
+                           )}
                        </div>
                     </div>
 
@@ -323,16 +367,180 @@ const Profile = () => {
                  </div>
 
                  <div className="flex justify-end gap-4">
-                    <Button 
-                      type="submit" 
-                      loading={saving} 
-                      className="px-8 py-4 rounded-xl shadow-md shadow-primary/20 text-sm"
-                    >
-                      Commit Changes <Save className="ml-2 w-4 h-4" />
-                    </Button>
+                     <Button 
+                       type="submit" 
+                       loading={saving} 
+                       className="px-8 py-4 rounded-xl shadow-md shadow-primary/20 text-sm"
+                     >
+                       Commit Changes <Save className="ml-2 w-4 h-4" />
+                     </Button>
                  </div>
               </form>
            </div>
+        </div>
+
+        {/* ── Quick Apply Template Section ── */}
+        <div className="glass-card p-10 rounded-[3rem] border-white/5 space-y-8 shadow-xl mt-12 text-left">
+           <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                 <FileText className="w-6 h-6 text-primary" />
+                 Quick Apply Template
+              </h2>
+              <p className="text-slate-400 text-sm font-medium">
+                 Fill this template once. We'll automatically pre-fill your application details when you apply to any job.
+              </p>
+           </div>
+
+           <form onSubmit={handleSaveTemplate} className="space-y-8">
+              <div className="space-y-6">
+                 {/* Education details */}
+                 <div className="space-y-4">
+                    <h3 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                       <GraduationCap className="w-4 h-4" /> Education Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Degree</label>
+                          <input 
+                             type="text" 
+                             name="degree"
+                             value={appTemplate.degree} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. Bachelor's Degree / MBA" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Institution</label>
+                          <input 
+                             type="text" 
+                             name="institution"
+                             value={appTemplate.institution} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. Delhi University" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Graduation Year</label>
+                          <input 
+                             type="text" 
+                             name="graduationYear"
+                             value={appTemplate.graduationYear} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. 2024" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Work Experience */}
+                 <div className="space-y-4">
+                    <h3 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                       <Briefcase className="w-4 h-4" /> Work Experience
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Job Title</label>
+                          <input 
+                             type="text" 
+                             name="jobTitle"
+                             value={appTemplate.jobTitle} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. Executive / Senior Manager" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Company</label>
+                          <input 
+                             type="text" 
+                             name="company"
+                             value={appTemplate.company} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. ABC Company" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Duration</label>
+                          <input 
+                             type="text" 
+                             name="duration"
+                             value={appTemplate.duration} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. 2 years" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Description of Roles & Responsibilities</label>
+                       <textarea 
+                          name="jobDesc"
+                          value={appTemplate.jobDesc} 
+                          onChange={handleTemplateChange}
+                          rows="3"
+                          placeholder="Describe your responsibilities..." 
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                       />
+                    </div>
+                 </div>
+
+                 {/* Addtional parameters */}
+                 <div className="space-y-4">
+                    <h3 className="text-xs font-black text-primary-light uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                       <Zap className="w-4 h-4" /> Additional Parameters & Skills
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Expected Salary</label>
+                          <input 
+                             type="text" 
+                             name="expectedSalary"
+                             value={appTemplate.expectedSalary} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. 8 Lakhs / 12 LPA" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Notice Period</label>
+                          <input 
+                             type="text" 
+                             name="noticePeriod"
+                             value={appTemplate.noticePeriod} 
+                             onChange={handleTemplateChange}
+                             placeholder="e.g. 30 days" 
+                             className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          />
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Skills for Quick Apply (Comma separated)</label>
+                       <input 
+                          type="text" 
+                          name="skills"
+                          value={appTemplate.skills} 
+                          onChange={handleTemplateChange}
+                          placeholder="e.g. Microsoft Excel, Marketing, Management" 
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                 <Button 
+                    type="submit" 
+                    loading={savingTemplate} 
+                    className="px-8 py-4 rounded-xl shadow-md shadow-primary/20 text-sm"
+                 >
+                    Save Application Template <Save className="ml-2 w-4 h-4" />
+                 </Button>
+              </div>
+           </form>
         </div>
 
         {/* ── Applied Jobs & Wishlist Sections ── */}

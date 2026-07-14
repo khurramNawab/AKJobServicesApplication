@@ -34,16 +34,17 @@
     "mongoose": "^9.2.4",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.2",
-    "multer-storage-cloudinary": "^4.0.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^8.0.5",
     "pino": "^10.3.1",
     "razorpay": "^2.9.6",
     "twilio": "^5.13.0",
-    "xss-clean": "^0.1.4",
+    "xss": "^1.0.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
   }
 }
+
+

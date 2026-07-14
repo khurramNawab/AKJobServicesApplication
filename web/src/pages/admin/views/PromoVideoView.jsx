@@ -1,10 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
-import { Video, Save, Eye, EyeOff, Loader2, Link, PlayCircle, CheckCircle, XCircle, Upload, Trash2, Check } from 'lucide-react';
+import { Video, Save, Eye, EyeOff, Loader2, Link, PlayCircle, CheckCircle, XCircle, Upload, Trash2, Check, AlignLeft, Plus, X } from 'lucide-react';
 import api from '../../../services/api';
+import { useTheme } from '../../../context/ThemeContext';
 
 const PromoVideoView = () => {
-    const [config, setConfig] = useState({ url: '', cloudinaryUrl: '', title: '', isActive: false, library: [] });
+    const { theme } = useTheme();
+    const [config, setConfig] = useState({
+        url: '',
+        cloudinaryUrl: '',
+        title: '',
+        description: '',
+        isActive: false,
+        isMuted: true, // Default to true (standard autoplay behavior)
+        descriptions: [],
+        library: []
+    });
+    const [originalConfig, setOriginalConfig] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -20,28 +33,34 @@ const PromoVideoView = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 50 * 1024 * 1024) {
-            showToast('Video is too large. Max size is 50MB.', 'error');
-            return;
-        }
+        console.log('[Upload] Selected file:', file.name, 'type:', file.type, 'size:', (file.size / (1024*1024)).toFixed(2), 'MB');
 
         setUploadingVideo(true);
         const formData = new FormData();
         formData.append('video', file);
 
         try {
+            console.log('[Upload] Sending POST to /admin/promo-video/upload...');
             const { data } = await api.post('/admin/promo-video/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                timeout: 10 * 60 * 1000, // 10 minutes for large video uploads
+                onUploadProgress: (progressEvent) => {
+                    const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    console.log(`[Upload] Progress: ${pct}%`);
+                }
             });
+            console.log('[Upload] Response:', data);
             if (data.success && data.url) {
-                // The new backend returns the full config with library in data.data
                 setConfig(data.data);
+                setOriginalConfig(data.data);
                 showToast('Video uploaded successfully to Cloudinary!', 'success');
             } else {
-                showToast('Upload failed', 'error');
+                showToast(data.message || 'Upload failed', 'error');
             }
         } catch (err) {
-            console.error('Video upload error:', err);
+            console.error('[Upload] FULL ERROR:', err);
+            console.error('[Upload] Response data:', err.response?.data);
+            console.error('[Upload] Response status:', err.response?.status);
+            console.error('[Upload] Request headers:', err.config?.headers);
             showToast(err.response?.data?.message || 'Video upload failed', 'error');
         } finally {
             setUploadingVideo(false);
@@ -52,7 +71,10 @@ const PromoVideoView = () => {
         const fetchConfig = async () => {
             try {
                 const { data } = await api.get('/admin/promo-video');
-                if (data.success && data.data) setConfig(data.data);
+                if (data.success && data.data) {
+                    setConfig(data.data);
+                    setOriginalConfig(data.data);
+                }
             } catch (err) {
                 console.error('Failed to fetch promo video config');
             } finally {
@@ -69,6 +91,7 @@ const PromoVideoView = () => {
             const { data } = await api.delete(`/admin/promo-video/library/${videoId}`);
             if (data.success && data.data) {
                 setConfig(data.data);
+                setOriginalConfig(data.data);
                 showToast('Video deleted successfully!', 'success');
             }
         } catch (err) {
@@ -87,8 +110,13 @@ const PromoVideoView = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.put('/admin/promo-video', config);
-            showToast('Promo video settings saved!', 'success');
+            console.log('[Save] Sending config:', { url: config.url, cloudinaryUrl: config.cloudinaryUrl, title: config.title, isActive: config.isActive, description: config.description });
+            const { data } = await api.put('/admin/promo-video', config);
+            if (data.success && data.data) {
+                setConfig(data.data);
+                setOriginalConfig(data.data);
+                showToast('Promo video settings saved!', 'success');
+            }
         } catch (err) {
             showToast('Failed to save settings', 'error');
         } finally {
@@ -96,19 +124,21 @@ const PromoVideoView = () => {
         }
     };
 
-    // Convert YouTube/Vimeo URL to embed URL
-    const getEmbedUrl = (url) => {
+    const hasUnsavedChanges = originalConfig && JSON.stringify(config) !== JSON.stringify(originalConfig);
+
+    const getEmbedUrl = (url, isMuted) => {
         if (!url) return '';
-        // YouTube
-        const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?controls=0&autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}`;
+        const muteParam = isMuted ? 1 : 0;
+        // Support standard, sharing, embed, and query-param formats
+        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?controls=1&autoplay=1&mute=${muteParam}&loop=1&playlist=${ytMatch[1]}`;
         // Vimeo
         const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-        if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?controls=0&autoplay=1&muted=1&loop=1`;
+        if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=${muteParam}&loop=1&controls=1`;
         return url; // already embed or cloudinary
     };
 
-    const embedUrl = getEmbedUrl(config.url || config.cloudinaryUrl);
+    const embedUrl = getEmbedUrl(config.url || config.cloudinaryUrl, config.isMuted !== false);
 
     if (loading) return null;
 
@@ -123,8 +153,8 @@ const PromoVideoView = () => {
                     exit={{ opacity: 0 }}
                     className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl ${
                         toast.type === 'success'
-                            ? 'bg-emerald-600 text-white shadow-emerald-600/20'
-                            : 'bg-rose-600 text-white shadow-rose-600/20'
+                            ? 'bg-emerald-600 text-text-primary shadow-emerald-600/20'
+                            : 'bg-rose-600 text-text-primary shadow-rose-600/20'
                     }`}
                 >
                     {toast.type === 'success' ? <CheckCircle size={16} /> : <XCircle size={16} />}
@@ -134,7 +164,7 @@ const PromoVideoView = () => {
 
             {/* Header */}
             <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">
+                <h2 className={`text-3xl font-black tracking-tighter uppercase leading-none ${theme === 'dark' ? 'text-text-primary' : 'text-slate-800'}`}>
                     Promo <span className="text-blue-500">Video</span>.
                 </h2>
                 <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">
@@ -148,8 +178,8 @@ const PromoVideoView = () => {
                 <div className="space-y-6">
                     
                     {/* Video Title */}
-                    <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] p-8 space-y-6">
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Video Configuration</h3>
+                    <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] p-8 space-y-6">
+                        <h3 className="text-sm font-black text-text-primary uppercase tracking-widest">Video Configuration</h3>
                         
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Video Title</label>
@@ -158,8 +188,88 @@ const PromoVideoView = () => {
                                 value={config.title}
                                 onChange={e => setConfig(p => ({ ...p, title: e.target.value }))}
                                 placeholder="Enter video title..."
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                autoComplete="off"
+                                className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <AlignLeft size={12} /> Video Description
+                            </label>
+                            
+                            {/* Preset Descriptions */}
+                            {config.descriptions && config.descriptions.length > 0 && (
+                                <div className="space-y-2 mb-3">
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Select a Default Description:</p>
+                                    <div className="flex flex-col gap-2">
+                                        {config.descriptions.map((desc, idx) => (
+                                            <div key={idx} className="flex gap-2 items-start">
+                                                <button
+                                                    onClick={() => setConfig(p => ({ ...p, description: desc }))}
+                                                    className={`flex-1 text-left px-4 py-2.5 rounded-xl text-[11px] font-medium leading-relaxed transition-all ${
+                                                        config.description === desc 
+                                                            ? 'bg-blue-600/10 dark:bg-blue-500/10 border border-blue-500/50 text-blue-600 dark:text-blue-400 shadow-md shadow-blue-500/5'
+                                                            : 'bg-gray-50 dark:bg-white/5 border border-border-subtle text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-text-primary'
+                                                    }`}
+                                                >
+                                                    {desc}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('Remove this default description?')) {
+                                                            setConfig(p => ({
+                                                                ...p,
+                                                                descriptions: p.descriptions.filter((_, i) => i !== idx)
+                                                            }));
+                                                        }
+                                                    }}
+                                                    className="p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-gray-400 hover:text-rose-400 transition-colors"
+                                                    title="Delete preset"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Add New Preset or Custom Description */}
+                            <div className="relative">
+                                <textarea
+                                    value={config.description}
+                                    onChange={e => setConfig(p => ({ ...p, description: e.target.value }))}
+                                    placeholder="Enter or select a video description..."
+                                    rows="3"
+                                    className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                />
+                                <div className="absolute bottom-3 right-3 flex gap-2">
+                                    <button
+                                        onClick={() => setConfig(p => ({ ...p, description: '' }))}
+                                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[9px] font-black text-gray-400 hover:text-text-primary uppercase tracking-wider transition-colors flex items-center gap-1"
+                                        title="Clear text"
+                                    >
+                                        <X size={10} /> Clear
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (config.description.trim() && !config.descriptions?.includes(config.description.trim())) {
+                                                setConfig(p => ({
+                                                    ...p,
+                                                    descriptions: [...(p.descriptions || []), p.description.trim()]
+                                                }));
+                                                showToast('Added to presets!', 'success');
+                                            }
+                                        }}
+                                        disabled={!config.description.trim() || config.descriptions?.includes(config.description.trim())}
+                                        className="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[9px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
+                                        title="Save as a new preset description"
+                                    >
+                                        <Plus size={10} /> Save as Preset
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-3">
@@ -171,7 +281,8 @@ const PromoVideoView = () => {
                                 value={config.url}
                                 onChange={e => setConfig(p => ({ ...p, url: e.target.value }))}
                                 placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[11px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                autoComplete="off"
+                                className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[11px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
                             <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest ml-1">
                                 Supports: youtube.com, youtu.be, vimeo.com
@@ -188,9 +299,10 @@ const PromoVideoView = () => {
                                     value={config.cloudinaryUrl}
                                     onChange={e => setConfig(p => ({ ...p, cloudinaryUrl: e.target.value }))}
                                     placeholder="https://res.cloudinary.com/..."
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[11px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    autoComplete="off"
+                                    className="flex-1 bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[11px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 />
-                                <label className="cursor-pointer px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shrink-0">
+                                <label className="cursor-pointer px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shrink-0">
                                     {uploadingVideo ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
                                     {uploadingVideo ? 'Uploading...' : 'Upload File'}
                                     <input
@@ -201,39 +313,68 @@ const PromoVideoView = () => {
                                         className="hidden"
                                     />
                                 </label>
+                                {config.cloudinaryUrl && (
+                                    <button
+                                        onClick={() => setConfig(p => ({ ...p, cloudinaryUrl: '' }))}
+                                        className="px-4 py-3.5 rounded-2xl bg-white/5 hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 transition-colors flex items-center justify-center shrink-0"
+                                        title="Clear Cloudinary URL"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
                         </div>
 
                         {/* Active Toggle */}
-                        <div className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/5 rounded-2xl">
+                        <div className="flex items-center justify-between p-5 bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-2xl">
                             <div>
-                                <p className="text-white font-black text-sm uppercase tracking-tight">Show on Landing Page</p>
+                                <p className="text-text-primary font-black text-sm uppercase tracking-tight">Show on Landing Page</p>
                                 <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">
                                     {config.isActive ? 'Video is visible to visitors' : 'Video is hidden from visitors'}
                                 </p>
                             </div>
                             <button
                                 onClick={() => setConfig(p => ({ ...p, isActive: !p.isActive }))}
-                                className={`w-16 h-8 rounded-full transition-all relative ${config.isActive ? 'bg-blue-600' : 'bg-white/10 border border-white/10'}`}
+                                className={`w-16 h-8 rounded-full transition-all relative ${config.isActive ? 'bg-blue-600' : 'bg-gray-200 dark:bg-white/10 border border-gray-300 dark:border-border-subtle'}`}
                             >
-                                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-xl ${config.isActive ? 'left-9' : 'left-1'}`} />
+                                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white dark:bg-gray-300 transition-all shadow-md ${config.isActive ? 'left-9' : 'left-1'}`} />
+                            </button>
+                        </div>
+
+                        {/* Mute Toggle */}
+                        <div className="flex items-center justify-between p-5 bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-2xl">
+                            <div>
+                                <p className="text-text-primary font-black text-sm uppercase tracking-tight">Mute Video Sound</p>
+                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">
+                                    {config.isMuted ? 'Voice is OFF (Recommended for Autoplay)' : 'Voice is ON (Autoplay may be blocked by browsers)'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setConfig(p => ({ ...p, isMuted: !p.isMuted }))}
+                                className={`w-16 h-8 rounded-full transition-all relative ${config.isMuted ? 'bg-blue-600' : 'bg-gray-200 dark:bg-white/10 border border-gray-300 dark:border-border-subtle'}`}
+                            >
+                                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white dark:bg-gray-300 transition-all shadow-md ${config.isMuted ? 'left-9' : 'left-1'}`} />
                             </button>
                         </div>
 
                         <button
                             onClick={handleSave}
-                            disabled={saving}
-                            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            disabled={saving || !hasUnsavedChanges}
+                            className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${
+                                hasUnsavedChanges
+                                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 animate-pulse'
+                                    : 'bg-white/5 border border-border-subtle text-gray-500 cursor-not-allowed'
+                            }`}
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                            {saving ? 'Saving...' : 'Save Configuration'}
+                            {saving ? 'Saving...' : hasUnsavedChanges ? 'Save Configuration' : 'Saved'}
                         </button>
                     </div>
                 </div>
 
                 {/* Preview Panel */}
-                <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] p-8 space-y-6">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] p-8 space-y-6">
+                    <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-3">
                         <PlayCircle size={18} className="text-blue-500" /> Live Preview
                     </h3>
 
@@ -244,7 +385,7 @@ const PromoVideoView = () => {
                                     src={config.cloudinaryUrl}
                                     autoPlay
                                     loop
-                                    muted
+                                    muted={config.isMuted !== false}
                                     playsInline
                                     className="w-full h-auto max-h-[400px] object-contain"
                                 />
@@ -261,7 +402,7 @@ const PromoVideoView = () => {
                             </div>
                         )
                     ) : (
-                        <div className="aspect-video rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center gap-4">
+                        <div className="aspect-video rounded-2xl bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle flex flex-col items-center justify-center gap-4">
                             <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
                                 <Video size={32} />
                             </div>
@@ -272,7 +413,11 @@ const PromoVideoView = () => {
                     )}
 
                     {config.title && (
-                        <p className="text-white font-black text-sm tracking-tight">{config.title}</p>
+                        <p className="text-text-primary font-black text-sm tracking-tight">{config.title}</p>
+                    )}
+                    
+                    {config.description && (
+                        <p className="text-gray-400 text-xs leading-relaxed">{config.description}</p>
                     )}
 
                     <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${config.isActive ? 'text-emerald-400' : 'text-gray-600'}`}>
@@ -283,9 +428,9 @@ const PromoVideoView = () => {
             </div>
 
             {/* Media Library Panel */}
-            <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+            <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] p-8 space-y-6">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                    <h3 className="text-sm font-black text-text-primary uppercase tracking-widest flex items-center gap-3">
                         <Video size={18} className="text-blue-500" /> Video Library History
                     </h3>
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
@@ -296,10 +441,10 @@ const PromoVideoView = () => {
                 {config.library && config.library.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {config.library.map(video => (
-                            <div key={video._id} className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden flex flex-col group relative">
+                            <div key={video._id} className="bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-2xl overflow-hidden flex flex-col group relative">
                                 {/* Active Indicator overlay */}
                                 {config.cloudinaryUrl === video.url && (
-                                    <div className="absolute top-3 left-3 z-10 bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/20">
+                                    <div className="absolute top-3 left-3 z-10 bg-blue-500 text-text-primary text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/20">
                                         <Check size={10} /> Active
                                     </div>
                                 )}
@@ -309,7 +454,7 @@ const PromoVideoView = () => {
                                 </div>
                                 <div className="p-5 flex flex-col flex-1 gap-4">
                                     <div className="flex-1">
-                                        <p className="text-white font-black text-xs uppercase tracking-wider truncate" title={video.title || 'Untitled Video'}>
+                                        <p className="text-text-primary font-black text-xs uppercase tracking-wider truncate" title={video.title || 'Untitled Video'}>
                                             {video.title || 'Untitled Video'}
                                         </p>
                                         <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mt-1">
@@ -319,7 +464,7 @@ const PromoVideoView = () => {
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={() => handleSetActiveVideo(video)}
-                                            className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-colors"
+                                            className="flex-1 bg-white/5 hover:bg-white/10 text-text-primary text-[9px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-colors"
                                         >
                                             Set Active
                                         </button>
@@ -336,7 +481,7 @@ const PromoVideoView = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="py-10 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+                    <div className="py-10 text-center border border-dashed border-border-subtle rounded-2xl bg-white/[0.01]">
                         <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">
                             No videos in library. Upload a video to see history.
                         </p>

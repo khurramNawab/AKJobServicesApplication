@@ -83,11 +83,11 @@ const CandidateDashboard = () => {
         {candidateSubscriptionEnabled && user?.planType === 'FREE' && (
            <div className="p-6 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-[2rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-2xl backdrop-blur-md">
               <div className="space-y-1 text-left">
-                 <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                 <h3 className="text-sm font-black text-text-primary uppercase tracking-tight flex items-center gap-2">
                     <Zap className="text-purple-400 w-4 h-4 animate-pulse" />
-                    Premium Job Applications Active
+                    Unlock Premium Applications
                  </h3>
-                 <p className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">Upgrade to Premium to get unlimited applications and highlight your resume to recruiters.</p>
+                 <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider">Upgrade to Premium to get unlimited applications and highlight your resume to recruiters.</p>
               </div>
               <Link to="/candidate-pricing">
                  <button className="px-6 py-3 bg-white text-black hover:bg-purple-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all">

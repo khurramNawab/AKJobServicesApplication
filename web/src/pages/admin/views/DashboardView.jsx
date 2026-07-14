@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
   Briefcase, 
@@ -18,16 +18,30 @@ import api from '../../../services/api';
 import { useOutletContext } from 'react-router-dom';
 
 const DashboardView = () => {
-  const { stats, activity } = useOutletContext();
+  const { stats, activity, fetchAdminData } = useOutletContext();
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualLog, setManualLog] = useState('');
+  const [toast, setToast] = useState(null);
 
-  const handleManualSubmit = (e) => {
+  const showToast = (type, message) => {
+      setToast({ type, message });
+      setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleManualSubmit = async (e) => {
     e.preventDefault();
-    // Simulate a manual entry commit
-    alert(`System Manual Entry Committed: ${manualLog}`);
-    setShowManualModal(false);
-    setManualLog('');
+    try {
+      const res = await api.post('/admin/audit-logs/manual', { details: manualLog });
+      if (res.data.success) {
+         showToast('success', 'Manual entry successfully committed to audit ledger.');
+         fetchAdminData();
+      }
+    } catch (err) {
+      showToast('error', err.response?.data?.message || 'Failed to commit manual log entry.');
+    } finally {
+      setShowManualModal(false);
+      setManualLog('');
+    }
   };
 
   const handleExport = () => {
@@ -90,19 +104,19 @@ const DashboardView = () => {
       {/* 🚀 Dashboard Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1 text-left">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Dashboard <span className="text-blue-500">Overview</span>.</h2>
+          <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Dashboard <span className="text-blue-500">Overview</span>.</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Real-time operational statistics of the portal.</p>
         </div>
         <div className="flex gap-4">
           <button 
             onClick={handleExport}
-            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl bg-white/5 border border-border-subtle text-[10px] font-black text-text-primary uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
           >
             Export Report
           </button>
           <button 
             onClick={() => setShowManualModal(true)}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-text-primary uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             <Plus size={14} /> New Manual Entry
           </button>
@@ -117,7 +131,7 @@ const DashboardView = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 rounded-3xl bg-[#1E293B] border border-white/5 hover:border-blue-500/30 transition-all group relative overflow-hidden flex flex-col items-start"
+            className="p-6 rounded-3xl bg-bg-surface border border-border-subtle hover:border-blue-500/30 transition-all group relative overflow-hidden flex flex-col items-start"
           >
             <div className="flex w-full justify-between items-start mb-6">
               <div className={`p-3 rounded-2xl bg-${stat.color}-500/10 text-${stat.color}-500 border border-${stat.color}-500/20 transition-all group-hover:scale-110`}>
@@ -129,7 +143,7 @@ const DashboardView = () => {
               </div>
             </div>
             <div className="space-y-1 text-left">
-              <p className="text-3xl font-black text-white tracking-tighter leading-none">{stat.value}</p>
+              <p className="text-3xl font-black text-text-primary tracking-tighter leading-none">{stat.value}</p>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
             </div>
           </motion.div>
@@ -140,10 +154,10 @@ const DashboardView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Signals Feed (Activity) */}
-        <div className="lg:col-span-2 p-8 rounded-[2.5rem] bg-[#1E293B] border border-white/5 space-y-8 flex flex-col items-start">
+        <div className="lg:col-span-2 p-8 rounded-[2.5rem] bg-bg-surface border border-border-subtle space-y-8 flex flex-col items-start">
           <div className="flex justify-between items-center w-full">
             <div className="text-left">
-              <h3 className="text-xl font-black text-white uppercase tracking-tight">Signals Feed</h3>
+              <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">Signals Feed</h3>
               <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">Live platform activity detection</p>
             </div>
             <Activity className="text-blue-500" size={20} />
@@ -151,11 +165,11 @@ const DashboardView = () => {
           
           <div className="w-full space-y-4">
             {activity.map((e, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-all group/item">
+              <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-2xl hover:bg-white/[0.04] transition-all group/item">
                 <div className="flex items-center gap-6">
                   <div className={`w-2.5 h-2.5 rounded-full ${e.type === 'USER_JOINED' ? 'bg-blue-500' : 'bg-emerald-500'} animate-pulse`} />
                   <div className="text-left">
-                    <p className="text-[11px] font-black text-white uppercase tracking-widest leading-none">{e.type.replace('_', ' ')}</p>
+                    <p className="text-[11px] font-black text-text-primary uppercase tracking-widest leading-none">{e.type.replace('_', ' ')}</p>
                     <p className="text-[10px] font-bold text-gray-500 mt-1 uppercase italic tracking-tighter">{e.detail}</p>
                   </div>
                 </div>
@@ -168,10 +182,10 @@ const DashboardView = () => {
         </div>
 
         {/* System Vitals */}
-        <div className="p-8 rounded-[2.5rem] bg-[#1E293B] border border-white/5 space-y-8 flex flex-col items-start">
+        <div className="p-8 rounded-[2.5rem] bg-bg-surface border border-border-subtle space-y-8 flex flex-col items-start">
           <div className="flex justify-between items-center w-full">
             <div className="text-left">
-              <h3 className="text-xl font-black text-white uppercase tracking-tight">System Vitals</h3>
+              <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">System Vitals</h3>
               <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">Core protocol health</p>
             </div>
             <ShieldCheck className="text-emerald-500" size={20} />
@@ -210,10 +224,10 @@ const DashboardView = () => {
            <motion.div 
              initial={{ scale: 0.9, opacity: 0 }}
              animate={{ scale: 1, opacity: 1 }}
-             className="w-full max-w-md bg-[#1E293B] border border-white/10 rounded-[2.5rem] p-10 space-y-8 shadow-2xl shadow-blue-500/10"
+             className="w-full max-w-md bg-bg-surface border border-border-subtle rounded-[2.5rem] p-10 space-y-8 shadow-2xl shadow-blue-500/10"
            >
               <div className="space-y-2 text-left">
-                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Manual <span className="text-blue-500">Node Entry</span>.</h3>
+                 <h3 className="text-2xl font-black text-text-primary uppercase tracking-tighter">Manual <span className="text-blue-500">Node Entry</span>.</h3>
                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Inject manual protocol logs into system matrix.</p>
               </div>
               
@@ -223,19 +237,19 @@ const DashboardView = () => {
                    value={manualLog}
                    onChange={(e) => setManualLog(e.target.value)}
                    placeholder="DESCRIBE MANUAL ACTION / LOG ENTRY..."
-                   className="w-full bg-white/5 border border-white/10 rounded-3xl px-6 py-5 text-[11px] font-black text-white tracking-widest focus:outline-none focus:border-blue-500 transition-all min-h-[120px] resize-none uppercase shadow-inner"
+                   className="w-full bg-white/5 border border-border-subtle rounded-3xl px-6 py-5 text-[11px] font-black text-text-primary tracking-widest focus:outline-none focus:border-blue-500 transition-all min-h-[120px] resize-none uppercase shadow-inner"
                  />
                  <div className="flex gap-4">
                     <button 
                       type="button"
                       onClick={() => setShowManualModal(false)}
-                      className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all"
+                      className="flex-1 py-4 rounded-2xl bg-white/5 border border-border-subtle text-gray-500 text-[10px] font-black uppercase tracking-widest hover:text-text-primary transition-all"
                     >
                       Abort
                     </button>
                     <button 
                       type="submit"
-                      className="flex-2 px-8 py-4 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all"
+                      className="flex-2 px-8 py-4 rounded-2xl bg-blue-600 text-text-primary text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all"
                     >
                       Commit Entry
                     </button>
@@ -245,6 +259,26 @@ const DashboardView = () => {
         </div>
       )}
 
+      {/* Top screen Toast Notification */}
+      <AnimatePresence>
+          {toast && (
+              <motion.div
+                  initial={{ opacity: 0, y: -50 }}
+                  animate={{ opacity: 1, y: 20 }}
+                  exit={{ opacity: 0, y: -50 }}
+                  className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-xl flex items-center gap-2 border text-sm font-semibold uppercase tracking-wider"
+                  style={{
+                      backgroundColor: toast.type === 'success' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      borderColor: toast.type === 'success' ? '#34D399' : '#EF4444',
+                      color: toast.type === 'success' ? '#34D399' : '#EF4444',
+                      backdropFilter: 'blur(10px)',
+                      borderWidth: '1px'
+                  }}
+              >
+                  {toast.type === 'success' ? '✓' : '✗'} {toast.message}
+              </motion.div>
+          )}
+      </AnimatePresence>
     </div>
   );
 };

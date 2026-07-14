@@ -87,7 +87,7 @@ const PaymentsView = () => {
       {/* 🚀 Financial Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Payment <span className="text-blue-500">Ledger</span>.</h2>
+          <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Payment <span className="text-blue-500">Ledger</span>.</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Platform-wide financial transactions log.</p>
         </div>
         <div className="flex items-center gap-4 w-full md:w-auto">
@@ -98,12 +98,12 @@ const PaymentsView = () => {
               placeholder="SEARCH BY TXN OR USER..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#1E293B] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
+              className="w-full bg-bg-surface border border-border-subtle rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
             />
           </div>
           <button 
             onClick={handleExportCSV}
-            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl bg-white/5 border border-border-subtle text-[10px] font-black text-text-primary uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
           >
             <Download size={14} /> Export CSV
           </button>
@@ -111,11 +111,11 @@ const PaymentsView = () => {
       </div>
 
       {/* 🧾 Transaction Grid */}
-      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[900px]">
              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
+                <tr className="border-b border-border-subtle bg-white/[0.02] dark:bg-white/[0.02]">
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Transaction ID</th>
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">User</th>
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Amount</th>
@@ -130,7 +130,7 @@ const PaymentsView = () => {
                      initial={{ opacity: 0, x: -10 }}
                      animate={{ opacity: 1, x: 0 }}
                      transition={{ delay: i * 0.05 }}
-                     className="border-b border-white/5 hover:bg-white/[0.02] transition-all group"
+                     className="border-b border-border-subtle hover:bg-white/[0.02] dark:bg-white/[0.02] transition-all group"
                    >
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-4">
@@ -138,7 +138,7 @@ const PaymentsView = () => {
                                <CreditCard size={18} />
                             </div>
                             <div className="text-left">
-                               <p className="text-white font-black text-sm tracking-tight">{t.id}</p>
+                               <p className="text-text-primary font-black text-sm tracking-tight">{t.id}</p>
                                <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{t.date}</p>
                             </div>
                          </div>
@@ -148,7 +148,7 @@ const PaymentsView = () => {
                          <p className="text-[9px] font-black text-blue-500 mt-1 uppercase tracking-widest italic">{t.plan} TIER</p>
                       </td>
                       <td className="px-8 py-6">
-                         <div className="flex items-center gap-1 text-white font-black text-sm tracking-tighter">
+                         <div className="flex items-center gap-1 text-text-primary font-black text-sm tracking-tighter">
                             <IndianRupee size={14} className="text-gray-500" /> {t.amount.toLocaleString()}
                          </div>
                       </td>
@@ -163,7 +163,7 @@ const PaymentsView = () => {
                          </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                         <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all">
+                         <button className="p-3 bg-white/5 hover:bg-white/10 border border-border-subtle rounded-xl text-gray-500 hover:text-text-primary transition-all">
                             <ExternalLink size={16} />
                          </button>
                       </td>

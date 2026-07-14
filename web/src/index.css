@@ -8,6 +8,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ── Design Tokens ───────────────────────────────────────── */
 @theme {
   /* Backgrounds */
@@ -137,12 +139,19 @@
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-[data-theme="light"] .glass-card .bg-white\/5 {
+[data-theme="light"] .glass-card .bg-white\/5,
+[data-theme="light"] .glass-modal .bg-white\/5 {
   background: rgba(0, 0, 0, 0.04) !important;
 }
 
-[data-theme="light"] .glass-card .border-white\/10 {
+[data-theme="light"] .glass-card .border-white\/10,
+[data-theme="light"] .glass-modal .border-white\/10 {
   border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+[data-theme="light"] .glass-modal input,
+[data-theme="light"] .glass-modal textarea {
+  color: var(--color-text-primary) !important;
 }
 
 /* Trend badge in salary cards — growth up (emerald) */

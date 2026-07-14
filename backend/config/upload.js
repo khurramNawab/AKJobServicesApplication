@@ -69,10 +69,11 @@ const fileFilter = (req, file, cb) => {
   }
 
   if (file.fieldname === "video") {
-    if (file.mimetype.startsWith("video/")) {
+    const allowedVideoExts = [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm"];
+    if (file.mimetype.startsWith("video/") || allowedVideoExts.includes(ext)) {
       return cb(null, true);
     }
-    return cb(new Error("Only video files are allowed."), false);
+    return cb(new Error(`Only video files are allowed. Got ${ext} file.`), false);
   }
 
   cb(new Error(`Unexpected field: ${file.fieldname}`), false);
@@ -127,7 +128,15 @@ const scanFileForMalware = (filePath) => {
 const uploadWithRetry = async (filePath, options, retries = 3, delay = 1000) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const result = await cloudinary.uploader.upload(filePath, options);
+      const isVideo = options.resource_type === 'video';
+      const result = isVideo 
+        ? await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_large(filePath, options, (error, uploadResult) => {
+              if (error) return reject(error);
+              resolve(uploadResult);
+            });
+          })
+        : await cloudinary.uploader.upload(filePath, options);
       return result;
     } catch (error) {
       if (attempt === retries) throw error;
@@ -145,7 +154,7 @@ const multerInstance = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB global Multer limit
+    fileSize: 5 * 1024 * 1024 * 1024, // 5 GB global Multer limit for videos
   },
 });
 
@@ -155,7 +164,11 @@ const upload = {
     return (req, res, next) => {
       multerMiddleware(req, res, async (err) => {
         if (err) {
-          return next(err);
+          console.error(`[Multer Error] Field: ${fieldname} | Error: ${err.message} | Content-Type: ${req.headers['content-type']}`);
+          return res.status(400).json({
+            success: false,
+            message: `File upload error: ${err.message}`,
+          });
         }
 
         if (!req.file) {
@@ -201,13 +214,7 @@ const upload = {
             });
           }
 
-          if (fieldname === "video" && fileSize > 50 * 1024 * 1024) {
-            try { fs.unlinkSync(localPath); } catch {}
-            return res.status(400).json({
-              success: false,
-              message: `Video file too large. Maximum size is 50 MB. (Your file is ${(fileSize / (1024 * 1024)).toFixed(2)} MB.)`,
-            });
-          }
+
 
           // 3. SPECIAL HANDLING FOR ASYNC QUEUE RESUME UPLOADS:
           // Bypass synchronous Cloudinary upload. CandidateController will enqueue it.

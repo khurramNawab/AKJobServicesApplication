@@ -12,6 +12,7 @@ const Landing = () => {
   const [jobsLoading, setJobsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
+  const [videoMuted, setVideoMuted] = useState(true); // always start muted for autoplay
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -59,25 +60,42 @@ const Landing = () => {
 
   useEffect(() => {
      api.get('/platform-config').then(res => {
+        console.log('[Landing] platform-config response:', JSON.stringify(res.data?.data?.promoVideo));
         if (res.data?.success && res.data.data?.promoVideo?.isActive) {
            setPromoVideo(res.data.data.promoVideo);
+        } else {
+           console.log('[Landing] promoVideo NOT active or missing. isActive:', res.data?.data?.promoVideo?.isActive, 'url:', res.data?.data?.promoVideo?.url, 'cloudinaryUrl:', res.data?.data?.promoVideo?.cloudinaryUrl);
         }
-     }).catch(() => {});
+     }).catch((err) => { console.error('[Landing] platform-config fetch error:', err); });
 
-     api.get('/jobs?featured=true&limit=6').then(res => {
-        if (res.data?.success) {
-           setFeaturedJobs(res.data.data || []);
-        }
-     }).catch(() => {})
-       .finally(() => setJobsLoading(false));
+      api.get('/jobs?featured=true&limit=6').then(async (res) => {
+         if (res.data?.success && res.data.data?.length > 0) {
+            setFeaturedJobs(res.data.data);
+         } else {
+            const fallbackRes = await api.get('/jobs?limit=6');
+            if (fallbackRes.data?.success && fallbackRes.data.data?.length > 0) {
+               setFeaturedJobs(fallbackRes.data.data);
+            }
+         }
+      }).catch(async () => {
+         try {
+            const fallbackRes = await api.get('/jobs?limit=6');
+            if (fallbackRes.data?.success && fallbackRes.data.data?.length > 0) {
+               setFeaturedJobs(fallbackRes.data.data);
+            }
+         } catch (e) {}
+      })
+        .finally(() => setJobsLoading(false));
   }, []);
 
-  const getEmbedUrl = (url) => {
+  const getEmbedUrl = (url, forceAlwaysMuted = true) => {
       if (!url) return '';
-      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-      if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?controls=0&autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}`;
+      // Always start muted for autoplay compliance. Audio toggled via re-render.
+      const muteParam = forceAlwaysMuted ? 1 : 0;
+      const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+      if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?controls=0&autoplay=1&mute=${muteParam}&loop=1&playlist=${ytMatch[1]}&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&playsinline=1&cc_load_policy=0&fs=0&showinfo=0`;
       const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-      if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?controls=0&autoplay=1&muted=1&loop=1`;
+      if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=${muteParam}&loop=1&controls=0&title=0&byline=0&portrait=0`;
       return url;
   };
   return (
@@ -92,10 +110,10 @@ const Landing = () => {
       </div>
 
       {/* Hero */}
-      <section className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8 z-10">
+      <section className="relative pt-10 sm:pt-12 lg:pt-16 pb-16 px-4 sm:px-6 lg:px-8 z-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            <div className="flex-1 text-left space-y-7 lg:space-y-8">
+            <div className="w-full lg:w-[45%] text-left space-y-7 lg:space-y-8">
 
               {/* Badge */}
               <motion.div
@@ -149,14 +167,59 @@ const Landing = () => {
               </motion.div>
             </div>
 
-            {/* Hero Illustration */}
+            {/* Hero Illustration or Promo Video */}
             <motion.div
               initial={{ opacity: 0, scale: 0.92, x: 40 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="flex-1 hidden lg:flex justify-center items-center relative h-[480px]"
+              className="w-full lg:w-[55%] hidden lg:flex flex-col justify-center items-center relative"
             >
-              <HeroIllustration />
+              {promoVideo && promoVideo.isActive && (promoVideo.url || promoVideo.cloudinaryUrl) ? (
+                <div className="w-full space-y-4">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-2xl relative group">
+                    {promoVideo.cloudinaryUrl && !promoVideo.url ? (
+                      <video
+                        src={promoVideo.cloudinaryUrl}
+                        autoPlay
+                        loop
+                        muted={videoMuted}
+                        playsInline
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                    ) : (
+                      <>
+                        <iframe
+                          key={`yt-${videoMuted}`}
+                          src={getEmbedUrl(promoVideo.url || promoVideo.cloudinaryUrl, videoMuted)}
+                          title={promoVideo.title || "Promo Video"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          className="w-full h-full border-none"
+                        />
+                        {/* Full overlay: blocks YouTube UI (share, subtitles, title, next) */}
+                        <div className="absolute inset-0 z-10" style={{ background: 'transparent' }} />
+                        {/* Audio toggle — only shown when admin enabled audio */}
+                        {promoVideo.isMuted === false && (
+                          <button
+                            onClick={() => setVideoMuted(m => !m)}
+                            className="absolute bottom-3 right-3 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold border border-white/10 hover:bg-black/80 transition-all shadow-xl"
+                          >
+                            {videoMuted ? '🔇 Tap for Audio' : '🔊 Mute'}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {promoVideo.description && (
+                    <p className="text-sm text-text-secondary text-center max-w-lg mx-auto">
+                      {promoVideo.description}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="h-[480px] w-full flex items-center justify-center">
+                  <HeroIllustration />
+                </div>
+              )}
             </motion.div>
           </div>
 
@@ -255,46 +318,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Promo Video Showcase Section */}
-      {promoVideo && (
-        <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-border-subtle text-left">
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#4F8EF7]/10 border border-[#4F8EF7]/20 text-[10px] font-black uppercase tracking-widest text-[#4F8EF7]">
-                    Featured Media
-                 </div>
-                 <h2 className="text-3xl md:text-5xl font-black text-text-primary tracking-tighter uppercase leading-tight">
-                    {promoVideo.title || 'Discover AK Job Services'}
-                 </h2>
-                 <p className="text-text-secondary text-sm leading-relaxed font-medium">
-                    Learn how our platform connects top talent with verified Indian employers. See the premium dashboard features, chat integrations, and advanced tools live in action.
-                 </p>
-              </div>
-               {promoVideo.url ? (
-                  <div className="aspect-video w-full rounded-[2.5rem] overflow-hidden bg-black border border-border-subtle shadow-2xl relative">
-                     <iframe
-                        src={getEmbedUrl(promoVideo.url)}
-                        title={promoVideo.title || 'Platform Overview'}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-none"
-                     />
-                  </div>
-               ) : promoVideo.cloudinaryUrl ? (
-                  <div className="w-full rounded-[2.5rem] overflow-hidden bg-black border border-white/10 shadow-2xl relative flex justify-center items-center">
-                     <video
-                        src={promoVideo.cloudinaryUrl}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-auto max-h-[500px] object-contain"
-                     />
-                  </div>
-               ) : null}
-           </div>
-        </section>
-      )}
+
 
       {/* Latest Openings */}
       {/* Latest Openings */}

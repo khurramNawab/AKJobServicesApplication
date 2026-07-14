@@ -35,7 +35,7 @@ const JobModerator = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left">
       <div className="flex flex-col md:flex-row justify-between gap-6">
         <div className="space-y-1">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Job <span className="text-blue-500">Moderator</span>.</h2>
+          <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Job <span className="text-blue-500">Moderator</span>.</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Manage platform postings and sector integrity.</p>
         </div>
         <div className="relative flex-1 md:max-w-md group">
@@ -45,16 +45,16 @@ const JobModerator = () => {
             placeholder="FILTER BY POSITION OR ENTITY..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#1E293B] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
+            className="w-full bg-bg-surface border border-border-subtle rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
           />
         </div>
       </div>
 
-      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[900px]">
              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
+                <tr className="border-b border-border-subtle bg-white/[0.02] dark:bg-white/[0.02]">
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Position / Company</th>
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Recruiter Signal</th>
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Package Status</th>
@@ -68,7 +68,7 @@ const JobModerator = () => {
                      initial={{ opacity: 0, x: -10 }}
                      animate={{ opacity: 1, x: 0 }}
                      transition={{ delay: i * 0.05 }}
-                     className="border-b border-white/5 hover:bg-white/[0.02] transition-all group"
+                     className="border-b border-border-subtle hover:bg-white/[0.02] dark:bg-white/[0.02] transition-all group"
                    >
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-4">
@@ -80,7 +80,7 @@ const JobModerator = () => {
                                )}
                             </div>
                             <div className="text-left">
-                               <p className="text-white font-black text-sm tracking-tight">{j.title}</p>
+                               <p className="text-text-primary font-black text-sm tracking-tight">{j.title}</p>
                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
                                  <Building2 size={10} /> {j.companyName || j.recruiterId?.companyName || 'Corporate Entity'}
                                </p>
@@ -103,12 +103,12 @@ const JobModerator = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                          <div className="flex items-center justify-end gap-3 transition-all">
-                            <button onClick={() => setSelectedJob(j)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all">
+                            <button onClick={() => setSelectedJob(j)} className="p-3 bg-white/5 hover:bg-white/10 border border-border-subtle rounded-xl text-gray-500 hover:text-text-primary transition-all">
                                <Eye size={16} />
                             </button>
                             <button 
                               onClick={() => onDelete(j._id)}
-                              className="p-3 bg-rose-500/10 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 rounded-xl text-rose-500 transition-all"
+                              className="p-3 bg-rose-500/10 hover:bg-rose-500/20 border border-border-subtle hover:border-rose-500/30 rounded-xl text-rose-500 transition-all"
                             >
                                <Trash2 size={16} />
                             </button>
@@ -121,7 +121,7 @@ const JobModerator = () => {
         </div>
         
         {/* 📟 Pager Subsystem */}
-        <div className="p-8 border-t border-white/5 px-10">
+        <div className="p-8 border-t border-border-subtle px-10">
           <Pagination 
              currentPage={pagination.jobs.current} 
              totalPages={pagination.jobs.pages} 
@@ -144,14 +144,14 @@ const JobModerator = () => {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-8"
+                  className="bg-[#0F172A] border border-border-subtle rounded-[2.5rem] p-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-8"
                >
                   <div className="flex items-center justify-between">
                      <div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight">{selectedJob.title}</h3>
+                        <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">{selectedJob.title}</h3>
                         <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">{selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Corporate Entity'}</p>
                      </div>
-                     <button onClick={() => setSelectedJob(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                     <button onClick={() => setSelectedJob(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-text-primary transition-all">
                         ✕
                      </button>
                   </div>
@@ -159,27 +159,27 @@ const JobModerator = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-slate-400 text-xs">
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Location</p>
-                        <p className="text-white font-bold mt-1 flex items-center gap-1.5"><MapPin size={12} /> {selectedJob.location}</p>
+                        <p className="text-text-primary font-bold mt-1 flex items-center gap-1.5"><MapPin size={12} /> {selectedJob.location}</p>
                      </div>
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Salary / Year</p>
-                        <p className="text-white font-bold mt-1 flex items-center gap-1.5"><IndianRupee size={12} /> {selectedJob.salaryRange?.min || selectedJob.salaryRange} - {selectedJob.salaryRange?.max || ''} {selectedJob.salaryRange?.currency || 'INR'}</p>
+                        <p className="text-text-primary font-bold mt-1 flex items-center gap-1.5"><IndianRupee size={12} /> {selectedJob.salaryRange?.min || selectedJob.salaryRange} - {selectedJob.salaryRange?.max || ''} {selectedJob.salaryRange?.currency || 'INR'}</p>
                      </div>
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Vacancies</p>
-                        <p className="text-white font-bold mt-1">{selectedJob.vacancies || 1}</p>
+                        <p className="text-text-primary font-bold mt-1">{selectedJob.vacancies || 1}</p>
                      </div>
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Interview Mode</p>
-                        <p className="text-white font-bold mt-1">{selectedJob.interviewMode || 'Online'}</p>
+                        <p className="text-text-primary font-bold mt-1">{selectedJob.interviewMode || 'Online'}</p>
                      </div>
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Education Required</p>
-                        <p className="text-white font-bold mt-1">{selectedJob.educationQualification || 'N/A'}</p>
+                        <p className="text-text-primary font-bold mt-1">{selectedJob.educationQualification || 'N/A'}</p>
                      </div>
                      <div>
                         <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Deadline</p>
-                        <p className="text-white font-bold mt-1">{selectedJob.applicationDeadline ? new Date(selectedJob.applicationDeadline).toLocaleDateString() : 'None'}</p>
+                        <p className="text-text-primary font-bold mt-1">{selectedJob.applicationDeadline ? new Date(selectedJob.applicationDeadline).toLocaleDateString() : 'None'}</p>
                      </div>
                   </div>
 

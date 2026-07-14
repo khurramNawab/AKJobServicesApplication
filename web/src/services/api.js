@@ -17,9 +17,27 @@ const api = axios.create({
   withCredentials: true, // Crucial for HTTP-Only Cookies
   xsrfCookieName: "XSRF-TOKEN", // Grabs cookie set by backend
   xsrfHeaderName: "X-XSRF-TOKEN", // Sends it back in headers
-  headers: {
-    "Content-Type": "application/json",
-  },
+});
+
+// Dynamically set Content-Type based on request body type.
+// For FormData (file uploads), we MUST NOT set application/json or the multipart boundary is lost.
+api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    // Explicitly delete any Content-Type so browser sets multipart/form-data with boundary
+    if (config.headers && typeof config.headers.delete === 'function') {
+      config.headers.delete("Content-Type");
+    } else if (config.headers) {
+      delete config.headers["Content-Type"];
+    }
+  } else {
+    // For normal requests, set application/json
+    if (config.headers && typeof config.headers.set === 'function') {
+      config.headers.set("Content-Type", "application/json");
+    } else if (config.headers) {
+      config.headers["Content-Type"] = "application/json";
+    }
+  }
+  return config;
 });
 
 // Ensure CSRF header is sent even for cross-origin (different port) requests.

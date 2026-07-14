@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShieldCheck, ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, RefreshCw, Mail } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -116,7 +118,10 @@ const ForgotPassword = () => {
       >
         <div
           className="p-8 rounded-2xl"
-          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          style={theme === 'light'
+            ? { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }
+            : { background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }
+          }
         >
           
           <AnimatePresence mode="wait">

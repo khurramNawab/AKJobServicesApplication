@@ -71,7 +71,21 @@ const candidateSchema = new mongoose.Schema({
         showPhone: { type: Boolean, default: true },
         whatsappUpdates: { type: Boolean, default: false }
     },
-    interests: [{ type: String }]
+    interests: [{ type: String }],
+    // ── Quick Apply Template ──────────────────────────────────────────
+    // Saved once in Profile and pre-filled in every job application modal
+    applicationTemplate: {
+        degree:         { type: String, default: '' },
+        institution:    { type: String, default: '' },
+        graduationYear: { type: String, default: '' },
+        jobTitle:       { type: String, default: '' },
+        company:        { type: String, default: '' },
+        duration:       { type: String, default: '' },
+        jobDesc:        { type: String, default: '' },
+        skills:         { type: String, default: '' },
+        expectedSalary: { type: String, default: '' },
+        noticePeriod:   { type: String, default: '' },
+    }
 }, {
     timestamps: true
 });

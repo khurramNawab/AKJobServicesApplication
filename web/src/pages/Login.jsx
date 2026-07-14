@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, Users, CheckCircle2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Button from '../components/ui/Button';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, googleLogin } = useContext(AuthContext);
+  const { theme } = useTheme();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -59,7 +61,10 @@ const Login = () => {
       >
         <div
           className="p-8 rounded-2xl space-y-6"
-          style={{ background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          style={theme === 'light'
+            ? { background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(0,0,0,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }
+            : { background: 'rgba(13,21,38,0.90)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }
+          }
         >
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-text-primary">
@@ -153,9 +158,9 @@ const Login = () => {
           </form>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
+            <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.07)' }} />
             <span className="text-xs text-text-muted uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-[rgba(255,255,255,0.07)]" />
+            <div className="flex-1 h-px" style={{ background: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.07)' }} />
           </div>
 
           <div className="flex justify-center">
@@ -175,7 +180,7 @@ const Login = () => {
                 }
               }}
               onError={() => setError('Google Login Failed')}
-              theme="filled_black"
+              theme={theme === 'light' ? 'outline' : 'filled_black'}
               shape="circle"
               size="large"
               text="continue_with"

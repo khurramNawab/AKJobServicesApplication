@@ -136,17 +136,31 @@ const Salaries = () => {
                </AnimatePresence>
             </div>
 
-            {/* Intelligence Disclosure */}
+            {/* Market Intelligence Note */}
             <div className="glass-card p-12 rounded-[4rem] border-white/5 flex flex-col md:flex-row items-center gap-12 group hover:border-[#4F8EF7]/30 transition-all shadow-2xl relative overflow-hidden text-left">
                <div className="absolute top-0 right-0 w-96 h-full bg-[#4F8EF7]/5 blur-[100px] rounded-full translate-x-1/2 -z-10" />
                <div className="w-24 h-24 rounded-3xl bg-[#4F8EF7]/10 flex items-center justify-center border border-[#4F8EF7]/20 flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
                   <Info className="w-10 h-10 text-[#4F8EF7]" />
                </div>
-               <div className="space-y-4">
-                  <h3 className="text-2xl font-black text-white tracking-tight uppercase">Data Precision Intelligence</h3>
-                  <p className="text-base font-medium text-text-secondary opacity-80 leading-relaxed max-w-4xl">
-                     Salary intelligence is aggregated from real-time corporate data points and is strictly meant for market positioning. Individual valuation depends on core competencies, specialized certifications, and current market deployment demand.
+               <div className="space-y-4 flex-1">
+                  <h3 className="text-2xl font-black text-text-primary tracking-tight uppercase">Real-Time Market Intelligence</h3>
+                  <p className="text-base font-medium text-text-secondary leading-relaxed max-w-4xl">
+                     All salary data is sourced from live corporate hiring data and verified industry benchmarks across India's top sectors. Use these figures to benchmark your compensation, negotiate smarter, and understand your true market value.
                   </p>
+                  <div className="flex flex-wrap gap-6 pt-2">
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#4F8EF7]" />
+                        <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Updated Daily</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#34D399]" />
+                        <span className="text-xs font-bold text-text-muted uppercase tracking-widest">50,000+ Data Points</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+                        <span className="text-xs font-bold text-text-muted uppercase tracking-widest">India-Specific Insights</span>
+                     </div>
+                  </div>
                </div>
             </div>
          </div>

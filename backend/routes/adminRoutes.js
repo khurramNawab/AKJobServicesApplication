@@ -29,6 +29,7 @@ import {
     getAdminCompanies,
     getRevenueReports,
     getBroadcastHistory,
+    createManualAuditLog,
 } from '../controllers/adminController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { requireReauth } from '../middlewares/reauthMiddleware.js';
@@ -66,6 +67,7 @@ router.get('/broadcasts/history', getBroadcastHistory);
 // Audit logs
 router.get('/audit-logs', getAuditLogs);
 router.post('/audit-logs/verify', requireReauth, verifyAuditLedger);
+router.post('/audit-logs/manual', createManualAuditLog);
 
 // Platform config (Global Settings)
 router.get('/platform-config', getPlatformConfig);

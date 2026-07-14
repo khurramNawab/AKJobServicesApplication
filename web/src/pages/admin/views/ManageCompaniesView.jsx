@@ -82,7 +82,7 @@ const ManageCompaniesView = () => {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl ${
-                        toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                        toast.type === 'success' ? 'bg-emerald-600 text-text-primary' : 'bg-rose-600 text-text-primary'
                     }`}
                 >
                     {toast.type === 'success' ? <CheckCircle size={16} /> : <XCircle size={16} />}
@@ -93,7 +93,7 @@ const ManageCompaniesView = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Manage <span className="text-blue-500">Companies</span>.</h2>
+                    <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Manage <span className="text-blue-500">Companies</span>.</h2>
                     <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">View recruiters and manually create company accounts.</p>
                 </div>
                 
@@ -105,12 +105,12 @@ const ManageCompaniesView = () => {
                             placeholder="SEARCH COMPANY..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-[#1E293B] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
+                            className="w-full bg-bg-surface border border-border-subtle rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
                         />
                     </div>
                     <button 
                         onClick={() => setShowModal(true)}
-                        className="px-6 py-3 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-lg"
+                        className="px-6 py-3 rounded-xl bg-blue-600 text-[10px] font-black text-text-primary uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-lg"
                     >
                         <Plus size={14} /> Add Company
                     </button>
@@ -118,11 +118,11 @@ const ManageCompaniesView = () => {
             </div>
 
             {/* List Table */}
-            <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[900px]">
                         <thead>
-                            <tr className="border-b border-white/5 bg-white/[0.02]">
+                            <tr className="border-b border-border-subtle bg-white/[0.02] dark:bg-white/[0.02]">
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Company / Recruiter</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Contact</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan</th>
@@ -142,7 +142,7 @@ const ManageCompaniesView = () => {
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="border-b border-white/5 hover:bg-white/[0.02] transition-all group"
+                                    className="border-b border-border-subtle hover:bg-white/[0.02] dark:bg-white/[0.02] transition-all group"
                                 >
                                     <td className="px-8 py-6">
                                         <div className="flex items-center gap-4">
@@ -154,7 +154,7 @@ const ManageCompaniesView = () => {
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="text-white font-black text-sm tracking-tight">{c.companyName || 'Unnamed Company'}</p>
+                                                <p className="text-text-primary font-black text-sm tracking-tight">{c.companyName || 'Unnamed Company'}</p>
                                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{c.userId?.name || 'Orphaned Recruiter'}</p>
                                             </div>
                                         </div>
@@ -175,7 +175,7 @@ const ManageCompaniesView = () => {
                                         <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
                                             c.userId?.planType === 'ELITE' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
                                             c.userId?.planType === 'PRO' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
-                                            'bg-white/5 border-white/10 text-gray-500'
+                                            'bg-white/5 border-border-subtle text-gray-500'
                                         }`}>
                                             {c.userId?.planType || 'FREE'}
                                         </span>
@@ -208,14 +208,14 @@ const ManageCompaniesView = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-8"
+                            className="bg-[#0F172A] border border-border-subtle rounded-[2.5rem] p-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-8"
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Add Company</h3>
+                                    <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">Add Company</h3>
                                     <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Manually create a recruiter account</p>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                                <button onClick={() => setShowModal(false)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-text-primary transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -245,7 +245,7 @@ const ManageCompaniesView = () => {
                                             required={required}
                                             value={form[key]}
                                             onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                         />
                                     </div>
                                 ))}
@@ -256,7 +256,7 @@ const ManageCompaniesView = () => {
                                         rows={4}
                                         value={form.description}
                                         onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     />
                                 </div>
 
@@ -264,7 +264,7 @@ const ManageCompaniesView = () => {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                        className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-text-primary font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                     >
                                         {submitting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                                         {submitting ? 'Creating...' : 'Create Recruiter Account'}

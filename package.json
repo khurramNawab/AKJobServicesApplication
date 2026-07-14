@@ -2,9 +2,10 @@
   "name": "ak-job-services-deployment",
   "version": "1.0.0",
   "description": "Root package for Hostinger Unified Deployment",
+  "type": "module",
   "scripts": {
-    "postinstall": "cd backend && npm install && cd ../web && npm install",
-    "build": "cd web && npm run build",
-    "start": "cd backend && node server.js"
+    "postinstall": "cd backend && npm install --no-audit --no-fund",
+    "build": "echo 'Frontend pre-built. Skipping build.'",
+    "start": "node server.js"
   }
 }

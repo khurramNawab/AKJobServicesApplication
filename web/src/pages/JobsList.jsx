@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Briefcase, IndianRupee, Filter, SlidersHorizontal, ChevronRight, Bookmark, Clock, X, Zap, Star, TrendingUp, CheckCircle2 } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -8,8 +8,10 @@ import api from '../services/api';
 
 const JobsList = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [userApplications, setUserApplications] = useState([]);
+  const [savedJobIds, setSavedJobIds] = useState(new Set()); // wishlist state
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
@@ -37,15 +39,18 @@ const JobsList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobsRes, appsRes] = await Promise.all([
+        const fetchList = [
           api.get('/jobs'),
-          user && user.role === 'CANDIDATE' ? api.get('/applications/me') : Promise.resolve({ data: { data: [] } })
-        ]);
-
+          user && user.role === 'CANDIDATE' ? api.get('/applications/me') : Promise.resolve({ data: { data: [] } }),
+          user && user.role === 'CANDIDATE' ? api.get('/saved-jobs/me') : Promise.resolve({ data: { data: [] } }),
+        ];
+        const [jobsRes, appsRes, savedRes] = await Promise.all(fetchList);
         setJobs(jobsRes.data.data);
         const apps = appsRes.data.data || [];
         setUserApplications(apps);
-        console.log('User applications loaded:', apps.length);
+        // Build a Set of saved job IDs for O(1) lookup
+        const savedIds = new Set((savedRes.data.data || []).map(item => item.jobId?._id || item.jobId));
+        setSavedJobIds(savedIds);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -54,6 +59,22 @@ const JobsList = () => {
     };
     fetchData();
   }, [user]);
+
+  const toggleSave = async (e, jobId) => {
+    e.stopPropagation(); // Don't navigate when clicking bookmark
+    if (!user) { navigate('/login'); return; }
+    try {
+      await api.post(`/saved-jobs/toggle/${jobId}`);
+      setSavedJobIds(prev => {
+        const next = new Set(prev);
+        if (next.has(jobId)) next.delete(jobId);
+        else next.add(jobId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to toggle save:', err);
+    }
+  };
 
   const filteredJobs = useMemo(() => {
     let result = jobs;
@@ -168,13 +189,14 @@ const JobsList = () => {
               ))
             ) : filteredJobs.length > 0 ? (
               filteredJobs.map((job) => (
-                <motion.div
+                 <motion.div
                   key={job._id}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -2 }}
                   transition={{ duration: 0.2 }}
-                  className="glass-card p-6 group relative flex flex-col h-full"
+                  onClick={() => navigate(`/jobs/${job._id}`)}
+                  className="glass-card p-6 group relative flex flex-col h-full cursor-pointer"
                 >
                   {/* Featured Badge */}
                   <div className="absolute top-5 right-5">
@@ -224,9 +246,23 @@ const JobsList = () => {
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Applied
                         </span>
                       )}
-                      <Link to={`/jobs/${job._id}`} className="flex items-center gap-1 text-xs font-medium text-text-secondary group-hover:text-[#4F8EF7] transition-colors">
+                      {/* Wishlist bookmark button for candidates */}
+                      {user && user.role === 'CANDIDATE' && (
+                        <button
+                          onClick={(e) => toggleSave(e, job._id)}
+                          className={`p-1.5 rounded-lg border transition-all ${
+                            savedJobIds.has(job._id)
+                              ? 'bg-[#F05674]/10 border-[#F05674]/30 text-[#F05674]'
+                              : 'bg-white/[0.04] border-[rgba(255,255,255,0.07)] text-text-muted hover:text-[#F05674] hover:border-[#F05674]/30'
+                          }`}
+                          title={savedJobIds.has(job._id) ? 'Remove from Wishlist' : 'Save to Wishlist'}
+                        >
+                          <Bookmark className={`w-3.5 h-3.5 ${savedJobIds.has(job._id) ? 'fill-current' : ''}`} />
+                        </button>
+                      )}
+                      <span className="flex items-center gap-1 text-xs font-medium text-text-secondary group-hover:text-[#4F8EF7] transition-colors">
                         View <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
+                      </span>
                     </div>
                   </div>
                 </motion.div>

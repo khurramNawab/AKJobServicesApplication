@@ -51,7 +51,7 @@ const UserView = () => {
       {/* 🧭 Operational Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1 text-left">
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">User <span className="text-blue-500">Directory</span>.</h2>
+          <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">User <span className="text-blue-500">Directory</span>.</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Manage registered users and roles.</p>
         </div>
         
@@ -63,13 +63,13 @@ const UserView = () => {
               placeholder="SEARCH BY NAME OR EMAIL..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#1E293B] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
+              className="w-full bg-bg-surface border border-border-subtle rounded-xl py-3 pl-12 pr-4 text-[11px] font-black tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase"
             />
           </div>
           <select 
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
-            className="bg-[#1E293B] border border-white/5 rounded-xl px-4 py-3 text-[10px] font-black text-white focus:outline-none focus:border-blue-500 uppercase tracking-widest cursor-pointer"
+            className="bg-bg-surface border border-border-subtle rounded-xl px-4 py-3 text-[10px] font-black text-text-primary focus:outline-none focus:border-blue-500 uppercase tracking-widest cursor-pointer"
           >
             <option value="ALL">All Roles</option>
             <option value="CANDIDATE">Candidate</option>
@@ -80,13 +80,13 @@ const UserView = () => {
       </div>
 
       {/* 🧾 High-Performance Master Table */}
-      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
+                <tr className="border-b border-border-subtle bg-white/[0.02] dark:bg-white/[0.02]">
                    <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                      <div className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+                      <div className="flex items-center gap-2 cursor-pointer hover:text-text-primary transition-colors">
                          User Info <ArrowUpDown size={12} />
                       </div>
                    </th>
@@ -102,7 +102,7 @@ const UserView = () => {
                      initial={{ opacity: 0, x: -10 }}
                      animate={{ opacity: 1, x: 0 }}
                      transition={{ delay: i * 0.05 }}
-                     className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
+                     className="border-b border-border-subtle hover:bg-white/[0.02] dark:bg-white/[0.02] transition-colors group"
                    >
                       <td className="px-8 py-6 text-left">
                          <div className="flex items-center gap-4">
@@ -114,7 +114,7 @@ const UserView = () => {
                                 )}
                              </div>
                             <div className="text-left">
-                               <p className="text-white font-black text-sm tracking-tight">{u.name}</p>
+                               <p className="text-text-primary font-black text-sm tracking-tight">{u.name}</p>
                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{u.email}</p>
                             </div>
                          </div>
@@ -123,7 +123,7 @@ const UserView = () => {
                          <select 
                            value={u.role}
                            onChange={(e) => handleRoleUpdate(u._id, e.target.value)}
-                           className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black text-white focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest cursor-pointer"
+                           className="bg-white/5 border border-border-subtle rounded-xl px-4 py-2 text-[10px] font-black text-text-primary focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest cursor-pointer"
                          >
                             <option value="CANDIDATE">Candidate</option>
                             <option value="RECRUITER">Recruiter</option>
@@ -133,7 +133,7 @@ const UserView = () => {
                       <td className="px-8 py-6">
                          <button 
                            onClick={() => handleToggleVerification(u._id, u.isVerified)}
-                           className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all bg-white/5 border-white/10 text-white"
+                           className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all bg-white/5 border-border-subtle text-text-primary"
                          >
                             {u.isVerified ? <CheckCircle size={12} className="text-emerald-400" /> : <Clock size={12} className="text-amber-400" />}
                             {u.isVerified ? 'Verified Account' : 'Pending Verification'}
@@ -143,13 +143,13 @@ const UserView = () => {
                          <div className="flex items-center justify-end gap-3 transition-all">
                             <button 
                               onClick={() => setSelectedUser(u)}
-                              className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-500 hover:text-white transition-all"
+                              className="p-3 bg-white/5 hover:bg-white/10 border border-border-subtle rounded-xl text-gray-500 hover:text-text-primary transition-all"
                             >
                                <Eye size={16} />
                             </button>
                             <button 
                               onClick={() => handleDeleteUser(u._id)}
-                              className="p-3 bg-rose-500/10 hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 rounded-xl text-rose-500 transition-all shadow-lg"
+                              className="p-3 bg-rose-500/10 hover:bg-rose-500/20 border border-border-subtle hover:border-rose-500/30 rounded-xl text-rose-500 transition-all shadow-lg"
                             >
                                <Trash2 size={16} />
                             </button>
@@ -162,7 +162,7 @@ const UserView = () => {
         </div>
  
         {/* 📟 Pager Subsystem */}
-        <div className="p-8 border-t border-white/5 px-10">
+        <div className="p-8 border-t border-border-subtle px-10">
           <Pagination 
              currentPage={pagination.users.current} 
              totalPages={pagination.users.pages} 
@@ -185,16 +185,16 @@ const UserView = () => {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-md space-y-8 text-left"
+                  className="bg-[#0F172A] border border-border-subtle rounded-[2.5rem] p-10 w-full max-w-md space-y-8 text-left"
                >
                   <div className="flex items-center justify-between">
-                     <h3 className="text-xl font-black text-white uppercase tracking-tight">User Details</h3>
-                     <button onClick={() => setSelectedUser(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                     <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">User Details</h3>
+                     <button onClick={() => setSelectedUser(null)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-text-primary transition-all">
                         ✕
                      </button>
                   </div>
 
-                  <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                  <div className="flex items-center gap-4 border-b border-border-subtle pb-6">
                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-indigo-600/20 flex items-center justify-center text-blue-400 font-black text-2xl border border-blue-500/20 overflow-hidden">
                         {selectedUser.profilePhoto || selectedUser.companyLogo ? (
                            <img src={selectedUser.profilePhoto || selectedUser.companyLogo} alt="Avatar" className="w-full h-full object-cover" />
@@ -203,29 +203,29 @@ const UserView = () => {
                         )}
                      </div>
                      <div>
-                        <h4 className="text-lg font-black text-white">{selectedUser.name}</h4>
+                        <h4 className="text-lg font-black text-text-primary">{selectedUser.name}</h4>
                         <p className="text-xs text-gray-500 font-bold">{selectedUser.email}</p>
                      </div>
                   </div>
 
                   <div className="space-y-4 text-xs text-slate-400">
-                     <div className="flex justify-between py-2 border-b border-white/5">
+                     <div className="flex justify-between py-2 border-b border-border-subtle">
                         <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Info size={12} /> User ID</span>
-                        <span className="text-white font-bold">{selectedUser._id}</span>
+                        <span className="text-text-primary font-bold">{selectedUser._id}</span>
                      </div>
-                     <div className="flex justify-between py-2 border-b border-white/5">
+                     <div className="flex justify-between py-2 border-b border-border-subtle">
                         <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px] flex items-center gap-1.5"><ShieldCheck size={12} /> Platform Sector</span>
                         <span className="text-blue-400 font-bold">{selectedUser.role}</span>
                      </div>
-                     <div className="flex justify-between py-2 border-b border-white/5">
+                     <div className="flex justify-between py-2 border-b border-border-subtle">
                         <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Zap size={12} /> Plan Type</span>
-                        <span className="text-white font-bold">{selectedUser.planType || 'FREE'}</span>
+                        <span className="text-text-primary font-bold">{selectedUser.planType || 'FREE'}</span>
                      </div>
-                     <div className="flex justify-between py-2 border-b border-white/5">
+                     <div className="flex justify-between py-2 border-b border-border-subtle">
                         <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Calendar size={12} /> Registered On</span>
-                        <span className="text-white font-bold">{new Date(selectedUser.createdAt).toLocaleDateString()}</span>
+                        <span className="text-text-primary font-bold">{new Date(selectedUser.createdAt).toLocaleDateString()}</span>
                      </div>
-                     <div className="flex justify-between py-2 border-b border-white/5">
+                     <div className="flex justify-between py-2 border-b border-border-subtle">
                         <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px] flex items-center gap-1.5"><CheckCircle size={12} /> Identity status</span>
                         <span className={`font-black ${selectedUser.isVerified ? 'text-emerald-400' : 'text-amber-400'}`}>
                            {selectedUser.isVerified ? 'VERIFIED' : 'PENDING'}
@@ -235,7 +235,7 @@ const UserView = () => {
 
                   <button
                      onClick={() => setSelectedUser(null)}
-                     className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 transition-all"
+                     className="w-full py-4 bg-white/5 hover:bg-white/10 text-text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest border border-border-subtle transition-all"
                   >
                      Close Details
                   </button>

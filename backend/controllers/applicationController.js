@@ -5,6 +5,7 @@ import { createNotification } from '../utils/notification.js';
 import PlatformConfig from '../models/PlatformConfig.js';
 import { invalidateCache } from '../utils/cache.js';
 import Recruiter from '../models/Recruiter.js';
+import User from '../models/User.js';
 
 // @desc    Apply for a job (Production-Hardened)
 // @route   POST /api/v1/jobs/:jobId/apply
@@ -65,14 +66,18 @@ export const applyForJob = async (req, res) => {
         }
 
         // 5. Create Application (No transactions for local stability)
+        const recruiterUser = await User.findById(job.recruiterId);
+        const isRecruiterPaid = recruiterUser && recruiterUser.planType !== 'FREE';
+
         const application = await Application.create({
             jobId: job._id,
             candidateId: userId,
             recruiterId: job.recruiterId,
             resume: finalResume,
             coverLetter: req.body?.coverLetter || '',
-            status: 'APPLIED',
-            statusHistory: [{ status: 'APPLIED', timestamp: new Date() }]
+            status: isRecruiterPaid ? 'PENDING' : 'APPLIED',
+            reviewedByAdmin: isRecruiterPaid ? false : true,
+            statusHistory: [{ status: isRecruiterPaid ? 'PENDING' : 'APPLIED', timestamp: new Date() }]
         });
 
         // 6. Update Job Metrics
@@ -83,17 +88,32 @@ export const applyForJob = async (req, res) => {
         await invalidateCache('jobs:list:*').catch(err => console.error('Cache Inval Error:', err));
 
         // 7. Notification (Non-blocking)
-        createNotification(
-            job.recruiterId,
-            'New Application',
-            `A new candidate has applied for: ${job.title}`,
-            'APPLICATION_STATUS',
-            { jobId: job._id, applicationId: application._id }
-        ).catch(err => console.error('Notification Error:', err));
+        if (isRecruiterPaid) {
+            const admins = await User.find({ role: 'ADMIN' }).select('_id');
+            for (const admin of admins) {
+                createNotification(
+                    admin._id,
+                    'New Application Pending Verification',
+                    `A candidate applied to ${job.title} which requires admin verification.`,
+                    'APPLICATION_STATUS',
+                    { jobId: job._id, applicationId: application._id }
+                ).catch(err => console.error('Notification Error:', err));
+            }
+        } else {
+            createNotification(
+                job.recruiterId,
+                'New Application',
+                `A new candidate has applied for: ${job.title}`,
+                'APPLICATION_STATUS',
+                { jobId: job._id, applicationId: application._id }
+            ).catch(err => console.error('Notification Error:', err));
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Application submitted successfully",
+            message: isRecruiterPaid
+                ? "Application submitted successfully and is pending admin verification"
+                : "Application submitted successfully",
             data: application
         });
 
@@ -199,8 +219,14 @@ export const getJobApplicants = async (req, res) => {
             });
         }
 
+        const matchQuery = { jobId: new mongoose.Types.ObjectId(jobId) };
+        if (req.user.role === 'RECRUITER' && req.user.planType !== 'FREE') {
+            matchQuery.reviewedByAdmin = true;
+            matchQuery.status = { $ne: 'REJECTED' };
+        }
+
         const applicants = await Application.aggregate([
-            { $match: { jobId: new mongoose.Types.ObjectId(jobId) } },
+            { $match: matchQuery },
             {
                 $lookup: {
                     from: 'users',

@@ -45,7 +45,7 @@ const ApplicationsView = () => {
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex justify-between items-end">
                 <div className="space-y-1 text-left">
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Vetting <span className="text-blue-500">Quarantine</span>.</h2>
+                    <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">Vetting <span className="text-blue-500">Quarantine</span>.</h2>
                     <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Manual verification for STRICT protocol resumes.</p>
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 px-6 py-3 rounded-2xl flex items-center gap-3">
@@ -55,7 +55,7 @@ const ApplicationsView = () => {
             </div>
 
             {applications.length === 0 ? (
-                <div className="py-32 flex flex-col items-center justify-center bg-white/[0.02] border border-white/5 rounded-[3rem] space-y-4">
+                <div className="py-32 flex flex-col items-center justify-center bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-[3rem] space-y-4">
                     <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-gray-600">
                         <CheckCircle size={32} />
                     </div>
@@ -71,7 +71,7 @@ const ApplicationsView = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] p-8 space-y-8 group hover:border-blue-500/30 transition-all shadow-xl"
+                                className="bg-bg-surface border border-border-subtle rounded-[2.5rem] p-8 space-y-8 group hover:border-blue-500/30 transition-all shadow-xl"
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-5">
@@ -79,7 +79,7 @@ const ApplicationsView = () => {
                                             {app.candidateId?.name?.charAt(0)}
                                         </div>
                                         <div className="space-y-1 text-left">
-                                            <h4 className="text-white font-black tracking-tight">{app.candidateId?.name}</h4>
+                                            <h4 className="text-text-primary font-black tracking-tight">{app.candidateId?.name}</h4>
                                             <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-1.5 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
                                                     <Briefcase size={12} /> {app.jobId?.title}
@@ -92,7 +92,7 @@ const ApplicationsView = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+                                <div className="p-6 bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle rounded-2xl flex items-center justify-between">
                                     <div className="flex items-center gap-4 text-gray-400">
                                         <FileText size={20} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Candidate Resume.pdf</span>
@@ -101,7 +101,7 @@ const ApplicationsView = () => {
                                         href={app.resume} 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest"
+                                        className="p-3 bg-blue-600 hover:bg-blue-500 text-text-primary rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest"
                                     >
                                         <Eye size={14} /> Inspect
                                     </a>
@@ -111,7 +111,7 @@ const ApplicationsView = () => {
                                     <button
                                         onClick={() => handleReview(app._id, 'APPROVED')}
                                         disabled={actionId === app._id}
-                                        className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                        className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-text-primary rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                     >
                                         {actionId === app._id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                         Approve & Transmit

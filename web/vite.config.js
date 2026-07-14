@@ -12,6 +12,8 @@ export default defineConfig({
         target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
+        timeout: 10 * 60 * 1000,
+        proxyTimeout: 10 * 60 * 1000,
         cookieDomainRewrite: "localhost",
         headers: {
           "X-Forwarded-Proto": "http",

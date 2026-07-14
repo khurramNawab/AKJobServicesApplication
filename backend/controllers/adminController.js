@@ -754,7 +754,7 @@ export const getPromoVideo = async (req, res) => {
     try {
         let config = await PlatformConfig.findOne();
         if (!config) config = await PlatformConfig.create({});
-        res.status(200).json({ success: true, data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary } });
+        res.status(200).json({ success: true, data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary, descriptions: config.promoVideoDescriptions } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -765,10 +765,14 @@ export const getPromoVideo = async (req, res) => {
 // @access  Private/Admin
 export const updatePromoVideo = async (req, res) => {
     try {
-        const ALLOWED = ['url', 'cloudinaryUrl', 'title', 'isActive'];
+        const ALLOWED = ['url', 'cloudinaryUrl', 'title', 'description', 'isActive', 'isMuted'];
         const promoVideoUpdate = {};
         for (const key of ALLOWED) {
             if (req.body[key] !== undefined) promoVideoUpdate[`promoVideo.${key}`] = req.body[key];
+        }
+
+        if (req.body.descriptions !== undefined) {
+            promoVideoUpdate['promoVideoDescriptions'] = req.body.descriptions;
         }
 
         const config = await PlatformConfig.findOneAndUpdate(
@@ -782,15 +786,12 @@ export const updatePromoVideo = async (req, res) => {
             details: 'Updated promo video settings',
         });
 
-        res.status(200).json({ success: true, data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary } });
+        res.status(200).json({ success: true, data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary, descriptions: config.promoVideoDescriptions } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Upload promo video and add to library
-// @route   POST /api/v1/admin/promo-video/upload
-// @access  Private/Admin
 export const uploadPromoVideo = async (req, res) => {
     try {
         if (!req.file || !req.file.path) {
@@ -814,7 +815,7 @@ export const uploadPromoVideo = async (req, res) => {
             success: true,
             message: 'Video uploaded successfully to Cloudinary and added to library!',
             url: req.file.path,
-            data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary }
+            data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary, descriptions: config.promoVideoDescriptions }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -843,13 +844,21 @@ export const deletePromoVideoFromLibrary = async (req, res) => {
             }
         }
 
+        // Clear active video if it matches the deleted one
+        if (config.promoVideo.cloudinaryUrl === video.url) {
+            config.promoVideo.cloudinaryUrl = '';
+            if (!config.promoVideo.url) {
+                config.promoVideo.isActive = false;
+            }
+        }
+
         config.promoVideoLibrary.pull(videoId);
         await config.save();
 
         res.status(200).json({ 
             success: true, 
             message: 'Video removed from library',
-            data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary }
+            data: { ...config.promoVideo.toObject(), library: config.promoVideoLibrary, descriptions: config.promoVideoDescriptions }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -1086,6 +1095,30 @@ export const getBroadcastHistory = async (req, res) => {
             .select('title message createdAt');
 
         res.status(200).json({ success: true, data: broadcasts });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Create manual audit log entry
+// @route   POST /api/v1/admin/audit-logs/manual
+// @access  Private/Admin
+export const createManualAuditLog = async (req, res) => {
+    try {
+        const { details } = req.body;
+        if (!details || details.trim() === '') {
+            return res.status(400).json({ success: false, message: 'Details log content is required' });
+        }
+        
+        await logAdminAction(req, 'OTHER', {
+            targetType: 'System',
+            details: `Manual Entry: ${details}`
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Manual entry successfully committed to system audit ledger'
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

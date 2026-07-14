@@ -44,7 +44,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1 space-y-4">
             <Link to="/" className="group inline-block">
-              <img src={Logo} alt="AK Job Services" className="w-20 h-20 object-contain group-hover:scale-105 transition-transform duration-200" />
+              <img src={Logo} alt="AK Job Services" className="w-32 h-32 object-contain group-hover:scale-105 transition-transform duration-200" />
             </Link>
             <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
               The premium job board connecting India's top talent with the world's most innovative companies.

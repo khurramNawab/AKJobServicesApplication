@@ -188,7 +188,7 @@ const SubscriptionView = () => {
          {/* Header */}
          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div className="space-y-1">
-               <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">
+               <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase leading-none">
                   Subscription <span className="text-blue-500">Plans</span>.
                </h2>
                <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">
@@ -198,13 +198,13 @@ const SubscriptionView = () => {
             <div className="flex gap-3">
                <button 
                   onClick={handleExportSubscribers}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-white/5 border border-border-subtle text-[10px] font-black text-text-primary uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
                >
                   <Download size={13} /> Export
                </button>
                <button 
                   onClick={() => setShowNewPlanModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 text-[10px] font-black text-text-primary uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
                >
                   <Plus size={13} /> New Plan
                </button>
@@ -223,21 +223,21 @@ const SubscriptionView = () => {
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: i * 0.1 }}
-                     className="p-8 rounded-[2.5rem] bg-[#1E293B] border border-white/5 space-y-6 group hover:border-blue-500/30 transition-all shadow-2xl relative overflow-hidden"
+                     className="p-8 rounded-[2.5rem] bg-bg-surface border border-border-subtle space-y-6 group hover:border-blue-500/30 transition-all shadow-2xl relative overflow-hidden"
                   >
                      <div className="absolute top-4 right-4 opacity-[0.06]">
-                        <PlanIcon size={80} className="text-white" />
+                        <PlanIcon size={80} className="text-text-primary" />
                      </div>
 
                      <div className="flex items-center justify-between">
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-${plan.color}-500/10 text-${plan.color}-400 border border-${plan.color}-500/20`}>
                            <PlanIcon size={11} /> {plan.name} Tier
                         </div>
-                        <span className="text-2xl font-black text-white">{count}</span>
+                        <span className="text-2xl font-black text-text-primary">{count}</span>
                      </div>
 
                      <div>
-                        <p className="text-3xl font-black text-white tracking-tighter">{plan.price}</p>
+                        <p className="text-3xl font-black text-text-primary tracking-tighter">{plan.price}</p>
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{count} active users</p>
                      </div>
 
@@ -269,20 +269,20 @@ const SubscriptionView = () => {
          </div>
 
          {/* ⚙️ Platform Plan Configuration Panel */}
-         <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+         <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-border-subtle">
                <div className="flex items-center gap-4">
                   <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                      <Settings size={20} />
                   </div>
                   <div>
-                     <h3 className="text-base font-black text-white uppercase tracking-widest">Recruiter Plan Pricing</h3>
+                     <h3 className="text-base font-black text-text-primary uppercase tracking-widest">Recruiter Plan Pricing</h3>
                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Set prices and feature access for recruiters</p>
                   </div>
                </div>
                <div className="flex items-center gap-4">
                   {saveMsg && <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">{saveMsg}</span>}
-                  <button onClick={handleSaveConfig} disabled={saving} className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all disabled:opacity-50">
+                  <button onClick={handleSaveConfig} disabled={saving} className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 text-[10px] font-black text-text-primary uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all disabled:opacity-50">
                      {saving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
                      {saving ? 'Saving...' : 'Save Config'}
                   </button>
@@ -299,7 +299,7 @@ const SubscriptionView = () => {
                         { value: 'ALL_PAID', label: 'All Paid', icon: Lock, desc: 'No free access', color: 'text-rose-400 border-rose-500/30 bg-rose-500/10' },
                      ].map(m => (
                         <button key={m.value} onClick={() => setConfig(c => ({ ...c, platformMode: m.value }))}
-                           className={`p-5 rounded-2xl border text-left flex flex-col gap-2 transition-all ${config.platformMode === m.value ? m.color : 'bg-white/5 border-white/5 text-gray-500 hover:border-white/20'}`}>
+                           className={`p-5 rounded-2xl border text-left flex flex-col gap-2 transition-all ${config.platformMode === m.value ? m.color : 'bg-white/5 border-border-subtle text-gray-500 hover:border-white/20'}`}>
                            <m.icon size={18} />
                            <span className="text-[11px] font-black uppercase tracking-widest">{m.label}</span>
                            <span className="text-[9px] font-bold opacity-60">{m.desc}</span>
@@ -311,7 +311,7 @@ const SubscriptionView = () => {
                {/* Free Tier */}
                <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-3"><Shield size={16} className="text-slate-400" /><label className="text-[11px] font-black text-white uppercase tracking-widest">Free Tier Settings</label></div>
+                     <div className="flex items-center gap-3"><Shield size={16} className="text-slate-400" /><label className="text-[11px] font-black text-text-primary uppercase tracking-widest">Free Tier Settings</label></div>
                      <button onClick={() => setConfig(c => ({ ...c, freeTierEnabled: !c.freeTierEnabled }))}>
                         {config.freeTierEnabled ? <ToggleRight size={28} className="text-emerald-400" /> : <ToggleLeft size={28} className="text-gray-600" />}
                      </button>
@@ -320,7 +320,7 @@ const SubscriptionView = () => {
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <div className="space-y-2">
                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1"><Calendar size={10} /> Free Until Date</label>
-                           <input type="date" value={config.freeTierExpiryDate} onChange={e => setConfig(c => ({ ...c, freeTierExpiryDate: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
+                           <input type="date" value={config.freeTierExpiryDate} onChange={e => setConfig(c => ({ ...c, freeTierExpiryDate: e.target.value }))} className="w-full bg-white/5 border border-border-subtle rounded-xl px-4 py-3 text-text-primary text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" />
                            <p className="text-[9px] text-gray-600 font-bold">Empty = always free</p>
                         </div>
                         <div className="space-y-2">
@@ -335,7 +335,7 @@ const SubscriptionView = () => {
                                  setConfig(c => ({ ...c, freeTierJobApplicationLimit: val === '' ? 0 : parseInt(val, 10) }));
                               }}
                               placeholder="0"
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                              className="w-full bg-white/5 border border-border-subtle rounded-xl px-4 py-3 text-text-primary text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
                            />
                         </div>
                         <div className="space-y-2">
@@ -350,7 +350,7 @@ const SubscriptionView = () => {
                                  setConfig(c => ({ ...c, freeTierJobPostLimit: val === '' ? 0 : parseInt(val, 10) }));
                               }}
                               placeholder="0"
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                              className="w-full bg-white/5 border border-border-subtle rounded-xl px-4 py-3 text-text-primary text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
                            />
                         </div>
                      </div>
@@ -365,7 +365,7 @@ const SubscriptionView = () => {
                   ].map(plan => (
                      <div key={plan.key} className="space-y-4">
                         <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-3"><plan.icon size={16} className={plan.color} /><label className="text-[11px] font-black text-white uppercase tracking-widest">{plan.label}</label></div>
+                           <div className="flex items-center gap-3"><plan.icon size={16} className={plan.color} /><label className="text-[11px] font-black text-text-primary uppercase tracking-widest">{plan.label}</label></div>
                            <button onClick={() => setConfig(c => ({ ...c, [plan.enabledKey]: !c[plan.enabledKey] }))}>
                               {config[plan.enabledKey] ? <ToggleRight size={28} className={plan.color} /> : <ToggleLeft size={28} className="text-gray-600" />}
                            </button>
@@ -384,7 +384,7 @@ const SubscriptionView = () => {
                                        setConfig(c => ({ ...c, [plan.monthlyKey]: val === '' ? 0 : parseInt(val, 10) }));
                                     }}
                                     placeholder="0"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                                    className="w-full bg-white/5 border border-border-subtle rounded-xl px-4 py-3 text-text-primary text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
                                  />
                               </div>
                               <div className="space-y-2">
@@ -399,7 +399,7 @@ const SubscriptionView = () => {
                                        setConfig(c => ({ ...c, [plan.yearlyKey]: val === '' ? 0 : parseInt(val, 10) }));
                                     }}
                                     placeholder="0"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
+                                    className="w-full bg-white/5 border border-border-subtle rounded-xl px-4 py-3 text-text-primary text-xs font-bold focus:outline-none focus:border-blue-500 transition-all" 
                                  />
                               </div>
                            </div>
@@ -412,18 +412,18 @@ const SubscriptionView = () => {
          </div>
 
          {/* Subscriber Table */}
-         <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+         <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
             {/* Filter Bar */}
-            <div className="flex items-center justify-between px-8 py-5 border-b border-white/5">
-               <h3 className="text-sm font-black text-white uppercase tracking-widest">All Subscribers</h3>
+            <div className="flex items-center justify-between px-8 py-5 border-b border-border-subtle">
+               <h3 className="text-sm font-black text-text-primary uppercase tracking-widest">All Subscribers</h3>
                <div className="flex gap-2">
                   {['ALL', 'ACTIVE', 'EXPIRED'].map(f => (
                      <button
                         key={f}
                         onClick={() => setActiveFilter(f)}
                         className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${activeFilter === f
-                              ? 'bg-blue-600 border-blue-500 text-white'
-                              : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'
+                              ? 'bg-blue-600 border-blue-500 text-text-primary'
+                              : 'bg-white/5 border-border-subtle text-gray-500 hover:text-text-primary'
                            }`}
                      >
                         {f}
@@ -440,7 +440,7 @@ const SubscriptionView = () => {
                <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[700px]">
                      <thead>
-                        <tr className="bg-white/[0.02]">
+                        <tr className="bg-white/[0.02] dark:bg-white/[0.02]">
                            <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">User</th>
                            <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan</th>
                            <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Amount</th>
@@ -461,10 +461,10 @@ const SubscriptionView = () => {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.04 }}
-                              className="border-t border-white/5 hover:bg-white/[0.02] transition-colors group"
+                              className="border-t border-border-subtle hover:bg-white/[0.02] dark:bg-white/[0.02] transition-colors group"
                            >
                               <td className="px-8 py-5">
-                                 <p className="text-white font-black text-sm">{sub.user?.name || 'Unknown'}</p>
+                                 <p className="text-text-primary font-black text-sm">{sub.user?.name || 'Unknown'}</p>
                                  <p className="text-[10px] text-gray-500 font-bold mt-0.5">{sub.user?.email}</p>
                               </td>
                               <td className="px-8 py-5">
@@ -476,7 +476,7 @@ const SubscriptionView = () => {
                                     {sub.plan}
                                  </span>
                               </td>
-                              <td className="px-8 py-5 text-white font-black text-sm">
+                              <td className="px-8 py-5 text-text-primary font-black text-sm">
                                  ₹{sub.amount?.toLocaleString() || 0}
                               </td>
                               <td className="px-8 py-5">
@@ -518,14 +518,14 @@ const SubscriptionView = () => {
                      initial={{ scale: 0.9, opacity: 0 }}
                      animate={{ scale: 1, opacity: 1 }}
                      exit={{ scale: 0.9, opacity: 0 }}
-                     className="bg-[#0F172A] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-md space-y-8 text-left"
+                     className="bg-[#0F172A] border border-border-subtle rounded-[2.5rem] p-10 w-full max-w-md space-y-8 text-left"
                   >
                      <div className="flex items-center justify-between">
                         <div>
-                           <h3 className="text-xl font-black text-white uppercase tracking-tight">Manual Subscription</h3>
+                           <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">Manual Subscription</h3>
                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Activate plan for any user directly</p>
                         </div>
-                        <button onClick={() => setShowNewPlanModal(false)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
+                        <button onClick={() => setShowNewPlanModal(false)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-text-primary transition-all">
                            <Plus className="rotate-45" size={18} />
                         </button>
                      </div>
@@ -539,7 +539,7 @@ const SubscriptionView = () => {
                               placeholder="e.g. user@company.com"
                               value={newPlanForm.userEmail}
                               onChange={e => setNewPlanForm(p => ({ ...p, userEmail: e.target.value }))}
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                            />
                         </div>
 
@@ -549,7 +549,7 @@ const SubscriptionView = () => {
                               <select
                                  value={newPlanForm.planType}
                                  onChange={e => setNewPlanForm(p => ({ ...p, planType: e.target.value }))}
-                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
+                                 className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
                               >
                                  <option value="PRO">PRO</option>
                                  <option value="ELITE">ELITE</option>
@@ -562,7 +562,7 @@ const SubscriptionView = () => {
                               <select
                                  value={newPlanForm.durationMonths}
                                  onChange={e => setNewPlanForm(p => ({ ...p, durationMonths: e.target.value }))}
-                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
+                                 className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all [&>option]:bg-[#0F172A]"
                               >
                                  <option value="1">1 Month</option>
                                  <option value="3">3 Months</option>
@@ -581,14 +581,14 @@ const SubscriptionView = () => {
                               placeholder="e.g. 999"
                               value={newPlanForm.amount}
                               onChange={e => setNewPlanForm(p => ({ ...p, amount: e.target.value }))}
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[12px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                              className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[12px] font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                            />
                         </div>
 
                         <div className="pt-4">
                            <button
                               type="submit"
-                              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-lg"
+                              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-text-primary font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-lg"
                            >
                               <Plus size={16} /> Activate Plan
                            </button>
@@ -645,10 +645,10 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
    const activePremiumUsers = subscriptions.filter(s => (s.plan === 'PREMIUM' || s.plan === 'CANDIDATE_PREMIUM') && s.status === 'ACTIVE').length;
 
    return (
-      <div className="bg-[#1E293B] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
-         <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between">
+      <div className="bg-bg-surface border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl">
+         <div className="px-10 py-8 border-b border-border-subtle flex items-center justify-between">
             <div>
-               <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-3">
+               <h3 className="text-lg font-black text-text-primary uppercase tracking-tight flex items-center gap-3">
                   <Users size={20} className="text-purple-500" />
                   Candidate Subscription Control
                </h3>
@@ -663,7 +663,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                </span>
                <button
                   onClick={() => setCfg(p => ({ ...p, candidateSubscriptionEnabled: !p.candidateSubscriptionEnabled }))}
-                  className={`w-16 h-8 rounded-full transition-all relative ${cfg.candidateSubscriptionEnabled ? 'bg-purple-600' : 'bg-white/10 border border-white/10'}`}
+                  className={`w-16 h-8 rounded-full transition-all relative ${cfg.candidateSubscriptionEnabled ? 'bg-purple-600' : 'bg-white/10 border border-border-subtle'}`}
                >
                   <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-xl ${cfg.candidateSubscriptionEnabled ? 'left-9' : 'left-1'}`} />
                </button>
@@ -683,7 +683,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
             {/* Candidate Plan Overview Cards */}
             {cfg.candidateSubscriptionEnabled && (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-6">
+                  <div className="p-8 rounded-[2rem] bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle space-y-6">
                      <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20">
                            <Star size={11} /> Basic Tier
@@ -691,7 +691,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{activeBasicUsers} active users</span>
                      </div>
                      <div>
-                        <p className="text-3xl font-black text-white tracking-tighter">₹{cfg.candidateBasicMonthly}/mo</p>
+                        <p className="text-3xl font-black text-text-primary tracking-tighter">₹{cfg.candidateBasicMonthly}/mo</p>
                         <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">₹{cfg.candidateBasicYearly}/yr option</p>
                      </div>
                      <ul className="space-y-2.5 text-xs text-gray-400">
@@ -701,7 +701,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      </ul>
                   </div>
 
-                  <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-6">
+                  <div className="p-8 rounded-[2rem] bg-white/[0.02] dark:bg-white/[0.02] border border-border-subtle space-y-6">
                      <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-400 border border-purple-500/20">
                            <Crown size={11} /> Premium Tier
@@ -709,7 +709,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{activePremiumUsers} active users</span>
                      </div>
                      <div>
-                        <p className="text-3xl font-black text-white tracking-tighter">₹{cfg.candidatePremiumMonthly}/mo</p>
+                        <p className="text-3xl font-black text-text-primary tracking-tighter">₹{cfg.candidatePremiumMonthly}/mo</p>
                         <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">₹{cfg.candidatePremiumYearly}/yr option</p>
                      </div>
                      <ul className="space-y-2.5 text-xs text-gray-400">
@@ -731,7 +731,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      min={1}
                      value={cfg.candidateFreeApplicationLimit}
                      onChange={e => setCfg(p => ({ ...p, candidateFreeApplicationLimit: +e.target.value }))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                     className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[13px] font-black text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                </div>
 
@@ -743,7 +743,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      min={0}
                      value={cfg.candidateBasicMonthly}
                      onChange={e => setCfg(p => ({ ...p, candidateBasicMonthly: +e.target.value }))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                     className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[13px] font-black text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                </div>
                <div className="space-y-3">
@@ -753,7 +753,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      min={0}
                      value={cfg.candidateBasicYearly}
                      onChange={e => setCfg(p => ({ ...p, candidateBasicYearly: +e.target.value }))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                     className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[13px] font-black text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                </div>
 
@@ -765,7 +765,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      min={0}
                      value={cfg.candidatePremiumMonthly}
                      onChange={e => setCfg(p => ({ ...p, candidatePremiumMonthly: +e.target.value }))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                     className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[13px] font-black text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                </div>
                <div className="space-y-3">
@@ -775,7 +775,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
                      min={0}
                      value={cfg.candidatePremiumYearly}
                      onChange={e => setCfg(p => ({ ...p, candidatePremiumYearly: +e.target.value }))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-[13px] font-black text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                     className="w-full bg-white/5 border border-border-subtle rounded-2xl px-5 py-3.5 text-[13px] font-black text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                </div>
             </div>
@@ -789,7 +789,7 @@ const CandidateSubscriptionConfig = ({ subscriptions = [] }) => {
             <button
                onClick={handleSave}
                disabled={saving}
-               className="px-8 py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 disabled:opacity-50"
+               className="px-8 py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-text-primary font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 disabled:opacity-50"
             >
                {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                {saving ? 'Saving...' : 'Save Candidate Config'}

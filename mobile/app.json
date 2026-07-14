@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "JobPortal",
-    "slug": "jobportal",
+    "name": "Ak Job Services",
+    "slug": "ak-job-services",
     "sdkVersion": "52.0.0",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,14 +11,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.jobportal"
+      "bundleIdentifier": "com.akjobservices.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/AK_Job_services_logo.png"
       },
-      "package": "com.anonymous.jobportal"
+      "package": "com.akjobservices.app"
     },
     "web": {
       "output": "single",
@@ -44,7 +44,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "64df62eb-6a04-4eff-ae71-b7e987885bfd"
+        "projectId": "20d54547-9b51-4a6c-89d4-64c7e06abf9b"
       }
     }
   }
