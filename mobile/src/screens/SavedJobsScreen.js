@@ -71,12 +71,17 @@ const SavedJobsScreen = () => {
     };
 
     const renderHeader = () => (
-        <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Ionicons name="chevron-back" size={26} color={COLORS.textPrimary} />
+        <View style={[styles.header, { borderBottomColor: COLORS.border, borderBottomWidth: 1 }]}>
+            <TouchableOpacity 
+                onPress={() => navigation.goBack()} 
+                style={[styles.headerBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]}
+            >
+                <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
-            <Text style={[styles.title, { color: COLORS.textPrimary }]}>Saved Jobs</Text>
-            <View style={{ width: 26 }} /> 
+            <View style={styles.headerTitleArea}>
+                <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Saved Jobs</Text>
+            </View>
+            <View style={{ width: 48 }} /> 
         </View>
     );
 
@@ -142,19 +147,25 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: SIZES.lg,
-        paddingTop: SIZES.md,
-        paddingBottom: SIZES.md,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
     },
-    backBtn: {
-        width: 40,
-        height: 40,
+    headerBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
         justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
-    title: {
+    headerTitleArea: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    headerTitle: {
         fontSize: 20,
-        fontWeight: '900',
+        fontWeight: '800',
         letterSpacing: -0.5,
     },
     listContent: {

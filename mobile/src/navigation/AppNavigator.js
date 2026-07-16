@@ -171,6 +171,7 @@ const AppNavigator = () => {
                         <Stack.Screen name="Notifications" component={NotificationsScreen} />
                         <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
                         <Stack.Screen name="SavedJobs" component={SavedJobsScreen} />
+                        <Stack.Screen name="MyApplications" component={MyApplicationsScreen} />
                         <Stack.Screen name="Talents" component={TalentDirectoryScreen} />
                         <Stack.Screen name="InterestSelection" component={InterestSelectionScreen} />
                         <Stack.Screen 

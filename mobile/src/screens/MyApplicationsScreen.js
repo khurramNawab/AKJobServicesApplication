@@ -191,8 +191,16 @@ const MyApplicationsScreen = () => {
     const renderHeader = () => (
         <View style={styles.header}>
             <View style={styles.headerTop}>
-                <View>
-                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>Applications</Text>
+                {navigation.canGoBack() && (
+                    <TouchableOpacity 
+                        onPress={() => navigation.goBack()} 
+                        style={[styles.headerBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border, marginRight: 16 }]}
+                    >
+                        <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+                    </TouchableOpacity>
+                )}
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>Applications</Text>
                     <Text style={[styles.headerSubtitle, { color: COLORS.textSecondary }]}>
                         You have applied to {applications.length} jobs
                     </Text>
@@ -281,6 +289,14 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    headerBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
     searchBox: {
         flexDirection: 'row',

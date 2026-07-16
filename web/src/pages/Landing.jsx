@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Briefcase, Star, TrendingUp, Users, ArrowRight, ShieldCheck, Globe, CheckCircle2, ChevronRight, Zap, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -12,8 +12,70 @@ const Landing = () => {
   const [jobsLoading, setJobsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
-  const [videoMuted, setVideoMuted] = useState(true); // always start muted for autoplay
+  const [videoMuted, setVideoMuted] = useState(true); // starts true, resolves dynamically from database config
+  const videoRef = useRef(null);
   const navigate = useNavigate();
+
+  // Try playing unmuted by default. If browser blocks, fallback to muted autoplay.
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (vid && promoVideo) {
+      vid.muted = videoMuted;
+      if (!videoMuted) {
+        vid.play().catch((err) => {
+          console.warn("[Landing Video] Unmuted autoplay blocked, falling back to muted autoplay:", err);
+          setVideoMuted(true);
+          vid.muted = true;
+          vid.setAttribute('muted', '');
+          vid.play().catch(() => {});
+
+          // --- AUTO-UNMUTE ON FIRST INTERACTION ---
+          // Since the browser blocked unmuted autoplay on load, we register a listener
+          // to automatically unmute the video on the first click, keypress, or touch.
+          const autoUnmute = () => {
+            if (videoRef.current) {
+              const v = videoRef.current;
+              v.muted = false;
+              v.removeAttribute('muted');
+              v.volume = 1.0;
+              setVideoMuted(false);
+              v.play().catch(() => {});
+            }
+            cleanup();
+          };
+
+          const cleanup = () => {
+            window.removeEventListener('click', autoUnmute);
+            window.removeEventListener('keydown', autoUnmute);
+            window.removeEventListener('touchstart', autoUnmute);
+          };
+
+          window.addEventListener('click', autoUnmute);
+          window.addEventListener('keydown', autoUnmute);
+          window.addEventListener('touchstart', autoUnmute);
+        });
+      }
+    }
+  }, [promoVideo]);
+
+  const handleAudioToggle = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    const newMuted = !videoMuted;
+    setVideoMuted(newMuted);
+
+    // Synchronously mutate properties inside the click handler to satisfy browser gesture requirements
+    vid.muted = newMuted;
+    if (newMuted) {
+      vid.setAttribute('muted', '');
+    } else {
+      vid.removeAttribute('muted');
+      vid.volume = 1.0;
+      // Explicitly call play to ensure audio playback continues smoothly
+      vid.play().catch((err) => console.log('[Landing Video] play failed:', err));
+    }
+  };
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
@@ -62,7 +124,10 @@ const Landing = () => {
      api.get('/platform-config').then(res => {
         console.log('[Landing] platform-config response:', JSON.stringify(res.data?.data?.promoVideo));
         if (res.data?.success && res.data.data?.promoVideo?.isActive) {
-           setPromoVideo(res.data.data.promoVideo);
+           const videoConfig = res.data.data.promoVideo;
+           setPromoVideo(videoConfig);
+           // Respect the admin dashboard setting: Voice is OFF (isMuted: true) or Voice is ON (isMuted: false)
+           setVideoMuted(videoConfig.isMuted !== false);
         } else {
            console.log('[Landing] promoVideo NOT active or missing. isActive:', res.data?.data?.promoVideo?.isActive, 'url:', res.data?.data?.promoVideo?.url, 'cloudinaryUrl:', res.data?.data?.promoVideo?.cloudinaryUrl);
         }
@@ -179,12 +244,13 @@ const Landing = () => {
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-2xl relative group">
                     {promoVideo.cloudinaryUrl && !promoVideo.url ? (
                       <video
+                        ref={videoRef}
                         src={promoVideo.cloudinaryUrl}
                         autoPlay
                         loop
                         muted={videoMuted}
                         playsInline
-                        className="w-full h-full object-cover pointer-events-none"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <>
@@ -197,17 +263,15 @@ const Landing = () => {
                         />
                         {/* Full overlay: blocks YouTube UI (share, subtitles, title, next) */}
                         <div className="absolute inset-0 z-10" style={{ background: 'transparent' }} />
-                        {/* Audio toggle — only shown when admin enabled audio */}
-                        {promoVideo.isMuted === false && (
-                          <button
-                            onClick={() => setVideoMuted(m => !m)}
-                            className="absolute bottom-3 right-3 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold border border-white/10 hover:bg-black/80 transition-all shadow-xl"
-                          >
-                            {videoMuted ? '🔇 Tap for Audio' : '🔊 Mute'}
-                          </button>
-                        )}
                       </>
                     )}
+                    {/* Audio toggle — always shown so visitors can toggle audio at will */}
+                    <button
+                      onClick={handleAudioToggle}
+                      className="absolute bottom-3 right-3 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold border border-white/10 hover:bg-black/80 transition-all shadow-xl"
+                    >
+                      {videoMuted ? '🔇 Tap for Audio' : '🔊 Mute'}
+                    </button>
                   </div>
                   {promoVideo.description && (
                     <p className="text-sm text-text-secondary text-center max-w-lg mx-auto">

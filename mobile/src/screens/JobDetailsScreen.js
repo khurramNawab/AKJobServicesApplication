@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
     headerIconBtn: {
         width: 48,
         height: 48,
-        borderRadius: 15,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,

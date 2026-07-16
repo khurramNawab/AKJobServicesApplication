@@ -257,10 +257,10 @@ const EditProfileScreen = ({ navigation }) => {
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={[styles.backButton, { backgroundColor: COLORS.background }]}
+          style={[styles.backButton, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]}
           hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         >
-          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: COLORS.textPrimary }]}>
           Edit Profile
@@ -611,11 +611,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
   },
   headerTitle: {
     fontSize: 18,

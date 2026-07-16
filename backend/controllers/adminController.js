@@ -805,6 +805,7 @@ export const uploadPromoVideo = async (req, res) => {
             uploadedAt: new Date()
         };
 
+
         const config = await PlatformConfig.findOneAndUpdate(
             {},
             { $push: { promoVideoLibrary: newVideo } },

@@ -219,6 +219,10 @@ const ProfileScreen = ({ navigation }) => {
                 bg = isDarkMode ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)';
                 iconColor = '#6366F1';
                 break;
+            case 'briefcase-outline':
+                bg = isDarkMode ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)';
+                iconColor = '#8B5CF6';
+                break;
             case 'person-outline':
                 bg = isDarkMode ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)';
                 iconColor = '#3B82F6';
@@ -391,7 +395,8 @@ const ProfileScreen = ({ navigation }) => {
                     {user?.role === 'CANDIDATE' ? (
                         <>
                             {renderMenuButton('person-outline', 'Edit Profile', 'Personal info, bio, and social links', () => navigation.navigate('EditProfile'))}
-                            {renderMenuButton('heart-outline', 'Saved Jobs', 'View your wishlisted opportunities', () => navigation.navigate('SavedJobs'))}
+                            {renderMenuButton('heart-outline', 'My Wishlist', 'View your wishlisted opportunities', () => navigation.navigate('SavedJobs'))}
+                            {renderMenuButton('briefcase-outline', 'My Applications', 'Track your job applications and status', () => navigation.navigate('MyApplications'))}
                             {renderMenuButton('document-text-outline', 'My Resume', 'View and update your professional CV', () => {
                                 const url = profile?.resumeUrl || null;
                                 console.log('[ProfileScreen] Navigating to ResumeViewer with URL:', url);
@@ -418,93 +423,10 @@ const ProfileScreen = ({ navigation }) => {
                     {renderMenuButton('shield-checkmark-outline', 'Privacy', 'Security settings and data privacy', () => navigation.navigate('PrivacySecurity'))}
                 </View>
 
-                <View style={[styles.section, { marginBottom: user?.role === 'CANDIDATE' ? 20 : 120 }]}>
+                <View style={[styles.section, { marginBottom: 120 }]}>
                     {renderSectionHeader('System')}
                     {renderMenuButton('log-out-outline', 'Sign Out', 'Safely log out of your session', handleLogout, true)}
                 </View>
-
-                {/* ── Candidate Jobs & Wishlist ── */}
-                {user?.role === 'CANDIDATE' && (
-                    <>
-                        {/* Applied Jobs */}
-                        <View style={[styles.section, { paddingHorizontal: 4 }]}>
-                            {renderSectionHeader('My Applications')}
-                            {appliedJobs.length > 0 ? (
-                                appliedJobs.map((app) => (
-                                    <TouchableOpacity 
-                                        key={app._id} 
-                                        style={[styles.jobRow, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-                                        onPress={() => navigation.navigate('JobDetails', { jobId: app.jobId?._id })}
-                                    >
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={[styles.jobRowTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>
-                                                {app.jobId?.title || 'Job Opening'}
-                                            </Text>
-                                            <Text style={[styles.jobRowCompany, { color: COLORS.textSecondary }]}>
-                                                {app.jobId?.recruiterId?.companyName || 'Top Company'}
-                                            </Text>
-                                        </View>
-                                        <View style={[styles.statusBadge, { 
-                                            backgroundColor: app.status === 'HIRED' ? 'rgba(16, 185, 129, 0.1)' : 
-                                                             app.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)' 
-                                        }]}>
-                                            <Text style={[styles.statusBadgeText, { 
-                                                color: app.status === 'HIRED' ? COLORS.success : 
-                                                       app.status === 'REJECTED' ? COLORS.danger : COLORS.warning 
-                                            }]}>
-                                                {app.status}
-                                            </Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))
-                            ) : (
-                                <Text style={[styles.emptySectionText, { color: COLORS.textTertiary }]}>No applications sent yet.</Text>
-                            )}
-                        </View>
-
-                        {/* My Wishlist */}
-                        <View style={[styles.section, { paddingHorizontal: 4, marginBottom: 120 }]}>
-                            {renderSectionHeader('My Wishlist')}
-                            {savedJobs.length > 0 ? (
-                                savedJobs.map((item) => {
-                                    const job = item.jobId;
-                                    if (!job) return null;
-                                    return (
-                                        <TouchableOpacity 
-                                            key={item._id} 
-                                            style={[styles.jobRow, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-                                            onPress={() => navigation.navigate('JobDetails', { jobId: job._id })}
-                                        >
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={[styles.jobRowTitle, { color: COLORS.textPrimary }]} numberOfLines={1}>
-                                                    {job.title}
-                                                </Text>
-                                                <Text style={[styles.jobRowCompany, { color: COLORS.textSecondary }]}>
-                                                    {job.recruiterId?.companyName || 'Top Company'}
-                                                </Text>
-                                            </View>
-                                            <TouchableOpacity 
-                                                onPress={async () => {
-                                                    try {
-                                                        await api.post(`/saved-jobs/toggle/${job._id}`);
-                                                        setSavedJobs(prev => prev.filter(s => s._id !== item._id));
-                                                    } catch (err) {
-                                                        console.error(err);
-                                                    }
-                                                }}
-                                                style={styles.unsaveBtn}
-                                            >
-                                                <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-                                            </TouchableOpacity>
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            ) : (
-                                <Text style={[styles.emptySectionText, { color: COLORS.textTertiary }]}>No saved jobs in wishlist.</Text>
-                            )}
-                        </View>
-                    </>
-                )}
             </ScrollView>
         </ScreenWrapper>
     );

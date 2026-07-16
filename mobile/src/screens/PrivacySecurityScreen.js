@@ -118,7 +118,7 @@ const PrivacySecurityScreen = ({ navigation }) => {
             <View style={[styles.header, { backgroundColor: COLORS.surface, borderBottomColor: COLORS.border }]}>
                 <TouchableOpacity 
                     onPress={() => navigation.goBack()} 
-                    style={styles.backBtn}
+                    style={[styles.backBtn, { backgroundColor: COLORS.surfaceSecondary, borderColor: COLORS.border }]}
                     hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >
                     <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
@@ -182,11 +182,12 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
     },
     backBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+        width: 48,
+        height: 48,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
     },
     headerTitle: {
         flex: 1,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     headerRight: {
-        width: 44,
+        width: 48,
         alignItems: 'center',
         justifyContent: 'center',
     },

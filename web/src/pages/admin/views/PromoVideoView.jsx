@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Video, Save, Eye, EyeOff, Loader2, Link, PlayCircle, CheckCircle, XCircle, Upload, Trash2, Check, AlignLeft, Plus, X } from 'lucide-react';
 import api from '../../../services/api';
@@ -23,6 +23,42 @@ const PromoVideoView = () => {
     const [uploadingVideo, setUploadingVideo] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [toast, setToast] = useState(null);
+    const [previewMuted, setPreviewMuted] = useState(false); // default audio to ON
+    const previewVideoRef = useRef(null);
+
+    // Try playing unmuted by default in preview. If browser blocks, fallback to muted autoplay.
+    useEffect(() => {
+        const vid = previewVideoRef.current;
+        if (vid && config && config.cloudinaryUrl) {
+            vid.muted = previewMuted;
+            if (!previewMuted) {
+                vid.play().catch((err) => {
+                    console.warn("[Admin Preview Video] Unmuted autoplay blocked, falling back to muted autoplay:", err);
+                    setPreviewMuted(true);
+                    vid.muted = true;
+                    vid.setAttribute('muted', '');
+                    vid.play().catch(() => {});
+                });
+            }
+        }
+    }, [config.cloudinaryUrl]);
+
+    const handlePreviewAudioToggle = () => {
+        const vid = previewVideoRef.current;
+        if (!vid) return;
+
+        const newMuted = !previewMuted;
+        setPreviewMuted(newMuted);
+
+        vid.muted = newMuted;
+        if (newMuted) {
+            vid.setAttribute('muted', '');
+        } else {
+            vid.removeAttribute('muted');
+            vid.volume = 1.0;
+            vid.play().catch((err) => console.log('[Admin Preview] play failed:', err));
+        }
+    };
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -380,15 +416,22 @@ const PromoVideoView = () => {
 
                     {embedUrl ? (
                         config.cloudinaryUrl && !config.url ? (
-                            <div className="w-full rounded-2xl overflow-hidden bg-black relative flex justify-center items-center">
+                            <div className="w-full rounded-2xl overflow-hidden bg-black relative flex justify-center items-center group/vid">
                                 <video
+                                    ref={previewVideoRef}
                                     src={config.cloudinaryUrl}
                                     autoPlay
                                     loop
-                                    muted={config.isMuted !== false}
+                                    muted={previewMuted}
                                     playsInline
                                     className="w-full h-auto max-h-[400px] object-contain"
                                 />
+                                <button
+                                    onClick={handlePreviewAudioToggle}
+                                    className="absolute bottom-3 right-3 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold border border-white/10 hover:bg-black/80 transition-all shadow-xl"
+                                >
+                                    {previewMuted ? '🔇 Tap for Audio' : '🔊 Mute'}
+                                </button>
                             </div>
                         ) : (
                             <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black relative">

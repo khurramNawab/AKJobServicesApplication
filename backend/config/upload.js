@@ -235,18 +235,25 @@ const upload = {
           if (fieldname === "video") {
             folder = "jobportal/videos";
             resourceType = "video";
-            transformation = [
-              { quality: "auto" },
-              { fetch_format: "auto" }
-            ];
+            transformation = []; // No transformations — preserve original audio tracks exactly
           }
 
           const uploadOptions = {
             folder,
             resource_type: resourceType,
             public_id: path.basename(localPath, path.extname(localPath)),
-            transformation: transformation
+            // Explicitly prevent any Cloudinary eager or incoming default transformations
+            // that could silently strip the audio codec on video uploads
+            use_filename: true,
+            unique_filename: true,
+            overwrite: false,
           };
+
+
+
+          if (transformation && transformation.length > 0) {
+            uploadOptions.transformation = transformation;
+          }
 
           // 5. Secure upload to Cloudinary using retry manager
           const result = await uploadWithRetry(localPath, uploadOptions);
